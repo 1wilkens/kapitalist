@@ -2,5 +2,21 @@
 name = "kapitalist"
 version = "0.1.0"
 authors = ["Florian Wilkens <gh@1wilkens.org>"]
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+repository = "https://github.com/1wilkens/kapitalist"
 
 [dependencies]
+dotenv = "0.11.0"
+
+diesel = { version = "1.1.1", features = ["postgres", "r2d2"] }
+diesel_codegen = "0.16.0"
+
+rocket = "0.3.6"
+rocket_codegen = "0.3.6"
+
+# Figure out if we need this
+[dependencies.rocket_contrib]
+version = "0.3.6"
+default-features = false
+features = ["json"]
