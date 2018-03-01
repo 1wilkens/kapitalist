@@ -9,12 +9,14 @@ extern crate rocket;
 extern crate rocket_contrib;
 
 mod db_pool;
+mod user;
+mod wallet;
 
 use std::env;
 
 #[get("/")]
 fn index() -> &'static str {
-    "Hello World!"
+    "Kapitalist is running allright!"
 }
 
 fn main() {
@@ -26,5 +28,6 @@ fn main() {
     rocket::ignite()
         .manage(db_pool::init(&db_url))
         .mount("/", routes![index])
+        .mount("/wallets", routes![wallet::get, wallet::get_one, wallet::post, wallet::put])
         .launch();
 }

@@ -10,10 +10,10 @@
 - POST /auth  -- (obtain authentication token)
 
 ### wallets
-- POST /wallet -- (create new wallet)
+- POST /wallets -- (create new wallet)
 - GET /wallets -- (get own wallets)
-- GET /wallet/{id} -- (get wallet details)
-- PUT /wallet/{id} -- (update wallet details)
+- GET /wallets/{id} -- (get wallet details)
+- PUT /wallets/{id} -- (update wallet details)
 
 ### transactions
 - GET /transaction
