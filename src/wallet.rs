@@ -1,28 +1,22 @@
 /* from doc/api.md
  *
  * ### wallets
- * - POST /wallets -- (create new wallet)
- * - GET /wallets -- (get own wallets)
- * - GET /wallets/{id} -- (get wallet details)
- * - PUT /wallets/{id} -- (update wallet details)
+ * - POST /wallet -- (create new wallet)
+ * - GET /wallet/{id} -- (get wallet details)
+ * - PUT /wallet/{id} -- (update wallet details)
  */
-
-#[get("/")]
-pub fn get() -> &'static str {
-    "GET /wallets"
-}
-
-#[get("/<id>")]
-pub fn get_one(id: u64) -> String {
-    format!("GET /wallets/{}", id)
-}
 
 #[post("/")]
 pub fn post() -> &'static str {
-    "POST /wallets"
+    "POST /wallet"
+}
+
+#[get("/<id>")]
+pub fn get(id: u64) -> String {
+    format!("GET /wallet/{}", id)
 }
 
 #[put("/<id>")]
 pub fn put(id: i64) -> String {
-    format!("PUT /wallets/{}", id)
+    format!("PUT /wallet/{}", id)
 }

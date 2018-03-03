@@ -3,18 +3,18 @@
 ## v1
 
 ### user management / authentication
+- POST /user  -- (register new user)
 - GET /me -- (get own user details)
 - PUT /me -- (update own user details)
 
-- POST /user  -- (register new user)
 - POST /auth  -- (obtain authentication token)
 
 ### wallets
-- POST /wallets -- (create new wallet)
-- GET /wallets -- (get own wallets)
-- GET /wallets/{id} -- (get wallet details)
-- PUT /wallets/{id} -- (update wallet details)
+- POST /wallet -- (create new wallet)
+- GET /wallet/{id} -- (get wallet details)
+- PUT /wallet/{id} -- (update wallet details)
 
 ### transactions
-- GET /transaction
-- GET /
+- POST /transaction -- (create new transaction)
+- GET /transaction/{id} -- (get transaction details)
+- PUT /transaction/{id} -- (update transaction details)
