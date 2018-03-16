@@ -1,29 +1,31 @@
 /* from doc/api.md
  *
- * ### user management / authentication
- * - GET /me -- (get own user details)
- * - PUT /me -- (update own user details)
- * 
- * - POST /user  -- (register new user)
- * - POST /auth  -- (obtain authentication token)
+ * ### User Management / Authentication
+ * | Method | Endpoint | Payload/Params | Description |
+ * | :--: | -- | -- | -- |
+ * | POST | `/register` | UserCreationRequest | register new user |
+ * | GET | `/me` | -- | get own user details |
+ * | PUT | `/me` | UserUpdateRequest | update own user details |
+ * |
+ * | POST | `/auth` | TokenRequest | obtain authentication token |
  */
 
-#[post("/me")]
-pub fn post() -> &'static str {
-    "POST /user"
+#[post("/register")]
+pub fn register() -> &'static str {
+    "POST /register"
 }
 
 #[get("/me")]
-pub fn get() -> &'static str {
+pub fn get_me() -> &'static str {
     "GET /me"
 }
 
 #[put("/me")]
-pub fn put() -> &'static str {
+pub fn put_me() -> &'static str {
     "PUT /me"
 }
 
-#[post("/auth")]
-pub fn token() -> &'static str {
-    "POST /auth"
+#[post("/authenticate")]
+pub fn authenticate() -> &'static str {
+    "POST /authenticate"
 }

@@ -17,7 +17,6 @@ extern crate jsonwebtoken as jwt;
 
 mod db_pool;
 
-mod transaction;
 mod user;
 mod wallet;
 
@@ -40,8 +39,7 @@ fn main() {
 
     rocket::ignite()
         .manage(db_pool::init(&db_url))
-        .mount("/", routes![index])
-        .mount("/wallet", routes![wallet::post, wallet::get, wallet::put])
-        .mount("/transaction", routes![transaction::post, transaction::get, transaction::put])
+        .mount("/", routes![index, user::register, user::get_me, user::put_me, user::authenticate])
+        .mount("/wallet", routes![wallet::post, wallet::get, wallet::put, wallet::tx_get_all, wallet::tx_post, wallet::tx_get, wallet::tx_put])
         .launch();
 }

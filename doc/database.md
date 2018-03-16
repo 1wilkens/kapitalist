@@ -4,11 +4,17 @@
 - Paradigm
 - Candidates
 
+## DB Separation
+- 2 DBs
+    - Prod data
+    - Secrets (Id, Salts, (Hashes?))
+- Maybe JWT_SECRET per user
+
 ## Entities
 - User
     - Id
     - EMail
-    - Secret (salted & hashed?)
+    - Secret (salted & hashed!)
     - Name
 
 - Wallet
