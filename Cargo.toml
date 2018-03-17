@@ -24,3 +24,6 @@ rocket_contrib = { git = "https://github.com/sergiobenitez/rocket.git", rev = "9
 
 # Use upstream once a common ring version is established
 jsonwebtoken = { git = "https://github.com/1wilkens/jsonwebtoken.git" }
+
+# Use upstream once a common ring version is established
+ring-pwhash = { git = "https://github.com/1wilkens/ring-pwhash.git", rev = "5939162" }

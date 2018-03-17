@@ -139,6 +139,11 @@ dependencies = [
 ]
 
 [[package]]
+name = "data-encoding"
+version = "2.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
 name = "derive-error-chain"
 version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -330,6 +335,7 @@ dependencies = [
  "diesel_codegen 0.16.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "dotenv 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "jsonwebtoken 4.0.0 (git+https://github.com/1wilkens/jsonwebtoken.git)",
+ "ring-pwhash 0.12.0 (git+https://github.com/1wilkens/ring-pwhash.git?rev=5939162)",
  "rocket 0.4.0-dev (git+https://github.com/sergiobenitez/rocket.git?rev=987f2d6)",
  "rocket_codegen 0.4.0-dev (git+https://github.com/sergiobenitez/rocket.git?rev=987f2d6)",
  "rocket_contrib 0.4.0-dev (git+https://github.com/sergiobenitez/rocket.git?rev=987f2d6)",
@@ -566,6 +572,16 @@ dependencies = [
  "libc 0.2.37 (registry+https://github.com/rust-lang/crates.io-index)",
  "rayon 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "untrusted 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "ring-pwhash"
+version = "0.12.0"
+source = "git+https://github.com/1wilkens/ring-pwhash.git?rev=5939162#59391620b1bc2f222c0e45b77f345096f22ccf13"
+dependencies = [
+ "data-encoding 2.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "libc 0.2.37 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ring 0.13.0-alpha (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -869,6 +885,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum crossbeam-deque 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "f739f8c5363aca78cfb059edf753d8f0d36908c348f3d8d1503f03d8b75d9cf3"
 "checksum crossbeam-epoch 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "59796cc6cbbdc6bb319161349db0c3250ec73ec7fcb763a51065ec4e2e158552"
 "checksum crossbeam-utils 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "2760899e32a1d58d5abb31129f8fae5de75220bc2176e77ff7c627ae45c918d9"
+"checksum data-encoding 2.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "67df0571a74bf0d97fb8b2ed22abdd9a48475c96bd327db968b7d9cace99655e"
 "checksum derive-error-chain 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)" = "3c9ca9ade651388daad7c993f005d0d20c4f6fe78c1cdc93e95f161c6f5ede4a"
 "checksum derive-error-chain 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)" = "92183014af72c63aea490e66526c712bf1066ac50f66c9f34824f02483ec1d98"
 "checksum diesel 0.16.0 (registry+https://github.com/rust-lang/crates.io-index)" = "304226fa7a3982b0405f6bb95dd9c10c3e2000709f194038a60ec2c277150951"
@@ -921,6 +938,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum regex 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)" = "5be5347bde0c48cfd8c3fdc0766cdfe9d8a755ef84d620d6794c778c91de8b2b"
 "checksum regex-syntax 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)" = "8e931c58b93d86f080c734bfd2bce7dd0079ae2331235818133c8be7f422e20e"
 "checksum ring 0.13.0-alpha (registry+https://github.com/rust-lang/crates.io-index)" = "946e5e2b336032275e23152755ec2a0610ede0302101d3666fdb686795d26535"
+"checksum ring-pwhash 0.12.0 (git+https://github.com/1wilkens/ring-pwhash.git?rev=5939162)" = "<none>"
 "checksum rocket 0.4.0-dev (git+https://github.com/sergiobenitez/rocket.git?rev=987f2d6)" = "<none>"
 "checksum rocket_codegen 0.4.0-dev (git+https://github.com/sergiobenitez/rocket.git?rev=987f2d6)" = "<none>"
 "checksum rocket_contrib 0.4.0-dev (git+https://github.com/sergiobenitez/rocket.git?rev=987f2d6)" = "<none>"

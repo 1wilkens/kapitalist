@@ -1,16 +1,16 @@
 /* from doc/api.md
  *
  * ### Wallets / transactions
-* | Method | Endpoint | Payload/Params | Description |
-* | :--: | -- | -- | -- |
-* | POST | `/wallet` | WalletCreationRequest | create new wallet |
-* | GET | `/wallet/{wid}` | `id` | get wallet details |
-* | PUT | `/wallet/{wid}` | WalletUpdateRequest | update wallet details |
-* |
-* | GET | `/wallet/{wid}/transactions` | `from, to` | get transaction history |
-* | POST | `/wallet/{wid}/transaction` | TransactionCreationRequest | create new transaction |
-* | GET | `/wallet/{wid}/transaction/{tid}` | -- | get transaction details |
-* | PUT | `/wallet/{wid}/transaction/{tid}` | TransactionUpdateRequest | update transaction details |
+ * | Method | Endpoint | Payload/Params | Description |
+ * | :--: | -- | -- | -- |
+ * | POST | `/wallet` | WalletCreationRequest | create new wallet |
+ * | GET | `/wallet/{wid}` | `id` | get wallet details |
+ * | PUT | `/wallet/{wid}` | WalletUpdateRequest | update wallet details |
+ * |
+ * | GET | `/wallet/{wid}/transactions` | `from, to` | get transaction history |
+ * | POST | `/wallet/{wid}/transaction` | TransactionCreationRequest | create new transaction |
+ * | GET | `/wallet/{wid}/transaction/{tid}` | -- | get transaction details |
+ * | PUT | `/wallet/{wid}/transaction/{tid}` | TransactionUpdateRequest | update transaction details |
  */
 
 #[post("/")]

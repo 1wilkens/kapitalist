@@ -15,7 +15,9 @@ extern crate rocket_contrib;
 
 extern crate jsonwebtoken as jwt;
 
-mod db_pool;
+extern crate ring_pwhash as pwhash;
+
+mod db;
 
 mod user;
 mod wallet;
@@ -38,7 +40,7 @@ fn main() {
         .expect("JWT_SECRET must be set");
 
     rocket::ignite()
-        .manage(db_pool::init(&db_url))
+        .manage(db::new(&db_url))
         .mount("/", routes![index, user::register, user::get_me, user::put_me, user::authenticate])
         .mount("/wallet", routes![wallet::post, wallet::get, wallet::put, wallet::tx_get_all, wallet::tx_post, wallet::tx_get, wallet::tx_put])
         .launch();

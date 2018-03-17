@@ -8,8 +8,15 @@ use std::ops::Deref;
 use rocket::http::Status;
 use rocket::request::{self, FromRequest};
 use rocket::{Request, State, Outcome};
+
 /// Db Connection request guard type: wrapper around diesel::r2d2 pooled connection
 pub struct DbConn(pub PooledConnection<ManagedPgConn>);
+
+/// Create a new database connection pool from a given database url
+pub fn new(database_url: &str) -> Pool {
+    let manager = ConnectionManager::<PgConnection>::new(database_url);
+    ::diesel::r2d2::Pool::new(manager).expect("Failed to create connection pool.")
+}
 
 /// Attempts to retrieve a single connection from the managed database pool. If
 /// no pool is currently managed, fails with an `InternalServerError` status. If
@@ -33,9 +40,4 @@ impl Deref for DbConn {
     fn deref(&self) -> &Self::Target {
         &self.0
     }
-}
-
-pub fn init(db_url: &str) -> Pool {
-    let manager = ConnectionManager::<PgConnection>::new(db_url);
-    ::diesel::r2d2::Pool::new(manager).expect("Failed to create pool.")
 }
