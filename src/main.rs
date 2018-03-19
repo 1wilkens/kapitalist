@@ -1,6 +1,8 @@
 #![feature(plugin, decl_macro)]
 #![plugin(rocket_codegen)]
 
+extern crate chrono;
+
 extern crate dotenv;
 
 extern crate serde;
@@ -18,8 +20,10 @@ extern crate jsonwebtoken as jwt;
 extern crate ring_pwhash as pwhash;
 
 mod db;
-
+mod models;
+mod schema;
 mod user;
+mod util;
 mod wallet;
 
 use std::env;
@@ -41,7 +45,7 @@ fn main() {
 
     rocket::ignite()
         .manage(db::new(&db_url))
-        .mount("/", routes![index, user::register, user::get_me, user::put_me, user::authenticate])
+        .mount("/", routes![index, user::register, user::get_me, user::put_me, user::token])
         .mount("/wallet", routes![wallet::post, wallet::get, wallet::put, wallet::tx_get_all, wallet::tx_post, wallet::tx_get, wallet::tx_put])
         .launch();
 }
