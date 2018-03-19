@@ -59,7 +59,7 @@ pub fn put_me(_db: DbConn, req: Json<UserUpdateRequest>) -> String {
 }
 
 #[post("/token", data = "<req>")]
-pub fn token(db: DbConn, req: Json<TokenRequest>) -> Result<Json<User>, NotFound<String>> {
+pub fn token(db: DbConn, req: Json<TokenRequest>) -> Result<String, NotFound<String>> {
     /* Authenticate and request a token
      *
      * - Check email exists
@@ -76,7 +76,12 @@ pub fn token(db: DbConn, req: Json<TokenRequest>) -> Result<Json<User>, NotFound
 
     let res = scrypt_check(&req.password, &user.secret_hash).expect("invalid hash in db");
     if res {
-        Ok(Json(user))
+        let claims = TokenClaims {
+            iss: "kapitalist".into(),
+            user: user.id
+        };
+        let jwt = ::jwt::encode(&::jwt::Header::default(), &claims, "supersecretkey".as_ref()).unwrap();
+        Ok(jwt)
     } else {
         Err(NotFound("fail".into()))
     }

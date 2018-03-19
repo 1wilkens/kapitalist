@@ -12,7 +12,8 @@ pub struct User {
     pub created_at: NaiveDateTime,
 }
 
-#[derive(Debug, Insertable)]
+#[derive(Debug)]
+#[derive(Insertable)]
 #[table_name ="users"]
 pub struct NewUser {
     pub email: String,
@@ -48,3 +49,8 @@ pub struct TokenRequest {
     pub password: String,
 }
 
+#[derive(Debug, Serialize)]
+pub struct TokenClaims {
+    pub iss:    String,
+    pub user:   i32,
+}
