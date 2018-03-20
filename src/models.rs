@@ -1,8 +1,9 @@
-use chrono::NaiveDateTime;
+use chrono::{NaiveDateTime};
 
 use schema::users;
+use util;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 #[derive(Queryable)]
 pub struct User {
     pub id: i32,
@@ -23,8 +24,10 @@ pub struct NewUser {
 
 impl NewUser {
     pub fn from_request(req: UserCreationRequest) -> Result<NewUser, ::std::io::Error> {
-        let params = ::pwhash::scrypt::ScryptParams::new(15, 8, 1);
-        let hash = ::pwhash::scrypt::scrypt_simple(&req.password, &params)?;
+        use pwhash::scrypt::scrypt_simple;
+
+        let params = util::get_scrypt_params();
+        let hash = scrypt_simple(&req.password, &params)?;
         Ok(NewUser { email: req.email, secret_hash: hash, username: req.name })
     }
 }
@@ -50,7 +53,6 @@ pub struct TokenRequest {
 }
 
 #[derive(Debug, Serialize)]
-pub struct TokenClaims {
-    pub iss:    String,
-    pub user:   i32,
+pub struct TokenResponse {
+    pub token: String
 }

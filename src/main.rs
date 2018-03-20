@@ -19,6 +19,7 @@ extern crate jsonwebtoken as jwt;
 
 extern crate ring_pwhash as pwhash;
 
+mod auth;
 mod db;
 mod models;
 mod schema;
