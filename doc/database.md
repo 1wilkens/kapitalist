@@ -16,6 +16,7 @@
     - EMail
     - Secret (salted & hashed!)
     - Name
+    - (Image)?
 
 - Wallet
     - Id
