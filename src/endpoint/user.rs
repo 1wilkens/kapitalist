@@ -12,18 +12,18 @@
 use diesel;
 use diesel::prelude::*;
 
-use rocket::{Request, State, Outcome};
-use rocket::http::Status;
-use rocket::request::{self, FromRequest};
-use rocket::response::status::NotFound;
+use rocket::response::status::{NotFound, Created};
 use rocket_contrib::Json;
 
 use auth::{UserGuard, TokenClaims};
 use db::DbConn;
-use models::*;
+use model::*;
+use request::*;
+use response::*;
 
 #[post("/register", data = "<req>")]
-pub fn register(db: DbConn, req: Json<UserCreationRequest>) -> Result<Json<User>, NotFound<String>> {
+pub fn register(db: DbConn, req: Json<UserCreationRequest>)
+    -> Result<Created<Json<User>>, Json<RequestError>> {
     /* Register a new user
      *
      * - Check email is not registered yet
@@ -38,10 +38,11 @@ pub fn register(db: DbConn, req: Json<UserCreationRequest>) -> Result<Json<User>
 
     let exists = diesel::select(diesel::dsl::exists(users
         .filter(email.eq(&req.email))))
-        .get_result(&*db).expect("query failed");
+        .get_result(&*db)
+        .map_err(|err| Json(RequestError { code: 401, text: err.to_string() }))?;
 
     if exists {
-        return Err(NotFound("fail".into()))
+        return Err(Json(RequestError { code: 401, text: "user already exists".into() }))
     }
 
     let new_user = NewUser::from_request(req.0).expect("failed to parse newuser");
@@ -49,7 +50,7 @@ pub fn register(db: DbConn, req: Json<UserCreationRequest>) -> Result<Json<User>
         .values(&new_user)
         .get_result(&*db)
         .expect("query failed");
-    Ok(Json(user))
+    Ok(Created("/me".into(), Some(Json(user))))
 }
 
 #[get("/me")]

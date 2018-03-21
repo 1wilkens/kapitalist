@@ -19,13 +19,17 @@ extern crate jsonwebtoken as jwt;
 
 extern crate ring_pwhash as pwhash;
 
+mod endpoint;
+
 mod auth;
 mod db;
-mod models;
+mod model;
+mod request;
+mod response;
 mod schema;
-mod user;
 mod util;
-mod wallet;
+
+use endpoint::{user, wallet};
 
 use std::env;
 

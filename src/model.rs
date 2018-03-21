@@ -1,7 +1,17 @@
 use chrono::{NaiveDateTime};
 
+use request::*;
 use schema::users;
 use util;
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct RequestError {
+    pub code: i16,
+    pub text: String
+}
+
+impl RequestError {
+}
 
 #[derive(Debug, Deserialize, Serialize)]
 #[derive(Queryable)]
@@ -30,29 +40,4 @@ impl NewUser {
         let hash = scrypt_simple(&req.password, &params)?;
         Ok(NewUser { email: req.email, secret_hash: hash, username: req.name })
     }
-}
-
-#[derive(Debug, Deserialize)]
-pub struct UserCreationRequest {
-    pub email:    String,
-    pub password: String,
-    pub name:     String,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct UserUpdateRequest {
-    pub email:    Option<String>,
-    pub password: Option<String>,
-    pub name:     Option<String>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct TokenRequest {
-    pub email:    String,
-    pub password: String,
-}
-
-#[derive(Debug, Serialize)]
-pub struct TokenResponse {
-    pub token: String
 }

@@ -1,5 +1,8 @@
 use chrono::{DateTime, Utc};
-use jwt::{decode, Algorithm, Validation};
+use chrono::serde::ts_seconds::serialize as to_ts;
+use chrono::serde::ts_seconds::deserialize as from_ts;
+
+use jwt::{decode, Validation};
 use rocket::Outcome;
 use rocket::http::Status;
 use rocket::request::{self, Request, FromRequest};
@@ -12,19 +15,25 @@ pub struct TokenClaims {
     pub iss:    String,
     // Subjec
     pub sub:    String,
+    // Audience
+    pub aud:    String,
     // Issued At
+    #[serde(serialize_with="to_ts", deserialize_with="from_ts")]
     pub iat:    DateTime<Utc>,
     // Expiration Time
+    #[serde(serialize_with="to_ts", deserialize_with="from_ts")]
     pub exp:    DateTime<Utc>,
     // User Id
     pub uid:   i32,
 }
 
 impl TokenClaims {
-    /// new blabla
+    /// Create a new TokenClaims instance with the given subject and user is
     pub fn new(sub: &str, uid: i32) -> TokenClaims {
+        // TODO: make this configurable and use real urls
         TokenClaims {
             iss: "kapitalist".into(),
+            aud: "kapitalist".into(),
             sub: sub.into(),
             iat: Utc::now(),
             exp: Utc::now(),
@@ -34,6 +43,7 @@ impl TokenClaims {
 }
 
 pub struct UserGuard {
+    // TODO: Add more fields as required
     user_id: i32
 }
 
@@ -47,14 +57,11 @@ impl<'a, 'r> FromRequest<'a, 'r> for UserGuard {
             if parts.len() == 2 && parts[0] == "Bearer" {
                 // We have a bearer token
                 let mut validation = Validation { leeway: 60, ..Default::default()};
-                // TODO: date validation is currently broken, reenable when upstream is fixed
-                validation.validate_iat = false;
-                validation.validate_exp = false;
                 // TODO: load secret from env (via env! macro?)
                 let token = match decode::<TokenClaims>(&parts[1],
                     b"supersecretkeyy", &validation) {
                     Ok(token) => token,
-                    Err(_)    => return Outcome::Failure((Status::Unauthorized, ()))
+                    Err(_)    => continue
                 };
                 return Outcome::Success(UserGuard { user_id: token.claims.uid });
             }
