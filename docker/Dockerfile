@@ -1,7 +1,7 @@
 FROM rustlang/rust:nightly
 
-RUN cargo install diesel_cli --no-default-features --features postgres
-RUN cargo install cargo-watch
+RUN cargo install -f diesel_cli --no-default-features --features postgres
+RUN cargo install -f cargo-watch
 
 WORKDIR /usr/src/app
 COPY wait-for-port.sh .

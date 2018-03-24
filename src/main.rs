@@ -38,9 +38,23 @@ fn index() -> &'static str {
     "Kapitalist is running allright!"
 }
 
+/*#[error(404)]
+fn err404(req: &::rocket::request::Request) -> &'static str {
+    "404"
+}*/
+
+fn setup_env() {
+    for item in dotenv::dotenv_iter().unwrap() {
+        let (key, val) = item.unwrap();
+        if let Err(env::VarError::NotPresent) = env::var(&key) {
+            env::set_var(&key, &val);
+        }
+    }
+}
+
 fn main() {
     // initialize env
-    dotenv::dotenv().ok();
+    setup_env();
 
     let db_url = env::var("DATABASE_URL")
         .expect("DATABASE_URL must be set");
@@ -50,6 +64,7 @@ fn main() {
 
     rocket::ignite()
         .manage(db::new(&db_url))
+        //.catch(errors![err404])
         .mount("/", routes![index, user::register, user::get_me, user::put_me, user::token])
         .mount("/wallet", routes![wallet::post, wallet::get, wallet::put, wallet::tx_get_all, wallet::tx_post, wallet::tx_get, wallet::tx_put])
         .launch();
