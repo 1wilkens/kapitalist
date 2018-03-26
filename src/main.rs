@@ -43,27 +43,31 @@ fn err404(req: &::rocket::request::Request) -> &'static str {
     "404"
 }*/
 
-fn setup_env() {
+fn parse_env() {
     for item in dotenv::dotenv_iter().unwrap() {
-        let (key, val) = item.unwrap();
-        if let Err(env::VarError::NotPresent) = env::var(&key) {
-            env::set_var(&key, &val);
+        if let Ok((key, val)) = item {
+            if let Err(env::VarError::NotPresent) = env::var(&key) {
+                env::set_var(&key, &val);
+            }
         }
     }
 }
 
+fn check_env() -> bool{
+    env::var("KAPITALIST_DB").is_ok()
+    && env::var("KAPITALIST_JWT_SECRET").is_ok()
+}
+
 fn main() {
-    // initialize env
-    setup_env();
-
-    let db_url = env::var("DATABASE_URL")
-        .expect("DATABASE_URL must be set");
-
-    env::var("JWT_SECRET")
-        .expect("JWT_SECRET must be set");
+    parse_env();
+    if !check_env() {
+        println!("[CRIT] Failed to validate environment.\nPlease check all required variables are present and valid\nExiting..");
+        return;
+    }
 
     rocket::ignite()
-        .manage(db::new(&db_url))
+        .manage(db::new(&env::var("KAPITALIST_DB").unwrap()))
+        .manage(auth::JwtSecret(env::var("KAPITALIST_JWT_SECRET").unwrap()))
         //.catch(errors![err404])
         .mount("/", routes![index, user::register, user::get_me, user::put_me, user::token])
         .mount("/wallet", routes![wallet::post, wallet::get, wallet::put, wallet::tx_get_all, wallet::tx_post, wallet::tx_get, wallet::tx_put])

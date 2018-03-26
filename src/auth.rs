@@ -7,6 +7,7 @@ use rocket::Outcome;
 use rocket::http::Status;
 use rocket::request::{self, Request, FromRequest};
 
+pub struct JwtSecret(pub String);
 
 #[derive(Debug, Serialize, Deserialize)]
 /// Represents claims included in kapitalist issued json web tokens
@@ -42,6 +43,7 @@ impl TokenClaims {
     }
 }
 
+/// Request guard which checks 
 pub struct UserGuard {
     // TODO: Add more fields as required
     user_id: i32
@@ -67,6 +69,8 @@ impl<'a, 'r> FromRequest<'a, 'r> for UserGuard {
             }
         }
 
-        Outcome::Failure((Status::Unauthorized, ()))
+        // TODO: Figure out what makes more sense here
+        Outcome::Forward(())
+        //Outcome::Failure((Status::Unauthorized, ()))
     }
 }

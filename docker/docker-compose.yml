@@ -16,9 +16,9 @@ services:
       - ..:/usr/src/app
     depends_on:
       - db
-    command: bash -c "./docker/wait-for-port.sh db:5432 -q -- diesel setup && cargo run --release"
+    command: bash -c "./docker/wait-for-port.sh db:5432 -q -- diesel --database-url $KAPITALIST_DB setup && cargo run --release"
     environment:
-      DATABASE_URL: postgres://kapitalist:supersecretpassword@db/kapitalist
+      KAPITALIST_DB: postgres://kapitalist:supersecretpassword@db/kapitalist
 
   db:
     container_name: kapitalist_db

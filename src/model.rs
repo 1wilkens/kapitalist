@@ -5,15 +5,6 @@ use schema::users;
 use util;
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct RequestError {
-    pub code: i16,
-    pub text: String
-}
-
-impl RequestError {
-}
-
-#[derive(Debug, Deserialize, Serialize)]
 #[derive(Queryable)]
 pub struct User {
     pub id: i32,
@@ -37,7 +28,8 @@ impl NewUser {
         use pwhash::scrypt::scrypt_simple;
 
         let params = util::get_scrypt_params();
-        let hash = scrypt_simple(&req.password, &params)?;
+        // Unwrap is safe here because scrypt_simple does not ever return an error
+        let hash = scrypt_simple(&req.password, &params).unwrap();
         Ok(NewUser { email: req.email, secret_hash: hash, username: req.name })
     }
 }
