@@ -18,6 +18,10 @@ impl ErrorResponse {
     pub fn server_error() -> ErrorResponse {
         ErrorResponse::new(500, Some("Internal server error"))
     }
+
+    pub fn not_implemented() -> ErrorResponse {
+        ErrorResponse::new(500, Some("Not implemented yet"))
+    }
 }
 
 #[derive(Debug, Serialize)]

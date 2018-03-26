@@ -13,18 +13,18 @@ use diesel;
 use diesel::prelude::*;
 
 use rocket::State;
-use rocket::response::status::{NotFound, Created};
+use rocket::response::status;
 use rocket_contrib::Json;
 
 use auth::{JwtSecret, TokenClaims, UserGuard};
 use db::DbConn;
-use model::*;
+use model::{User, NewUser};
 use request::*;
 use response::*;
 
 #[post("/register", data = "<req>")]
 pub fn register(db: DbConn, req: Json<UserCreationRequest>)
-    -> Result<Created<Json<User>>, Json<ErrorResponse>> {
+    -> Result<status::Created<Json<User>>, Json<ErrorResponse>> {
     /* Register a new user
      *
      * - Check email is not registered yet
@@ -52,7 +52,7 @@ pub fn register(db: DbConn, req: Json<UserCreationRequest>)
         .values(&new_user)
         .get_result(&*db)
         .map_err(|_| Json(ErrorResponse::server_error()))?;
-    Ok(Created("/me".into(), Some(Json(user))))
+    Ok(status::Created("/me".into(), Some(Json(user))))
 }
 
 #[get("/me")]
@@ -62,7 +62,7 @@ pub fn get_me(_db: DbConn, _user: UserGuard) -> Option<String> {
 }
 
 #[put("/me", data = "<req>")]
-pub fn put_me(_db: DbConn, req: Json<UserUpdateRequest>) -> Result<(), Json<ErrorResponse>> {
+pub fn put_me(_db: DbConn, _user: UserGuard, req: Json<UserUpdateRequest>) -> Result<(), Json<ErrorResponse>> {
     if req.email.is_none() && req.password.is_none() && req.name.is_none() {
         // At least one field has to be set, could also return 301 unchanged?
         return Err(Json(ErrorResponse::bad_request("Request has to contain at least one field to update")));

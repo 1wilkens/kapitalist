@@ -33,3 +33,14 @@ impl NewUser {
         Ok(NewUser { email: req.email, secret_hash: hash, username: req.name })
     }
 }
+
+#[derive(Debug, Deserialize, Serialize)]
+#[derive(Queryable)]
+pub struct Wallet {
+    pub id: i32,
+    pub name: String,
+    pub initial_balance: i32,
+    pub current_balance: i32,
+    pub color: String,
+    pub created_at: NaiveDateTime,
+}
