@@ -1,9 +1,11 @@
 #![feature(plugin, decl_macro)]
 #![plugin(rocket_codegen)]
 
-extern crate chrono;
-
+#[macro_use]
+extern crate log;
 extern crate dotenv;
+
+extern crate chrono;
 
 extern crate serde;
 #[macro_use]
@@ -12,6 +14,8 @@ extern crate serde_derive;
 #[macro_use]
 extern crate diesel;
 
+// "Steal" rocket's logging macros
+#[macro_use]
 extern crate rocket;
 extern crate rocket_contrib;
 

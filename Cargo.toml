@@ -7,6 +7,8 @@ readme = "README.md"
 repository = "https://github.com/1wilkens/kapitalist"
 
 [dependencies]
+log = "^0.4"
+
 dotenv = "0.11.0"
 
 serde = "1.0.34"

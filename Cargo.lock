@@ -329,6 +329,7 @@ dependencies = [
  "diesel_codegen 0.16.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "dotenv 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "jsonwebtoken 4.0.1 (git+https://github.com/1wilkens/jsonwebtoken.git)",
+ "log 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "ring-pwhash 0.12.0 (git+https://github.com/1wilkens/ring-pwhash.git?rev=5939162)",
  "rocket 0.4.0-dev (git+https://github.com/sergiobenitez/rocket.git?rev=987f2d6)",
  "rocket_codegen 0.4.0-dev (git+https://github.com/sergiobenitez/rocket.git?rev=987f2d6)",
