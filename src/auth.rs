@@ -4,7 +4,7 @@ use chrono::serde::ts_seconds::deserialize as from_ts;
 
 use jwt::{decode, Validation};
 use rocket::Outcome;
-use rocket::http::Status;
+use rocket::State;
 use rocket::request::{self, Request, FromRequest};
 
 pub struct JwtSecret(pub String);
@@ -53,15 +53,14 @@ impl<'a, 'r> FromRequest<'a, 'r> for UserGuard {
     type Error = ();
 
     fn from_request(req: &'a Request<'r>) -> request::Outcome<UserGuard, ()> {
+        let jwt = req.guard::<State<JwtSecret>>()?;
         let headers = req.headers().get("Authorization");
         for h in headers {
             let parts: Vec<&str> = h.split(' ').collect();
             if parts.len() == 2 && parts[0] == "Bearer" {
                 // We have a bearer token
                 let mut validation = Validation { leeway: 60, ..Default::default()};
-                // TODO: load secret from env (via env! macro?)
-                let token = match decode::<TokenClaims>(&parts[1],
-                    b"supersecretkeyy", &validation) {
+                let token = match decode::<TokenClaims>(&parts[1], jwt.0.as_ref(), &validation) {
                     Ok(token) => token,
                     Err(_)    => continue
                 };
@@ -70,6 +69,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for UserGuard {
         }
 
         // TODO: Figure out what makes more sense here
+        info_!("Forwarding because of missing or invalid Authorization header");
         Outcome::Forward(())
         //Outcome::Failure((Status::Unauthorized, ()))
     }
