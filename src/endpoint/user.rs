@@ -45,9 +45,7 @@ pub fn register(db: DbConn, req: Json<UserCreationRequest>)
         return Err(Json(ErrorResponse::new(401, Some("User already exists"))));
     }
 
-    // TODO: If this fails, scrypt failed (which should not happen?) investigate this some more
-    let new_user = NewUser::from_request(req.0)
-        .map_err(|_| Json(ErrorResponse::bad_request("Invalid body data")))?;
+    let new_user = NewUser::from_request(req.0);
     let user: User = diesel::insert_into(users)
         .values(&new_user)
         .get_result(&*db)

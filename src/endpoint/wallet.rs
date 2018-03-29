@@ -18,12 +18,14 @@ use rocket::response::status;
 
 use auth::UserGuard;
 use db::DbConn;
-use model::Wallet;
+use model::{Wallet, NewWallet};
+use request::WalletCreationRequest;
 use response::ErrorResponse;
 
-#[post("/")]
-pub fn post(_db: DbConn, _user: UserGuard) -> Result<status::Created<Json<Wallet>>, Json<ErrorResponse>> {
-    println!("POST /wallet");
+#[post("/", data = "<req>")]
+pub fn post(_db: DbConn, _user: UserGuard, req: Json<WalletCreationRequest>) -> Result<status::Created<Json<Wallet>>, Json<ErrorResponse>> {
+    println!("POST /wallet: name={}, balance={}, color={}", &req.name, &req.balance, &req.color);
+    let _new_wallet = NewWallet::from_request(req.0);
     Err(Json(ErrorResponse::not_implemented()))
 }
 
