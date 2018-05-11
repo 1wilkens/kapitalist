@@ -7,7 +7,9 @@ services:
     image: kapitalist:latest
     # diesel infer_schema macro gives warnings with this flag.
     environment:
-      - CARGO_INCREMENTAL=1
+      CARGO_INCREMENTAL: 1
+      DATABASE_URL: postgres://kapitalist:supersecretpassword@db/kapitalist
+      KAPITALIST_DB: postgres://kapitalist:supersecretpassword@db/kapitalist
     ports:
       - "127.0.0.1:3000:3000"
     networks:
@@ -16,9 +18,7 @@ services:
       - ..:/usr/src/app
     depends_on:
       - db
-    command: bash -c "./docker/wait-for-port.sh db:5432 -q -- diesel --database-url $KAPITALIST_DB setup && cargo run --release"
-    environment:
-      KAPITALIST_DB: postgres://kapitalist:supersecretpassword@db/kapitalist
+    command: bash -c "./docker/wait-for-port.sh db:5432 -q -- diesel setup && cargo run --release"
 
   db:
     container_name: kapitalist_db
