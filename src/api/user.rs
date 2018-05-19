@@ -17,10 +17,10 @@ use rocket::response::status;
 use rocket_contrib::Json;
 
 use auth::{JwtSecret, TokenClaims, UserGuard};
-use db::DbConn;
 use model::{User, NewUser};
 use request::*;
 use response::*;
+use util::db::DbConn;
 
 #[post("/register", data = "<req>")]
 pub fn register(db: DbConn, req: Json<UserCreationRequest>)

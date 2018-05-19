@@ -17,10 +17,10 @@ use rocket_contrib::Json;
 use rocket::response::status;
 
 use auth::UserGuard;
-use db::DbConn;
 use model::{Wallet, NewWallet};
 use request::WalletCreationRequest;
 use response::ErrorResponse;
+use util::db::DbConn;
 
 #[post("/", data = "<req>")]
 pub fn post(_db: DbConn, _user: UserGuard, req: Json<WalletCreationRequest>) -> Result<status::Created<Json<Wallet>>, Json<ErrorResponse>> {

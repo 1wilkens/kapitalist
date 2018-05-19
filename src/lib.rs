@@ -26,7 +26,6 @@ extern crate ring_pwhash as pwhash;
 pub mod api;
 
 pub mod auth;
-pub mod db;
 pub mod model;
 pub mod request;
 pub mod response;

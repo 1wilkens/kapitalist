@@ -4,11 +4,13 @@
 extern crate dotenv;
 #[macro_use]
 extern crate rocket;
+extern crate simplelog;
 
 extern crate kapitalist;
 
 use kapitalist::api::{user, wallet};
-use kapitalist::{auth, db};
+use kapitalist::auth;
+use kapitalist::util::db;
 
 use std::env;
 
