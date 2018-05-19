@@ -1,10 +1,18 @@
 [package]
-name = "kapitalist"
+name = "kapitalist_backend"
 version = "0.1.0"
 authors = ["Florian Wilkens <gh@1wilkens.org>"]
 license = "MIT OR Apache-2.0"
 readme = "README.md"
 repository = "https://github.com/1wilkens/kapitalist"
+
+[lib]
+name = "kapitalist"
+path = "src/lib.rs"
+
+[[bin]]
+name = "kapitalist"
+path = "src/bin/main.rs"
 
 [dependencies]
 log = "^0.4"
@@ -17,7 +25,6 @@ serde_derive = "1.0.37"
 chrono = { version = "0.4.1", features = ["serde"] }
 
 diesel = { version = "1.2.2", features = ["chrono", "postgres", "r2d2"] }
-diesel_codegen = "0.16.0"
 
 rocket = "0.3.10"
 #rocket = { git = "https://github.com/sergiobenitez/rocket.git", rev = "3894e4e" }
