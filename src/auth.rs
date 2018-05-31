@@ -43,7 +43,7 @@ impl TokenClaims {
     }
 }
 
-/// Request guard which checks 
+/// Request guard which checks
 pub struct UserGuard {
     // TODO: Add more fields as required
     user_id: i32

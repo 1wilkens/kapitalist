@@ -5,7 +5,7 @@ pub struct ErrorResponse {
 }
 
 impl ErrorResponse {
-    pub fn new<S>(code: i16, error: Option<S>) -> ErrorResponse 
+    pub fn new<S>(code: i16, error: Option<S>) -> ErrorResponse
         where S: Into<String> {
         ErrorResponse { code: code, error: if let Some(e) = error { e.into() } else { "".into() } }
     }
