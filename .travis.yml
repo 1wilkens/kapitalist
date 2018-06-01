@@ -1,10 +1,10 @@
 branches:
   only:
-  - develop
+    - develop
 language: rust
 cache: cargo
 rust:
-  - nightly
+  - nightly-2018-05-26
 
 sudo: false
 addons:
