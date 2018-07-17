@@ -12,9 +12,7 @@
 use diesel;
 use diesel::prelude::*;
 
-use rocket::State;
-use rocket::response::status;
-use rocket_contrib::Json;
+use actix_web::Json;
 
 use auth::{JwtSecret, TokenClaims, UserGuard};
 use model::{User, NewUser};
@@ -22,9 +20,7 @@ use request::*;
 use response::*;
 use util::db::DbConn;
 
-#[post("/register", data = "<req>")]
-pub fn register(db: DbConn, req: Json<UserCreationRequest>)
-    -> Result<status::Created<Json<User>>, Json<ErrorResponse>> {
+pub fn register(db: DbConn, req: Json<UserCreationRequest>) -> Result<Json<User>, Json<ErrorResponse>> {
     /* Register a new user
      *
      * - Check email is not registered yet
@@ -50,16 +46,13 @@ pub fn register(db: DbConn, req: Json<UserCreationRequest>)
         .values(&new_user)
         .get_result(&*db)
         .map_err(|_| Json(ErrorResponse::server_error()))?;
-    Ok(status::Created("/me".into(), Some(Json(user))))
+    Ok(Json(user))
 }
-
-#[get("/me")]
 pub fn get_me(_db: DbConn, _user: UserGuard) -> Option<String> {
     // TODO: Figure out what to return here
     Some("GET /me".into())
 }
 
-#[put("/me", data = "<req>")]
 pub fn put_me(_db: DbConn, _user: UserGuard, req: Json<UserUpdateRequest>) -> Result<(), Json<ErrorResponse>> {
     if req.email.is_none() && req.password.is_none() && req.name.is_none() {
         // At least one field has to be set, could also return 301 unchanged?
@@ -70,8 +63,7 @@ pub fn put_me(_db: DbConn, _user: UserGuard, req: Json<UserUpdateRequest>) -> Re
     Ok(())
 }
 
-#[post("/token", data = "<req>")]
-pub fn token(db: DbConn, jwt: State<JwtSecret>, req: Json<TokenRequest>) -> Result<Json<TokenResponse>, Json<ErrorResponse>> {
+pub fn token(db: DbConn, jwt: JwtSecret, req: Json<TokenRequest>) -> Result<Json<TokenResponse>, Json<ErrorResponse>> {
     /* Authenticate and request a token
      *
      * - Check email exists

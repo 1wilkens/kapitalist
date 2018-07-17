@@ -1,4 +1,4 @@
-use rocket_contrib::Json;
+use actix_web::Json;
 
 use auth::UserGuard;
 use db::DbConn;

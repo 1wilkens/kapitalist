@@ -3,9 +3,6 @@ use chrono::serde::ts_seconds::serialize as to_ts;
 use chrono::serde::ts_seconds::deserialize as from_ts;
 
 use jwt::{decode, Validation};
-use rocket::Outcome;
-use rocket::State;
-use rocket::request::{self, Request, FromRequest};
 
 pub struct JwtSecret(pub String);
 
@@ -49,7 +46,8 @@ pub struct UserGuard {
     user_id: i32
 }
 
-impl<'a, 'r> FromRequest<'a, 'r> for UserGuard {
+// TODO: replace with actix-web equivalent
+/*impl<'a, 'r> FromRequest<'a, 'r> for UserGuard {
     type Error = ();
 
     fn from_request(req: &'a Request<'r>) -> request::Outcome<UserGuard, ()> {
@@ -69,8 +67,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for UserGuard {
         }
 
         // TODO: Figure out what makes more sense here
-        info_!("Forwarding because of missing or invalid Authorization header");
         Outcome::Forward(())
         //Outcome::Failure((Status::Unauthorized, ()))
     }
-}
+}*/

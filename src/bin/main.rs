@@ -1,10 +1,7 @@
-#![feature(plugin, decl_macro)]
-#![plugin(rocket_codegen)]
-
 extern crate dotenv;
-#[macro_use]
-extern crate rocket;
 extern crate simplelog;
+
+extern crate actix_web;
 
 extern crate kapitalist;
 
@@ -36,11 +33,13 @@ fn main() {
         return;
     }
 
-    rocket::ignite()
+
+    // TODO: replace this with actix-web equivalent
+    /*rocket::ignite()
         .manage(db::new(&env::var("KAPITALIST_DB").unwrap()))
         .manage(auth::JwtSecret(env::var("KAPITALIST_JWT_SECRET").unwrap()))
         //.catch(errors![err404])
         .mount("/", routes![user::register, user::get_me, user::put_me, user::token])
         .mount("/wallet", routes![wallet::post, wallet::get, wallet::put, wallet::tx_get_all, wallet::tx_post, wallet::tx_get, wallet::tx_put])
-        .launch();
+        .launch();*/
 }

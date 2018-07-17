@@ -1,6 +1,3 @@
-#![feature(plugin, decl_macro)]
-#![plugin(rocket_codegen)]
-
 #[macro_use]
 extern crate log;
 extern crate dotenv;
@@ -14,10 +11,7 @@ extern crate serde_derive;
 #[macro_use]
 extern crate diesel;
 
-// "Steal" rocket's logging macros
-#[macro_use]
-extern crate rocket;
-extern crate rocket_contrib;
+extern crate actix_web;
 
 extern crate jsonwebtoken as jwt;
 

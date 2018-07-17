@@ -13,8 +13,7 @@
  * | PUT | `/wallet/{wid}/transaction/{tid}` | TransactionUpdateRequest | update transaction details |
  */
 
-use rocket_contrib::Json;
-use rocket::response::status;
+use actix_web::Json;
 
 use auth::UserGuard;
 use model::{Wallet, NewWallet};
@@ -22,44 +21,37 @@ use request::WalletCreationRequest;
 use response::ErrorResponse;
 use util::db::DbConn;
 
-#[post("/", data = "<req>")]
-pub fn post(_db: DbConn, _user: UserGuard, req: Json<WalletCreationRequest>) -> Result<status::Created<Json<Wallet>>, Json<ErrorResponse>> {
+pub fn post(_db: DbConn, _user: UserGuard, req: Json<WalletCreationRequest>) -> Result<Json<Wallet>, Json<ErrorResponse>> {
     println!("POST /wallet: name={}, balance={}, color={}", &req.name, &req.balance, &req.color);
     let _new_wallet = NewWallet::from_request(req.0);
     Err(Json(ErrorResponse::not_implemented()))
 }
 
-#[get("/<wid>")]
 pub fn get(_db: DbConn, _user: UserGuard, wid: u64) -> Result<Json<Wallet>, Json<ErrorResponse>> {
     println!("GET /wallet/{}", wid);
     Err(Json(ErrorResponse::not_implemented()))
 }
 
-#[put("/<wid>")]
 pub fn put(_db: DbConn, _user: UserGuard, wid: u64) -> Result<Json<Wallet>, Json<ErrorResponse>> {
     println!("PUT /wallet/{}", wid);
     Err(Json(ErrorResponse::not_implemented()))
 }
 
-#[get("/<wid>/transactions")]
 pub fn tx_get_all(_db: DbConn, _user: UserGuard, wid: u64) -> Result<Json<()>, Json<ErrorResponse>> {
     println!("GET /wallet/{}/transactions", wid);
     Err(Json(ErrorResponse::not_implemented()))
 }
 
-#[post("/<wid>/transaction")]
 pub fn tx_post(_db: DbConn, _user: UserGuard, wid: u64) -> Result<Json<()>, Json<ErrorResponse>> {
     println!("POST /wallet/{}/transaction", wid);
     Err(Json(ErrorResponse::not_implemented()))
 }
 
-#[get("/<wid>/transaction/<tid>")]
 pub fn tx_get(_db: DbConn, _user: UserGuard, wid: u64, tid: u64) -> Result<Json<()>, Json<ErrorResponse>> {
     println!("POST /wallet/{}/transaction/{}", wid, tid);
     Err(Json(ErrorResponse::not_implemented()))
 }
 
-#[put("/<wid>/transaction/<tid>")]
 pub fn tx_put(_db: DbConn, _user: UserGuard, wid: u64, tid: u64) -> Result<Json<()>, Json<ErrorResponse>> {
     println!("PUT /wallet/{}/transaction/{}", wid, tid);
     Err(Json(ErrorResponse::not_implemented()))
