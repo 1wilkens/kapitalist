@@ -1,5 +1,3 @@
-pub mod db;
-
 use pwhash::scrypt::ScryptParams;
 
 pub fn get_scrypt_params() -> ScryptParams {

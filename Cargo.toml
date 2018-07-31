@@ -27,11 +27,11 @@ chrono = { version = "0.4.1", features = ["serde"] }
 
 diesel = { version = "1.2.2", features = ["chrono", "postgres", "r2d2"] }
 
-actix-web = "0.6"
+actix-web = "=0.7.0"
 
 # Use upstream once a common ring version is established
 #jsonwebtoken = { git = "https://github.com/1wilkens/jsonwebtoken.git" }
-jsonwebtoken = "3.0"
+jsonwebtoken = "4.0"
 
 # Use upstream once a common ring version is established
 #ring-pwhash = { git = "https://github.com/1wilkens/ring-pwhash.git", rev = "5939162" }

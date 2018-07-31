@@ -5,11 +5,14 @@ extern crate actix_web;
 
 extern crate kapitalist;
 
-use kapitalist::api::{user, wallet};
-use kapitalist::auth;
-use kapitalist::util::db;
+use kapitalist::{
+    api::{self, user, wallet},
+    state::AppState,
+};
 
 use std::env;
+
+use actix_web::{actix, server, App};
 
 fn parse_env() {
     for item in dotenv::dotenv_iter().unwrap() {
@@ -21,9 +24,8 @@ fn parse_env() {
     }
 }
 
-fn check_env() -> bool{
-    env::var("KAPITALIST_DB").is_ok()
-    && env::var("KAPITALIST_JWT_SECRET").is_ok()
+fn check_env() -> bool {
+    env::var("KAPITALIST_DB").is_ok() && env::var("KAPITALIST_JWT_SECRET").is_ok()
 }
 
 fn main() {
@@ -33,6 +35,20 @@ fn main() {
         return;
     }
 
+    let addr = "127.0.0.1:8000";
+
+    let sys = actix::System::new("kapitalist");
+
+    server::new(move || {
+        let state = AppState::default();
+        App::with_state(state)
+            .resource("/", |r| r.get().f(api::index))
+    }).bind(&addr)
+    .expect("Failed to start server")
+    .start();
+
+    println!("Started server on: {}", &addr);
+    let _ = sys.run();
 
     // TODO: replace this with actix-web equivalent
     /*rocket::ignite()
@@ -41,5 +57,4 @@ fn main() {
         //.catch(errors![err404])
         .mount("/", routes![user::register, user::get_me, user::put_me, user::token])
         .mount("/wallet", routes![wallet::post, wallet::get, wallet::put, wallet::tx_get_all, wallet::tx_post, wallet::tx_get, wallet::tx_put])
-        .launch();*/
-}
+        .launch();*/}

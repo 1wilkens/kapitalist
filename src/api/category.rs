@@ -1,4 +1,4 @@
-use actix_web::Json;
+/*use actix_web::Json;
 
 use auth::UserGuard;
 use db::DbConn;
@@ -7,7 +7,7 @@ use model::{Category};
 use request::*;
 use response::*;
 
-#[get("/<id>")]
+//#[get("/<id>")]
 pub fn get(db: DbConn, _user: UserGuard, id: i32) -> Result<Json<Category>, Json<ErrorResponse>> {
     use schema::categories;
 
@@ -17,4 +17,4 @@ pub fn get(db: DbConn, _user: UserGuard, id: i32) -> Result<Json<Category>, Json
         .map_err(|_| Json(ErrorResponse::server_error()))?;
 
     Ok(Json(c))
-}
+}*/

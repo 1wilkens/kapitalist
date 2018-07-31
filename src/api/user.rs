@@ -9,7 +9,7 @@
  * |
  * | POST | `/auth` | TokenRequest | obtain authentication token |
  */
-use diesel;
+/*use diesel;
 use diesel::prelude::*;
 
 use actix_web::Json;
@@ -17,10 +17,9 @@ use actix_web::Json;
 use auth::{JwtSecret, TokenClaims, UserGuard};
 use model::{User, NewUser};
 use request::*;
-use response::*;
-use util::db::DbConn;
+use response::*;*/
 
-pub fn register(db: DbConn, req: Json<UserCreationRequest>) -> Result<Json<User>, Json<ErrorResponse>> {
+/*pub fn register(db: DbConn, req: Json<UserCreationRequest>) -> Result<Json<User>, Json<ErrorResponse>> {
     /* Register a new user
      *
      * - Check email is not registered yet
@@ -87,4 +86,4 @@ pub fn token(db: DbConn, jwt: JwtSecret, req: Json<TokenRequest>) -> Result<Json
         // Password check failed -> Return 401 - Unauthorized
         Err(Json(ErrorResponse::new(401, Some("Unauthorized"))))
     }
-}
+}*/
