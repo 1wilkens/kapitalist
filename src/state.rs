@@ -1,12 +1,16 @@
 use auth::JwtSecret;
+use db::DatabaseExecutor;
+
+use actix_web::actix::Addr;
 
 pub struct AppState {
-    pub config: Config,
+    pub(crate) config: Config,
+    pub(crate) db: Addr<DatabaseExecutor>
 }
 
-impl Default for AppState {
-    fn default() -> Self {
-        AppState { config: Config { jwt_secret: JwtSecret(String::new()) } }
+impl AppState {
+    pub fn new(addr: Addr<DatabaseExecutor>) -> AppState {
+        AppState { config: Config { jwt_secret: JwtSecret(String::new()) }, db: addr }
     }
 }
 

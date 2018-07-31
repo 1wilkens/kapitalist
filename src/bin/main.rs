@@ -7,6 +7,7 @@ extern crate kapitalist;
 
 use kapitalist::{
     api::{self, user, wallet},
+    db::DatabaseExecutor,
     state::AppState,
 };
 
@@ -35,14 +36,18 @@ fn main() {
         return;
     }
 
-    let addr = "127.0.0.1:8000";
+    let addr = "0.0.0.0:3000";
+    let db_url = env::var("KAPITALIST_DB").unwrap();
 
     let sys = actix::System::new("kapitalist");
 
+    let db = actix::SyncArbiter::start(3, move || {
+        DatabaseExecutor::new(&db_url).expect("Failed to instantiate DatabaseExecutor")
+    });
+
     server::new(move || {
-        let state = AppState::default();
-        App::with_state(state)
-            .resource("/", |r| r.get().f(api::index))
+        let state = AppState::new(db.clone());
+        App::with_state(state).resource("/", |r| r.get().f(api::index))
     }).bind(&addr)
     .expect("Failed to start server")
     .start();

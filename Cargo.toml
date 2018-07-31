@@ -25,9 +25,9 @@ serde_derive = "1.0.62"
 
 chrono = { version = "0.4.1", features = ["serde"] }
 
-diesel = { version = "1.2.2", features = ["chrono", "postgres", "r2d2"] }
+diesel = { version = "1.2.2", features = ["chrono", "postgres"] }
 
-actix-web = "=0.7.0"
+actix-web = "=0.7.1"
 
 # Use upstream once a common ring version is established
 #jsonwebtoken = { git = "https://github.com/1wilkens/jsonwebtoken.git" }

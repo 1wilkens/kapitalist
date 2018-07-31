@@ -18,7 +18,7 @@ extern crate jsonwebtoken as jwt;
 extern crate ring_pwhash as pwhash;
 
 pub mod api;
-pub mod database;
+pub mod db;
 
 pub mod auth;
 pub mod model;
