@@ -15,19 +15,20 @@ name = "kapitalist"
 path = "src/bin/main.rs"
 
 [dependencies]
-log = "^0.4"
-simplelog = "^0.5"
+log = "0.4"
+simplelog = "0.5"
 
-dotenv = "0.11.0"
+dotenv = "0.11"
 
-serde = "1.0.62"
-serde_derive = "1.0.62"
+serde = "1.0"
+serde_derive = "1.0"
 
-chrono = { version = "0.4.1", features = ["serde"] }
+chrono = { version = "0.4", features = ["serde"] }
 
-diesel = { version = "1.2.2", features = ["chrono", "postgres"] }
+diesel = { version = "1.2", features = ["chrono", "postgres"] }
 
 actix-web = "=0.7.1"
+futures = "0.1"
 
 # Use upstream once a common ring version is established
 #jsonwebtoken = { git = "https://github.com/1wilkens/jsonwebtoken.git" }

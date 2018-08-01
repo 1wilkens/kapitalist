@@ -12,6 +12,7 @@ extern crate serde_derive;
 extern crate diesel;
 
 extern crate actix_web;
+extern crate futures;
 
 extern crate jsonwebtoken as jwt;
 

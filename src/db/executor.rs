@@ -27,7 +27,7 @@ impl Message for GetPGVersion {
 impl Handler<GetPGVersion> for DatabaseExecutor {
     type Result = Result<String, ()>;
 
-    fn handle(&mut self, msg: GetPGVersion, _: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, _msg: GetPGVersion, _: &mut Self::Context) -> Self::Result {
         Err(())
     }
 }

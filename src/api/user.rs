@@ -9,17 +9,15 @@
  * |
  * | POST | `/auth` | TokenRequest | obtain authentication token |
  */
-/*use diesel;
-use diesel::prelude::*;
+use actix_web::{AsyncResponder, Responder, HttpRequest, HttpResponse, Json};
+use futures::Future;
 
-use actix_web::Json;
-
-use auth::{JwtSecret, TokenClaims, UserGuard};
-use model::{User, NewUser};
+//use auth::{JwtSecret, TokenClaims, UserGuard};
+use db::model::NewUser;
 use request::*;
-use response::*;*/
+use state::AppState;
 
-/*pub fn register(db: DbConn, req: Json<UserCreationRequest>) -> Result<Json<User>, Json<ErrorResponse>> {
+pub fn register((req, data): (HttpRequest<AppState>, Json<UserCreationRequest>)) -> impl Responder {
     /* Register a new user
      *
      * - Check email is not registered yet
@@ -27,27 +25,18 @@ use response::*;*/
      * - Insert into DB
      * - Figure out what to return (redirect to me?)
      */
-    use schema::users::dsl::*;
 
-    let exists = diesel::select(diesel::dsl::exists(users
-        .filter(email.eq(&req.email))))
-        .get_result(&*db)
-        // TODO: expose error here in debug mode?
-        .map_err(|_| Json(ErrorResponse::server_error()))?;
-
-    if exists {
-        // TODO: should we really return this message?
-        return Err(Json(ErrorResponse::new(401, Some("User already exists"))));
-    }
-
-    let new_user = NewUser::from_request(req.0);
-    let user: User = diesel::insert_into(users)
-        .values(&new_user)
-        .get_result(&*db)
-        .map_err(|_| Json(ErrorResponse::server_error()))?;
-    Ok(Json(user))
+    let new_user = NewUser::from_request(data.0);
+    req.state().db.send(new_user)
+        .and_then(|res| {
+            match res {
+                Ok(user) => Ok(HttpResponse::Ok().json(user)),
+                Err(_)  => Ok(HttpResponse::InternalServerError().into())
+            }
+        })
+        .responder()
 }
-pub fn get_me(_db: DbConn, _user: UserGuard) -> Option<String> {
+/*pub fn get_me(_db: DbConn, _user: UserGuard) -> Option<String> {
     // TODO: Figure out what to return here
     Some("GET /me".into())
 }

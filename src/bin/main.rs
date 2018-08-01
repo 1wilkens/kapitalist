@@ -6,7 +6,7 @@ extern crate actix_web;
 extern crate kapitalist;
 
 use kapitalist::{
-    api::{self, user, wallet},
+    api,
     db::DatabaseExecutor,
     state::AppState,
 };
@@ -47,7 +47,9 @@ fn main() {
 
     server::new(move || {
         let state = AppState::new(db.clone());
-        App::with_state(state).resource("/", |r| r.get().f(api::index))
+        App::with_state(state)
+            .resource("/", |r| r.get().f(api::index))
+            .resource("/register", |r| r.post().with(api::user::register))
     }).bind(&addr)
     .expect("Failed to start server")
     .start();

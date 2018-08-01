@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use chrono::serde::ts_seconds::serialize as to_ts;
 use chrono::serde::ts_seconds::deserialize as from_ts;
 
-use jwt::{decode, Validation};
+//use jwt::{decode, Validation};
 
 pub struct JwtSecret(pub String);
 

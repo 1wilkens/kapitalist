@@ -1,5 +1,5 @@
-mod executor;
-mod model;
-mod schema;
+pub mod executor;
+pub mod model;
+pub mod schema;
 
 pub use self::executor::DatabaseExecutor;
