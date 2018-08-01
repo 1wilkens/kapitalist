@@ -4,7 +4,7 @@ branches:
 language: rust
 cache: cargo
 rust:
-  - nightly-2018-05-26
+  - nightly
 
 sudo: false
 addons:
