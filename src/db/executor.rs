@@ -46,7 +46,7 @@ impl Handler<NewUser> for DatabaseExecutor {
         let exists: bool = diesel::select(diesel::dsl::exists(users
             .filter(email.eq(&msg.email))))
             .get_result(&self.0)
-            .map_err(|_| "Database error".into())?;
+            .map_err(|_| "Database error".to_string())?;
 
         if exists {
             // TODO: should we really return this message?
@@ -56,7 +56,7 @@ impl Handler<NewUser> for DatabaseExecutor {
         let user: User = diesel::insert_into(users)
             .values(&msg)
             .get_result(&self.0)
-            .map_err(|_| "Database error".into())?;
+            .map_err(|_| "Database error".to_string())?;
         Ok(user)
     }
 }
