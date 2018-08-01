@@ -1,7 +1,7 @@
 use chrono::{NaiveDateTime};
 
 use request::*;
-use schema::{users, wallets};
+use super::schema::{users, wallets};
 use util;
 
 #[derive(Debug, Deserialize, Serialize)]

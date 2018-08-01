@@ -21,9 +21,7 @@ pub mod api;
 pub mod db;
 
 pub mod auth;
-pub mod model;
 pub mod request;
 pub mod response;
-pub mod schema;
 pub mod state;
 pub mod util;
