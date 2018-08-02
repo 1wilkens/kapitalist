@@ -9,15 +9,19 @@
  * |
  * | POST | `/auth` | TokenRequest | obtain authentication token |
  */
-use actix_web::{AsyncResponder, Responder, HttpRequest, HttpResponse, Json};
+use actix_web::{AsyncResponder, HttpResponse, Json, Responder, State, http::StatusCode};
 use futures::Future;
 
-//use auth::{JwtSecret, TokenClaims, UserGuard};
-use db::model::NewUser;
+use auth::TokenClaims;
+use db::{
+    executor,
+    model::NewUser,
+};
 use request::*;
+use response::*;
 use state::AppState;
 
-pub fn register((req, data): (HttpRequest<AppState>, Json<UserCreationRequest>)) -> impl Responder {
+pub fn register((state, data): (State<AppState>, Json<UserCreationRequest>)) -> impl Responder {
     /* Register a new user
      *
      * - Check email is not registered yet
@@ -27,14 +31,19 @@ pub fn register((req, data): (HttpRequest<AppState>, Json<UserCreationRequest>))
      */
 
     let new_user = NewUser::from_request(data.0);
-    req.state().db.send(new_user)
-        .and_then(|res| {
-            match res {
-                Ok(user) => Ok(HttpResponse::Ok().json(user)),
-                Err(_)  => Ok(HttpResponse::InternalServerError().into())
-            }
-        })
-        .responder()
+    state.db
+        .send(new_user)
+        .and_then(|res| match res {
+            Ok(user) => {
+                let resp = HttpResponse::Ok().json(user);
+                eprintln!("{:?}", resp);
+                Ok(resp)
+            },
+            Err(e) => {
+                eprintln!("{:?}", e);
+                Ok(HttpResponse::InternalServerError().into())
+            },
+        }).responder()
 }
 /*pub fn get_me(_db: DbConn, _user: UserGuard) -> Option<String> {
     // TODO: Figure out what to return here
@@ -49,9 +58,9 @@ pub fn put_me(_db: DbConn, _user: UserGuard, req: Json<UserUpdateRequest>) -> Re
 
     println!("PUT /me: email={:?}, password={:?}, name={:?}", req.email, req.password, req.name);
     Ok(())
-}
+}*/
 
-pub fn token(db: DbConn, jwt: JwtSecret, req: Json<TokenRequest>) -> Result<Json<TokenResponse>, Json<ErrorResponse>> {
+pub fn token((state, data): (State<AppState>, Json<TokenRequest>)) -> impl Responder {
     /* Authenticate and request a token
      *
      * - Check email exists
@@ -59,20 +68,29 @@ pub fn token(db: DbConn, jwt: JwtSecret, req: Json<TokenRequest>) -> Result<Json
      * - Generate and return token
      */
     use pwhash::scrypt::scrypt_check;
-    use schema::users::dsl::*;
 
-    let user = users
-        .filter(email.eq(&req.email))
-        .get_result::<User>(&*db)
-        .map_err(|_| Json(ErrorResponse::server_error()))?;
-
-    if scrypt_check(&req.password, &user.secret_hash).expect("[CRIT] Found invalid hash in db") {
-        // Password check succeeded -> Issuing token
-        let claims = TokenClaims::new("auth", user.id);
-        let jwt = ::jwt::encode(&::jwt::Header::default(), &claims, jwt.0.as_ref()).unwrap();
-        Ok(Json(TokenResponse { token: jwt }))
-    } else {
-        // Password check failed -> Return 401 - Unauthorized
-        Err(Json(ErrorResponse::new(401, Some("Unauthorized"))))
-    }
-}*/
+    state.db.send(executor::GetUser(data.email.clone()))
+        .and_then(move |res| {
+            match res {
+                Ok(user) => {
+                    if scrypt_check(&data.password, &user.secret_hash)
+                        .expect("[CRIT] Found invalid hash in db")
+                    {
+                        // Password check succeeded -> Issuing token
+                        let claims = TokenClaims::new("auth", user.id);
+                        let jwt = ::jwt::encode(
+                            &::jwt::Header::default(),
+                            &claims,
+                            state.config.jwt_secret.0.as_ref(),
+                        ).unwrap();
+                        eprintln!("{:?}", jwt);
+                        Ok(HttpResponse::Ok().json(TokenResponse { token: jwt }))
+                    } else {
+                        // Password check failed -> Return 401 - Unauthorized
+                        Ok(HttpResponse::build(StatusCode::UNAUTHORIZED).json("Unauthorized"))
+                    }
+                }
+                Err(_) => Ok(HttpResponse::InternalServerError().into()),
+            }
+        }).responder()
+}

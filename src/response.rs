@@ -1,3 +1,5 @@
+// XXX: Figure out if we need this at all with actix
+
 #[derive(Debug, Serialize)]
 pub struct ErrorResponse {
     pub code: i16,

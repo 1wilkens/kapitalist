@@ -50,6 +50,7 @@ fn main() {
         App::with_state(state)
             .resource("/", |r| r.get().f(api::index))
             .resource("/register", |r| r.post().with(api::user::register))
+            .resource("/token", |r| r.post().with(api::user::token))
     }).bind(&addr)
     .expect("Failed to start server")
     .start();

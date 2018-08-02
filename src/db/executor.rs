@@ -60,3 +60,24 @@ impl Handler<NewUser> for DatabaseExecutor {
         Ok(user)
     }
 }
+
+pub struct GetUser(pub String);
+
+impl Message for GetUser {
+    type Result = Result<User, String>;
+}
+
+impl Handler<GetUser> for DatabaseExecutor {
+    type Result = Result<User, String>;
+
+    fn handle(&mut self, msg: GetUser, _: &mut Self::Context) -> Self::Result {
+        use db::schema::users::dsl::*;
+
+        // XXX: Figure out error type to be used here and add conversion functions for convenience
+        let user: User = users
+            .filter(email.eq(&msg.0))
+            .get_result(&self.0)
+            .map_err(|_| "Database error".to_string())?;
+        Ok(user)
+    }
+}
