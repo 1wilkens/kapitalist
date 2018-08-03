@@ -42,8 +42,10 @@ impl TokenClaims {
 
 /// Request guard which checks
 pub struct UserGuard {
-    // TODO: Add more fields as required
+    // XXX: Remove when this is used
+    #[allow(dead_code)]
     user_id: i32
+    // TODO: Add more fields as required
 }
 
 // TODO: replace with actix-web equivalent

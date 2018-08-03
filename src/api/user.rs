@@ -90,6 +90,7 @@ pub fn token((state, data): (State<AppState>, Json<TokenRequest>)) -> impl Respo
                         Ok(HttpResponse::build(StatusCode::UNAUTHORIZED).json("Unauthorized"))
                     }
                 }
+                // XXX: Fix error type from DbExecutor and match here to differentiate between 4XX and 5XX errors
                 Err(_) => Ok(HttpResponse::InternalServerError().into()),
             }
         }).responder()
