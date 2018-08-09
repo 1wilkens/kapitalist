@@ -1,6 +1,6 @@
-use chrono::{DateTime, Utc};
-use chrono::serde::ts_seconds::serialize as to_ts;
 use chrono::serde::ts_seconds::deserialize as from_ts;
+use chrono::serde::ts_seconds::serialize as to_ts;
+use chrono::{DateTime, Utc};
 
 //use jwt::{decode, Validation};
 
@@ -10,19 +10,19 @@ pub struct JwtSecret(pub String);
 /// Represents claims included in kapitalist issued json web tokens
 pub struct TokenClaims {
     // Issuer
-    pub iss:    String,
+    pub iss: String,
     // Subjec
-    pub sub:    String,
+    pub sub: String,
     // Audience
-    pub aud:    String,
+    pub aud: String,
     // Issued At
-    #[serde(serialize_with="to_ts", deserialize_with="from_ts")]
-    pub iat:    DateTime<Utc>,
+    #[serde(serialize_with = "to_ts", deserialize_with = "from_ts")]
+    pub iat: DateTime<Utc>,
     // Expiration Time
-    #[serde(serialize_with="to_ts", deserialize_with="from_ts")]
-    pub exp:    DateTime<Utc>,
+    #[serde(serialize_with = "to_ts", deserialize_with = "from_ts")]
+    pub exp: DateTime<Utc>,
     // User Id
-    pub uid:   i32,
+    pub uid: i32,
 }
 
 impl TokenClaims {
@@ -35,7 +35,7 @@ impl TokenClaims {
             sub: sub.into(),
             iat: Utc::now(),
             exp: Utc::now(),
-            uid: uid
+            uid: uid,
         }
     }
 }
@@ -44,8 +44,7 @@ impl TokenClaims {
 pub struct UserGuard {
     // XXX: Remove when this is used
     #[allow(dead_code)]
-    user_id: i32
-    // TODO: Add more fields as required
+    user_id: i32, // TODO: Add more fields as required
 }
 
 // TODO: replace with actix-web equivalent

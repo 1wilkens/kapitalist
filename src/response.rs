@@ -3,17 +3,28 @@
 #[derive(Debug, Serialize)]
 pub struct ErrorResponse {
     pub code: i16,
-    pub error: String
+    pub error: String,
 }
 
 impl ErrorResponse {
     pub fn new<S>(code: i16, error: Option<S>) -> ErrorResponse
-        where S: Into<String> {
-        ErrorResponse { code: code, error: if let Some(e) = error { e.into() } else { "".into() } }
+    where
+        S: Into<String>,
+    {
+        ErrorResponse {
+            code: code,
+            error: if let Some(e) = error {
+                e.into()
+            } else {
+                "".into()
+            },
+        }
     }
 
     pub fn bad_request<S>(error: S) -> ErrorResponse
-        where S: Into<String> {
+    where
+        S: Into<String>,
+    {
         ErrorResponse::new(400, Some(error))
     }
 
@@ -28,5 +39,5 @@ impl ErrorResponse {
 
 #[derive(Debug, Serialize)]
 pub struct TokenResponse {
-    pub token: String
+    pub token: String,
 }

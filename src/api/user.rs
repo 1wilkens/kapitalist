@@ -9,14 +9,11 @@
  * |
  * | POST | `/auth` | TokenRequest | obtain authentication token |
  */
-use actix_web::{AsyncResponder, HttpResponse, Json, Responder, State, http::StatusCode};
+use actix_web::{http::StatusCode, AsyncResponder, HttpResponse, Json, Responder, State};
 use futures::Future;
 
 use auth::TokenClaims;
-use db::{
-    executor,
-    model::NewUser,
-};
+use db::{executor, model::NewUser};
 use request::*;
 use response::*;
 use state::AppState;
@@ -31,18 +28,19 @@ pub fn register((state, data): (State<AppState>, Json<UserCreationRequest>)) -> 
      */
 
     let new_user = NewUser::from_request(data.0);
-    state.db
+    state
+        .db
         .send(new_user)
         .and_then(|res| match res {
             Ok(user) => {
                 let resp = HttpResponse::Ok().json(user);
                 eprintln!("{:?}", resp);
                 Ok(resp)
-            },
+            }
             Err(e) => {
                 eprintln!("{:?}", e);
                 Ok(HttpResponse::InternalServerError().into())
-            },
+            }
         }).responder()
 }
 /*pub fn get_me(_db: DbConn, _user: UserGuard) -> Option<String> {

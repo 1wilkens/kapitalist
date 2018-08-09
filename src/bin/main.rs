@@ -5,11 +5,7 @@ extern crate actix_web;
 
 extern crate kapitalist;
 
-use kapitalist::{
-    api,
-    db::DatabaseExecutor,
-    state::AppState,
-};
+use kapitalist::{api, db::DatabaseExecutor, state::AppState};
 
 use std::env;
 
