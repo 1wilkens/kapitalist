@@ -9,13 +9,18 @@
  * |
  * | POST | `/auth` | TokenRequest | obtain authentication token |
  */
-use actix_web::{http::StatusCode, AsyncResponder, HttpResponse, Json, Responder, State};
+use actix_web::{
+    http::StatusCode, AsyncResponder, HttpResponse, Json, Responder, State,
+};
 use futures::Future;
 
 use auth::TokenClaims;
-use db::{executor, model::NewUser};
-use request::*;
-use response::*;
+use db::{
+    executor,
+    user::{GetUser, NewUser},
+};
+use request::{TokenRequest, UserCreationRequest, UserUpdateRequest};
+use response::TokenResponse;
 use state::AppState;
 
 pub fn register((state, data): (State<AppState>, Json<UserCreationRequest>)) -> impl Responder {
@@ -67,7 +72,8 @@ pub fn token((state, data): (State<AppState>, Json<TokenRequest>)) -> impl Respo
      */
     use pwhash::scrypt::scrypt_check;
 
-    state.db.send(executor::GetUser(data.email.clone()))
+    state.db
+        .send(GetUser(data.email.clone()))
         .and_then(move |res| {
             match res {
                 Ok(user) => {

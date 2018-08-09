@@ -5,10 +5,8 @@ use actix_web::{
 
 use diesel::{self, prelude::*};
 
-use super::model::{NewUser, User};
-
 /// The database executor actor
-pub struct DatabaseExecutor(PgConnection);
+pub struct DatabaseExecutor(pub(crate) PgConnection);
 
 impl Actor for DatabaseExecutor {
     type Context = SyncContext<Self>;
@@ -32,54 +30,5 @@ impl Handler<GetPGVersion> for DatabaseExecutor {
 
     fn handle(&mut self, _msg: GetPGVersion, _: &mut Self::Context) -> Self::Result {
         Ok("".to_string())
-    }
-}
-
-impl Message for NewUser {
-    type Result = Result<User, Error>;
-}
-
-impl Handler<NewUser> for DatabaseExecutor {
-    type Result = Result<User, Error>;
-
-    fn handle(&mut self, msg: NewUser, _: &mut Self::Context) -> Self::Result {
-        use db::schema::users::dsl::*;
-
-        // XXX: Figure out error type to be used here and add conversion functions for convenience
-        let exists: bool = diesel::select(diesel::dsl::exists(users.filter(email.eq(&msg.email))))
-            .get_result(&self.0)
-            .map_err(|_| error::ErrorInternalServerError("Error getting user"))?;
-
-        if exists {
-            // TODO: should we really return this message?
-            return Err(error::ErrorUnauthorized("User already exists"));
-        }
-
-        let user: User = diesel::insert_into(users)
-            .values(&msg)
-            .get_result(&self.0)
-            .map_err(|_| error::ErrorInternalServerError("Error inserting user"))?;
-        Ok(user)
-    }
-}
-
-pub struct GetUser(pub String);
-
-impl Message for GetUser {
-    type Result = Result<User, Error>;
-}
-
-impl Handler<GetUser> for DatabaseExecutor {
-    type Result = Result<User, Error>;
-
-    fn handle(&mut self, msg: GetUser, _: &mut Self::Context) -> Self::Result {
-        use db::schema::users::dsl::*;
-
-        // XXX: Figure out error type to be used here and add conversion functions for convenience
-        let user: User = users
-            .filter(email.eq(&msg.0))
-            .get_result(&self.0)
-            .map_err(|_| error::ErrorInternalServerError("Error getting user`"))?;
-        Ok(user)
     }
 }
