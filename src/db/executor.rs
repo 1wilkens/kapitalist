@@ -1,9 +1,9 @@
 use actix_web::{
     actix::{Actor, Handler, Message, SyncContext},
-    error::{self, Error},
+    error::Error,
 };
 
-use diesel::{self, prelude::*};
+use diesel::prelude::*;
 
 /// The database executor actor
 pub struct DatabaseExecutor(pub(crate) PgConnection);

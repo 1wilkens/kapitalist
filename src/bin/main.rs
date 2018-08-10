@@ -47,6 +47,7 @@ fn main() {
             .resource("/", |r| r.get().f(api::index))
             .resource("/register", |r| r.post().with(api::user::register))
             .resource("/token", |r| r.post().with(api::user::token))
+            .resource("/me", |r| r.get().with(api::user::get_me))
     }).bind(&addr)
     .expect("Failed to start server")
     .start();

@@ -1,8 +1,7 @@
 use chrono::NaiveDateTime;
 
-use super::schema::{users, wallets};
+use super::schema::{wallets};
 use request::*;
-use util;
 
 #[derive(Debug, Deserialize, Serialize, Queryable)]
 pub struct Wallet {

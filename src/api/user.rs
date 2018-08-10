@@ -14,9 +14,8 @@ use actix_web::{
 };
 use futures::Future;
 
-use auth::TokenClaims;
+use auth::{TokenClaims, UserGuard};
 use db::{
-    executor,
     user::{GetUser, NewUser},
 };
 use request::{TokenRequest, UserCreationRequest, UserUpdateRequest};
@@ -48,12 +47,12 @@ pub fn register((state, data): (State<AppState>, Json<UserCreationRequest>)) -> 
             }
         }).responder()
 }
-/*pub fn get_me(_db: DbConn, _user: UserGuard) -> Option<String> {
+pub fn get_me((_state, user): (State<AppState>, UserGuard)) -> impl Responder {
     // TODO: Figure out what to return here
-    Some("GET /me".into())
+    Some(format!("GET /me (uid={})", user.user_id))
 }
 
-pub fn put_me(_db: DbConn, _user: UserGuard, req: Json<UserUpdateRequest>) -> Result<(), Json<ErrorResponse>> {
+/*pub fn put_me(_db: DbConn, _user: UserGuard, req: Json<UserUpdateRequest>) -> Result<(), Json<ErrorResponse>> {
     if req.email.is_none() && req.password.is_none() && req.name.is_none() {
         // At least one field has to be set, could also return 301 unchanged?
         return Err(Json(ErrorResponse::bad_request("Request has to contain at least one field to update")));

@@ -1,9 +1,15 @@
-use chrono::serde::ts_seconds::deserialize as from_ts;
-use chrono::serde::ts_seconds::serialize as to_ts;
+use actix_web::{
+    error::{Error, ErrorUnauthorized},
+    http::header::AUTHORIZATION,
+    FromRequest, HttpRequest,
+};
+use chrono::serde::ts_seconds::{deserialize as from_ts, serialize as to_ts};
 use chrono::{DateTime, Utc};
+use jwt::{decode, Validation};
 
-//use jwt::{decode, Validation};
+use state::AppState;
 
+#[derive(Debug)]
 pub struct JwtSecret(pub String);
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -40,35 +46,45 @@ impl TokenClaims {
     }
 }
 
-/// Request guard which checks
+/// Request guard which validates the user's token
 pub struct UserGuard {
-    // XXX: Remove when this is used
-    #[allow(dead_code)]
-    user_id: i32, // TODO: Add more fields as required
+    pub user_id: i32, // TODO: Add more fields as required
 }
 
-// TODO: replace with actix-web equivalent
-/*impl<'a, 'r> FromRequest<'a, 'r> for UserGuard {
-    type Error = ();
+impl FromRequest<AppState> for UserGuard {
+    type Config = ();
+    type Result = Result<UserGuard, Error>;
 
-    fn from_request(req: &'a Request<'r>) -> request::Outcome<UserGuard, ()> {
-        let jwt = req.guard::<State<JwtSecret>>()?;
-        let headers = req.headers().get("Authorization");
-        for h in headers {
-            let parts: Vec<&str> = h.split(' ').collect();
+    #[inline]
+    fn from_request(req: &HttpRequest<AppState>, _: &Self::Config) -> Self::Result {
+        let secret = req.state().config.jwt_secret.0.as_ref();
+
+        let headers = req.headers().get_all(AUTHORIZATION);
+        for value in headers {
+            // Skip invalid ASCII headers
+            let value = match value.to_str() {
+                Ok(v) => v,
+                Err(_) => continue,
+            };
+            // Extract Bearer
+            let parts: Vec<&str> = value.split(' ').collect();
             if parts.len() == 2 && parts[0] == "Bearer" {
                 // We have a bearer token
-                let mut validation = Validation { leeway: 60, ..Default::default()};
-                let token = match decode::<TokenClaims>(&parts[1], jwt.0.as_ref(), &validation) {
-                    Ok(token) => token,
-                    Err(_)    => continue
+                let mut validation = Validation {
+                    leeway: 60,
+                    ..Default::default()
                 };
-                return Outcome::Success(UserGuard { user_id: token.claims.uid });
+                let token = match decode::<TokenClaims>(&parts[1], secret, &validation) {
+                    Ok(token) => token,
+                    Err(_) => continue,
+                };
+                return Ok(UserGuard {
+                    user_id: token.claims.uid,
+                });
             }
         }
 
-        // TODO: Figure out what makes more sense here
-        Outcome::Forward(())
-        //Outcome::Failure((Status::Unauthorized, ()))
+        // XXX: Make this return a json error
+        Err(ErrorUnauthorized("Unauthorized"))
     }
-}*/
+}
