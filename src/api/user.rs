@@ -69,15 +69,16 @@ pub fn token((state, data): (State<AppState>, Json<TokenRequest>)) -> impl Respo
      * - Verify password via scrypt_check
      * - Generate and return token
      */
-    use pwhash::scrypt::scrypt_check;
+    use libreauth::pass::HashBuilder;
 
     state.db
         .send(GetUser(data.email.clone()))
         .and_then(move |res| {
             match res {
                 Ok(user) => {
-                    if scrypt_check(&data.password, &user.secret_hash)
-                        .expect("[CRIT] Found invalid hash in db")
+                    // XXX: Should handle errors here as well
+                    let hasher = HashBuilder::from_phc(user.secret_hash).expect("[CRIT] Failed to create Hasher");
+                    if hasher.is_valid(&data.password)
                     {
                         // Password check succeeded -> Issuing token
                         let claims = TokenClaims::new("auth", user.id);

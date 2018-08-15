@@ -7,7 +7,6 @@ use diesel::{self, prelude::*};
 
 use db::{schema::users, DatabaseExecutor};
 use request::{UserCreationRequest, UserUpdateRequest};
-use util;
 
 #[derive(Debug, Deserialize, Serialize, Queryable)]
 pub struct User {
@@ -28,11 +27,11 @@ pub struct NewUser {
 
 impl NewUser {
     pub fn from_request(req: UserCreationRequest) -> NewUser {
-        use pwhash::scrypt::scrypt_simple;
+        use libreauth::pass::HashBuilder;
 
-        let params = util::get_scrypt_params();
-        // Unwrap is safe here because scrypt_simple does not ever return an error
-        let hash = scrypt_simple(&req.password, &params).unwrap();
+        let hasher = HashBuilder::new().finalize().expect("[CRIT] Failed to create Hasher");
+        // XXX: Should handle hash errors here
+        let hash = hasher.hash(&req.password).expect("[CRIT] Failed to hash given password");
         NewUser {
             email: req.email,
             secret_hash: hash,

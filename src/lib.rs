@@ -15,8 +15,7 @@ extern crate actix_web;
 extern crate futures;
 
 extern crate jsonwebtoken as jwt;
-
-extern crate ring_pwhash as pwhash;
+extern crate libreauth;
 
 pub mod api;
 pub mod db;
@@ -25,4 +24,3 @@ pub mod auth;
 pub mod request;
 pub mod response;
 pub mod state;
-pub mod util;

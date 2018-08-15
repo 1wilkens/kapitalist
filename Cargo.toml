@@ -18,22 +18,21 @@ path = "src/bin/main.rs"
 log = "0.4"
 simplelog = "0.5"
 
-dotenv = "0.11"
+dotenv = "0.13"
 
 serde = "1.0"
 serde_derive = "1.0"
 
 chrono = { version = "0.4", features = ["serde"] }
 
-diesel = { version = "1.2", features = ["chrono", "postgres"] }
+diesel = { version = "1.3", features = ["chrono", "postgres"] }
 
-actix-web = "=0.7.1"
+actix = "0.7"
+actix-web = "0.7"
 futures = "0.1"
 
 # Use upstream once a common ring version is established
 #jsonwebtoken = { git = "https://github.com/1wilkens/jsonwebtoken.git" }
-jsonwebtoken = "4.0"
+jsonwebtoken = "5.0"
 
-# Use upstream once a common ring version is established
-#ring-pwhash = { git = "https://github.com/1wilkens/ring-pwhash.git", rev = "5939162" }
-ring-pwhash = "0.12"
+libreauth = "0.10"
