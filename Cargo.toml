@@ -31,8 +31,6 @@ actix = "0.7"
 actix-web = "0.7"
 futures = "0.1"
 
-# Use upstream once a common ring version is established
-#jsonwebtoken = { git = "https://github.com/1wilkens/jsonwebtoken.git" }
 jsonwebtoken = "5.0"
 
 libreauth = "0.10"
