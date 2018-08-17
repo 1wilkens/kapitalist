@@ -15,10 +15,10 @@ services:
     networks:
       - kapitalist-net
     volumes:
-      - ..:/usr/src/app
+      - ..:/usr/src/kapitalist
     depends_on:
       - db
-    command: bash -c "./docker/wait-for-port.sh db:5432 -q -- diesel setup && cargo run --release"
+    command: bash -c "./docker/wait-for-port.sh db:5432 -q -- cargo --version && diesel setup && cargo watch -x run"
 
   db:
     container_name: kapitalist_db
