@@ -26,17 +26,18 @@ pub struct NewUser {
 }
 
 impl NewUser {
-    pub fn from_request(req: UserCreationRequest) -> NewUser {
+    /// XXX: This should return a result, figure out fitting error type
+    pub fn from_request(req: UserCreationRequest) -> Option<NewUser> {
         use libreauth::pass::HashBuilder;
 
         let hasher = HashBuilder::new().finalize().expect("[CRIT] Failed to create Hasher");
         // XXX: Should handle hash errors here
-        let hash = hasher.hash(&req.password).expect("[CRIT] Failed to hash given password");
-        NewUser {
+        let hash = hasher.hash(&req.password).ok()?;
+        Some(NewUser {
             email: req.email,
             secret_hash: hash,
             username: req.name,
-        }
+        })
     }
 }
 

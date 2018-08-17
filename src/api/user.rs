@@ -9,19 +9,16 @@
  * |
  * | POST | `/auth` | TokenRequest | obtain authentication token |
  */
-use actix_web::{
-    http::StatusCode, AsyncResponder, HttpResponse, Json, Responder, State,
-};
+use actix_web::{http::StatusCode, AsyncResponder, Either, HttpResponse, Json, Responder, State};
 use futures::Future;
 
 use auth::{TokenClaims, UserGuard};
-use db::{
-    user::{GetUser, NewUser},
-};
+use db::user::{GetUser, NewUser};
 use request::{TokenRequest, UserCreationRequest, UserUpdateRequest};
 use response::TokenResponse;
 use state::AppState;
 
+// TODO: Verify this use of Either
 pub fn register((state, data): (State<AppState>, Json<UserCreationRequest>)) -> impl Responder {
     /* Register a new user
      *
@@ -31,8 +28,11 @@ pub fn register((state, data): (State<AppState>, Json<UserCreationRequest>)) -> 
      * - Figure out what to return (redirect to me?)
      */
 
-    let new_user = NewUser::from_request(data.0);
-    state
+    let new_user = match NewUser::from_request(data.0) {
+        Some(u) => u,
+        None => return Either::A(HttpResponse::BadRequest().body("Invalid password")),
+    };
+    Either::B(state
         .db
         .send(new_user)
         .and_then(|res| match res {
@@ -45,22 +45,23 @@ pub fn register((state, data): (State<AppState>, Json<UserCreationRequest>)) -> 
                 eprintln!("{:?}", e);
                 Ok(HttpResponse::InternalServerError().into())
             }
-        }).responder()
+        }).responder())
 }
 pub fn get_me((_state, user): (State<AppState>, UserGuard)) -> impl Responder {
     // TODO: Figure out what to return here
     Some(format!("GET /me (uid={})", user.user_id))
 }
 
-/*pub fn put_me(_db: DbConn, _user: UserGuard, req: Json<UserUpdateRequest>) -> Result<(), Json<ErrorResponse>> {
+// XXX: This should probably return Result instead of Option
+pub fn put_me((_state, _user, req): (State<AppState>, UserGuard, Json<UserUpdateRequest>)) -> impl Responder {
     if req.email.is_none() && req.password.is_none() && req.name.is_none() {
         // At least one field has to be set, could also return 301 unchanged?
-        return Err(Json(ErrorResponse::bad_request("Request has to contain at least one field to update")));
+        return Some(HttpResponse::BadRequest().body("Request has to contain at least one field to update"));
     }
 
-    println!("PUT /me: email={:?}, password={:?}, name={:?}", req.email, req.password, req.name);
-    Ok(())
-}*/
+    eprintln!("PUT /me: email={:?}, password={:?}, name={:?}", req.email, req.password, req.name);
+    Some(HttpResponse::Ok().into())
+}
 
 pub fn token((state, data): (State<AppState>, Json<TokenRequest>)) -> impl Responder {
     /* Authenticate and request a token
@@ -71,15 +72,16 @@ pub fn token((state, data): (State<AppState>, Json<TokenRequest>)) -> impl Respo
      */
     use libreauth::pass::HashBuilder;
 
-    state.db
+    state
+        .db
         .send(GetUser(data.email.clone()))
         .and_then(move |res| {
             match res {
                 Ok(user) => {
                     // XXX: Should handle errors here as well
-                    let hasher = HashBuilder::from_phc(user.secret_hash).expect("[CRIT] Failed to create Hasher");
-                    if hasher.is_valid(&data.password)
-                    {
+                    let hasher = HashBuilder::from_phc(user.secret_hash)
+                        .expect("[CRIT] Failed to create Hasher");
+                    if hasher.is_valid(&data.password) {
                         // Password check succeeded -> Issuing token
                         let claims = TokenClaims::new("auth", user.id);
                         let jwt = ::jwt::encode(
