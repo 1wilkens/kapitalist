@@ -30,22 +30,24 @@ pub fn register((state, data): (State<AppState>, Json<UserCreationRequest>)) -> 
 
     let new_user = match NewUser::from_request(data.0) {
         Some(u) => u,
-        None => return Either::A(HttpResponse::BadRequest().body("Invalid password")),
+        None => return Either::A(HttpResponse::BadRequest().json("Invalid password")),
     };
-    Either::B(state
-        .db
-        .send(new_user)
-        .and_then(|res| match res {
-            Ok(user) => {
-                let resp = HttpResponse::Ok().json(user);
-                eprintln!("{:?}", resp);
-                Ok(resp)
-            }
-            Err(e) => {
-                eprintln!("{:?}", e);
-                Ok(HttpResponse::InternalServerError().into())
-            }
-        }).responder())
+    Either::B(
+        state
+            .db
+            .send(new_user)
+            .and_then(|res| match res {
+                Ok(user) => {
+                    let resp = HttpResponse::Ok().json(user);
+                    eprintln!("{:?}", resp);
+                    Ok(resp)
+                }
+                Err(e) => {
+                    eprintln!("{:?}", e);
+                    Ok(HttpResponse::InternalServerError().into())
+                }
+            }).responder(),
+    )
 }
 pub fn get_me((_state, user): (State<AppState>, UserGuard)) -> impl Responder {
     // TODO: Figure out what to return here
@@ -53,14 +55,20 @@ pub fn get_me((_state, user): (State<AppState>, UserGuard)) -> impl Responder {
 }
 
 // XXX: This should probably return Result instead of Option
-pub fn put_me((_state, _user, req): (State<AppState>, UserGuard, Json<UserUpdateRequest>)) -> impl Responder {
+pub fn put_me(
+    (_state, _user, req): (State<AppState>, UserGuard, Json<UserUpdateRequest>),
+) -> impl Responder {
     if req.email.is_none() && req.password.is_none() && req.name.is_none() {
         // At least one field has to be set, could also return 301 unchanged?
-        return Some(HttpResponse::BadRequest().body("Request has to contain at least one field to update"));
+        return HttpResponse::BadRequest()
+            .json("Request has to contain at least one field to update");
     }
 
-    eprintln!("PUT /me: email={:?}, password={:?}, name={:?}", req.email, req.password, req.name);
-    Some(HttpResponse::Ok().into())
+    eprintln!(
+        "PUT /me: email={:?}, password={:?}, name={:?}",
+        req.email, req.password, req.name
+    );
+    HttpResponse::Ok().finish()
 }
 
 pub fn token((state, data): (State<AppState>, Json<TokenRequest>)) -> impl Responder {
