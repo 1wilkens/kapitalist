@@ -13,45 +13,50 @@
  * | PUT | `/wallet/{wid}/transaction/{tid}` | TransactionUpdateRequest | update transaction details |
  */
 
-/*use actix_web::Json;
+use actix_web::{HttpResponse, Json, Responder, State};
 
 use auth::UserGuard;
-use model::{Wallet, NewWallet};
+use db::model::{NewWallet, Wallet};
 use request::WalletCreationRequest;
-use response::ErrorResponse;*/
+use state::AppState;
 
-/*pub fn post(_db: DbConn, _user: UserGuard, req: Json<WalletCreationRequest>) -> Result<Json<Wallet>, Json<ErrorResponse>> {
-    println!("POST /wallet: name={}, balance={}, color={}", &req.name, &req.balance, &req.color);
+pub fn post(
+    (_state, _user, req): (State<AppState>, UserGuard, Json<WalletCreationRequest>),
+) -> impl Responder {
+    eprintln!(
+        "POST /wallet: name={}, balance={}, color={}",
+        &req.name, &req.balance, &req.color
+    );
     let _new_wallet = NewWallet::from_request(req.0);
-    Err(Json(ErrorResponse::not_implemented()))
+    HttpResponse::InternalServerError().body("Not implemented")
 }
 
-pub fn get(_db: DbConn, _user: UserGuard, wid: u64) -> Result<Json<Wallet>, Json<ErrorResponse>> {
-    println!("GET /wallet/{}", wid);
-    Err(Json(ErrorResponse::not_implemented()))
+pub fn get((_state, _user, wid): (State<AppState>, UserGuard, u64)) -> impl Responder {
+    eprintln!("GET /wallet/{}", wid);
+    HttpResponse::InternalServerError().body("Not implemented")
 }
 
-pub fn put(_db: DbConn, _user: UserGuard, wid: u64) -> Result<Json<Wallet>, Json<ErrorResponse>> {
-    println!("PUT /wallet/{}", wid);
-    Err(Json(ErrorResponse::not_implemented()))
+pub fn put((_state, _user, wid): (State<AppState>, UserGuard, u64)) -> impl Responder {
+    eprintln!("PUT /wallet/{}", wid);
+    HttpResponse::InternalServerError().body("Not implemented")
 }
 
-pub fn tx_get_all(_db: DbConn, _user: UserGuard, wid: u64) -> Result<Json<()>, Json<ErrorResponse>> {
-    println!("GET /wallet/{}/transactions", wid);
-    Err(Json(ErrorResponse::not_implemented()))
+pub fn tx_get_all((_state, _user, wid): (State<AppState>, UserGuard, u64)) -> impl Responder {
+    eprintln!("GET /wallet/{}/transactions", wid);
+    HttpResponse::InternalServerError().body("Not implemented")
 }
 
-pub fn tx_post(_db: DbConn, _user: UserGuard, wid: u64) -> Result<Json<()>, Json<ErrorResponse>> {
-    println!("POST /wallet/{}/transaction", wid);
-    Err(Json(ErrorResponse::not_implemented()))
+pub fn tx_post((_state, _user, wid): (State<AppState>, UserGuard, u64)) -> impl Responder {
+    eprintln!("POST /wallet/{}/transaction", wid);
+    HttpResponse::InternalServerError().body("Not implemented")
 }
 
-pub fn tx_get(_db: DbConn, _user: UserGuard, wid: u64, tid: u64) -> Result<Json<()>, Json<ErrorResponse>> {
-    println!("POST /wallet/{}/transaction/{}", wid, tid);
-    Err(Json(ErrorResponse::not_implemented()))
+pub fn tx_get((_state, _user, wid, tid): (State<AppState>, UserGuard, u64, u64)) -> impl Responder {
+    eprintln!("POST /wallet/{}/transaction/{}", wid, tid);
+    HttpResponse::InternalServerError().body("Not implemented")
 }
 
-pub fn tx_put(_db: DbConn, _user: UserGuard, wid: u64, tid: u64) -> Result<Json<()>, Json<ErrorResponse>> {
-    println!("PUT /wallet/{}/transaction/{}", wid, tid);
-    Err(Json(ErrorResponse::not_implemented()))
-}*/
+pub fn tx_put((_state, _user, wid, tid): (State<AppState>, UserGuard, u64, u64)) -> impl Responder {
+    eprintln!("PUT /wallet/{}/transaction/{}", wid, tid);
+    HttpResponse::InternalServerError().body("Not implemented")
+}
