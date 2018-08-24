@@ -54,7 +54,7 @@ impl Handler<NewUser> for DatabaseExecutor {
         // XXX: Figure out error type to be used here and add conversion functions for convenience
         let exists: bool = diesel::select(diesel::dsl::exists(users.filter(email.eq(&msg.email))))
             .get_result(&self.0)
-            .map_err(|_| error::ErrorInternalServerError("Error getting user"))?;
+            .map_err(|_| error::ErrorInternalServerError("Error getting User from Db"))?;
 
         if exists {
             // TODO: should we really return this message?

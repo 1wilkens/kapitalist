@@ -15,7 +15,7 @@ use futures::Future;
 use auth::{TokenClaims, UserGuard};
 use db::user::{GetUser, NewUser};
 use request::{TokenRequest, UserCreationRequest, UserUpdateRequest};
-use response::TokenResponse;
+use response::{ErrorResponse, TokenResponse};
 use state::AppState;
 
 // TODO: Verify this use of Either
@@ -30,7 +30,7 @@ pub fn register((state, data): (State<AppState>, Json<UserCreationRequest>)) -> 
 
     let new_user = match NewUser::from_request(data.0) {
         Some(u) => u,
-        None => return Either::A(HttpResponse::BadRequest().json("Invalid password")),
+        None => return Either::A(HttpResponse::BadRequest().json(ErrorResponse::new("Password does not match criteria"))),
     };
     Either::B(
         state
@@ -61,7 +61,7 @@ pub fn put_me(
     if req.email.is_none() && req.password.is_none() && req.name.is_none() {
         // At least one field has to be set, could also return 301 unchanged?
         return HttpResponse::BadRequest()
-            .json("Request has to contain at least one field to update");
+            .json(ErrorResponse::new("Request has to contain at least one field to update"));
     }
 
     eprintln!(
