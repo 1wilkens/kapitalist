@@ -9,7 +9,7 @@ use jwt::{decode, Validation};
 
 use state::AppState;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct JwtSecret(pub String);
 
 #[derive(Debug, Serialize, Deserialize)]

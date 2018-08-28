@@ -15,8 +15,9 @@ name = "kapitalist"
 path = "src/bin/main.rs"
 
 [dependencies]
-log = "0.4"
-simplelog = "0.5"
+slog = { version = "2.3", default-features = false }
+slog-async = { version = "2.3", default-features = false }
+slog-term = { version = "2.4", default-features = false }
 
 dotenv = "0.13"
 

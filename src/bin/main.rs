@@ -1,11 +1,20 @@
-extern crate dotenv;
-extern crate simplelog;
-
 extern crate actix_web;
+extern crate dotenv;
+
+#[macro_use]
+extern crate slog;
+extern crate slog_async;
+extern crate slog_term;
 
 extern crate kapitalist;
 
-use kapitalist::{api, db::DatabaseExecutor, state::AppState};
+use kapitalist::{
+    api,
+    auth::JwtSecret,
+    db::DatabaseExecutor,
+    log::SlogLogger,
+    state::{AppState, Config},
+};
 
 use std::env;
 
@@ -28,22 +37,30 @@ fn check_env() -> bool {
 fn main() {
     parse_env();
     if !check_env() {
-        println!("[CRIT] Failed to validate environment.\nPlease check all required variables are present and valid\nExiting..");
+        // XXX: Improve format and print environment variables found and missing
+        println!("Failed to validate environment.\nPlease check all required variables are present and valid\nExiting..");
         return;
     }
 
     let addr = "0.0.0.0:3000";
     let db_url = env::var("KAPITALIST_DB").unwrap();
 
+    // actix main system
     let sys = actix::System::new("kapitalist");
 
+    // configuration + database connection
+    let cfg = Config::from_env().unwrap();
     let db = actix::SyncArbiter::start(3, move || {
         DatabaseExecutor::new(&db_url).expect("Failed to instantiate DatabaseExecutor")
     });
 
+    // logging drain
+    let drain = make_drain();
+
     server::new(move || {
-        let state = AppState::new(db.clone());
+        let state = AppState::new(cfg.clone(), db.clone());
         App::with_state(state)
+            .middleware(SlogLogger::new(drain.clone()))
             .resource("/", |r| r.get().f(api::index))
             .resource("/register", |r| r.post().with(api::user::register))
             .resource("/token", |r| r.post().with(api::user::token))
@@ -54,12 +71,13 @@ fn main() {
 
     println!("Started server on: {}", &addr);
     let _ = sys.run();
+}
 
-    // TODO: replace this with actix-web equivalent
-    /*rocket::ignite()
-        .manage(db::new(&env::var("KAPITALIST_DB").unwrap()))
-        .manage(auth::JwtSecret(env::var("KAPITALIST_JWT_SECRET").unwrap()))
-        //.catch(errors![err404])
-        .mount("/", routes![user::register, user::get_me, user::put_me, user::token])
-        .mount("/wallet", routes![wallet::post, wallet::get, wallet::put, wallet::tx_get_all, wallet::tx_post, wallet::tx_get, wallet::tx_put])
-        .launch();*/}
+fn make_drain() -> slog::Logger {
+    use slog::Drain;
+
+    let decorator = slog_term::TermDecorator::new().build();
+    let drain = slog_term::CompactFormat::new(decorator).build().fuse();
+    let drain = slog_async::Async::new(drain).build().fuse();
+    slog::Logger::root(drain, o!())
+}
