@@ -27,47 +27,58 @@ pub fn register((state, data): (State<AppState>, Json<UserCreationRequest>)) -> 
      * - Insert into DB
      * - Figure out what to return (redirect to me?)
      */
+    trace!(&state.log, "Endpoint {ep} called", ep = "user::register");
 
     let new_user = match NewUser::from_request(data.0) {
         Some(u) => u,
-        None => return Either::A(HttpResponse::BadRequest().json(ErrorResponse::new("Password does not match criteria"))),
+        None => {
+            return Either::A(
+                HttpResponse::BadRequest()
+                    .json(ErrorResponse::new("Password does not match criteria")),
+            )
+        }
     };
     Either::B(
         state
             .db
             .send(new_user)
-            .and_then(|res| match res {
+            .and_then(move |res| match res {
                 Ok(user) => {
-                    let resp = HttpResponse::Ok().json(user);
-                    eprintln!("{:?}", resp);
-                    Ok(resp)
+
+                    trace!(&state.log, "Endpoint {ep} returned", ep = "user::register";
+                        "response" => ?&user,
+                        "statuscode" => 200);
+                    Ok(HttpResponse::Ok().json(user))
                 }
                 Err(e) => {
-                    eprintln!("{:?}", e);
+                    trace!(&state.log, "Endpoint {ep} returned", ep = "user::register";
+                        "error" => ?e,
+                        "statuscode" => 500);
                     Ok(HttpResponse::InternalServerError().into())
                 }
             }).responder(),
     )
 }
-pub fn get_me((_state, user): (State<AppState>, UserGuard)) -> impl Responder {
+pub fn get_me((state, user): (State<AppState>, UserGuard)) -> impl Responder {
+    trace!(&state.log, "Endpoint {ep} called", ep = "user::get_me");
     // TODO: Figure out what to return here
     Some(format!("GET /me (uid={})", user.user_id))
 }
 
 // XXX: This should probably return Result instead of Option
 pub fn put_me(
-    (_state, _user, req): (State<AppState>, UserGuard, Json<UserUpdateRequest>),
+    (state, _user, req): (State<AppState>, UserGuard, Json<UserUpdateRequest>),
 ) -> impl Responder {
+    trace!(&state.log, "Endpoint {ep} called", ep = "user::put_me");
+
     if req.email.is_none() && req.password.is_none() && req.name.is_none() {
         // At least one field has to be set, could also return 301 unchanged?
-        return HttpResponse::BadRequest()
-            .json(ErrorResponse::new("Request has to contain at least one field to update"));
+        return HttpResponse::BadRequest().json(ErrorResponse::new(
+            "Request has to contain at least one field to update",
+        ));
     }
 
-    eprintln!(
-        "PUT /me: email={:?}, password={:?}, name={:?}",
-        req.email, req.password, req.name
-    );
+    trace!(&state.log, "PUT /me:"; "email" => &req.email, "password" => &req.password, "name" => &req.name);
     HttpResponse::Ok().finish()
 }
 
@@ -79,6 +90,7 @@ pub fn token((state, data): (State<AppState>, Json<TokenRequest>)) -> impl Respo
      * - Generate and return token
      */
     use libreauth::pass::HashBuilder;
+    trace!(&state.log, "Endpoint {ep} called", ep = "user::token");
 
     state
         .db
@@ -96,14 +108,21 @@ pub fn token((state, data): (State<AppState>, Json<TokenRequest>)) -> impl Respo
                             &::jwt::Header::default(),
                             &claims,
                             state.config.jwt_secret.0.as_ref(),
-                        ).unwrap();
-                        eprintln!("{:?}", jwt);
-                        Ok(HttpResponse::Ok().json(TokenResponse { token: jwt }))
+                        ).expect("Failed to encode jwt token");
+                        let token = TokenResponse { token: jwt };
+
+                        trace!(&state.log, "Endpoint {ep} returned", ep = "user::token";
+                            "response" => ?&token,
+                            "statuscode" => 200);
+                        Ok(HttpResponse::Ok().json(token))
                     } else {
                         // Password check failed -> Return 401 - Unauthorized
+
+                        trace!(&state.log, "Endpoint {ep} returned", ep = "user::token";
+                            "statuscode" => 401);
                         Ok(HttpResponse::build(StatusCode::UNAUTHORIZED).json("Unauthorized"))
                     }
-                }
+                },
                 // XXX: Fix error type from DbExecutor and match here to differentiate between 4XX and 5XX errors
                 Err(_) => Ok(HttpResponse::InternalServerError().into()),
             }

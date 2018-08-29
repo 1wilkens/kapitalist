@@ -27,9 +27,9 @@ impl SlogLogger {
         if let Some(entry_time) = req.extensions().get::<StartTime>() {
             // Log request / response pair)
             trace!(self.log, "Handled request";
-                "remote_ip" => req.connection_info().remote().unwrap_or("-"),
+                "time" => %(Utc::now() - entry_time.0),
                 "request_line" => format_args!("{} {} {:?}", req.method(), req.path(), req.version()),
-                "time" => %(Utc::now() - entry_time.0))
+                "remote_ip" => req.connection_info().remote().unwrap_or("-"));
         }
     }
 }

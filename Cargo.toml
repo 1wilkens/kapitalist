@@ -16,6 +16,7 @@ path = "src/bin/main.rs"
 
 [dependencies]
 slog = { version = "2.3" }
+#slog = { version = "2.3", features = ["max_level_trace", "release_max_level_warn"] }
 slog-async = { version = "2.3", default-features = false }
 slog-stdlog = { version = "3.0", default-features = false }
 slog-term = { version = "2.4", default-features = false }

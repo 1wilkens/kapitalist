@@ -45,12 +45,14 @@ fn load_env() {
 }
 
 fn check_env(log: &Logger) -> Result<(), String> {
-    trace!(log, "Cheking environment");
+    trace!(log, "Checking environment");
     let vars: HashMap<String, String> = env::vars().collect();
 
     for v in REQUIRED_VARIABLES.iter() {
         if vars.contains_key(*v) && !vars[*v].is_empty() {
-            debug!(log, "Found required env variable"; "name" => v, "value" => &vars[*v]);
+            debug!(log, "Found required env variable";
+                "value" => &vars[*v],
+                "name" => v);
         } else {
             debug!(log, "Missing required env variables"; "name" => v);
             return Err(v.to_string());
@@ -73,6 +75,7 @@ fn main() {
         return;
     }
 
+    // load configuration
     let cfg = match Config::from_env() {
         Ok(cfg) => cfg,
         Err(e)  => {
@@ -80,21 +83,24 @@ fn main() {
             return;
         }
     };
-    let cfg_ = cfg.clone();
 
     // actix main system
     let sys = actix::System::new("kapitalist");
 
 
-    // configuration + database connection
+    // database connection
+    let url = cfg.db_url.clone();
     let db = actix::SyncArbiter::start(3, move || {
-        DatabaseExecutor::new(&cfg_.db_url.clone()).expect("Failed to instantiate DatabaseExecutor")
+        // XXX: Need to check for errors here somehow. Currently the actor thread just panicks
+        DatabaseExecutor::new(&url).expect("Failed to instantiate DatabaseExecutor")
     });
 
     let log_ = log.clone();
     let cfg_ = cfg.clone();
     server::new(move || {
-        let state = AppState::new(cfg_.clone(), db.clone());
+        let state = AppState::new(cfg_.clone(), db.clone())
+            .with_logger(log_.clone())
+            .build();
         App::with_state(state)
             .middleware(SlogLogger::new(log_.clone()))
             .resource("/", |r| r.get().f(api::index))
