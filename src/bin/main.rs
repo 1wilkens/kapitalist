@@ -10,15 +10,29 @@ extern crate kapitalist;
 
 use kapitalist::{
     api,
-    auth::JwtSecret,
     db::DatabaseExecutor,
     log::SlogLogger,
     state::{AppState, Config},
 };
 
+use std::collections::HashMap;
 use std::env;
 
 use actix_web::{actix, server, App};
+use slog::Logger;
+
+/// Required environment variables for kapitalist
+///
+/// - "KAPITALIST_HOST"       - Which IP address to listen on
+/// - "KAPITALIST_PORT"       - Which port to listen on
+/// - "KAPITALIST_DB"         - Connection string of the backing database (diesel format)
+/// - "KAPITALIST_JWT_SECRET" - JWT secret to sign tokens with
+static REQUIRED_VARIABLES: [&str; 4] = [
+    "KAPITALIST_HOST",
+    "KAPITALIST_PORT",
+    "KAPITALIST_DB",
+    "KAPITALIST_JWT_SECRET"
+];
 
 fn parse_env() {
     for item in dotenv::dotenv_iter().unwrap() {
@@ -30,15 +44,30 @@ fn parse_env() {
     }
 }
 
-fn check_env() -> bool {
-    env::var("KAPITALIST_DB").is_ok() && env::var("KAPITALIST_JWT_SECRET").is_ok()
+fn check_env(log: &Logger) -> bool {
+    trace!(log, "Cheking environment");
+    let vars: HashMap<String, String> = env::vars().collect();
+
+    for v in REQUIRED_VARIABLES.iter() {
+        if vars.contains_key(*v) && !vars[*v].is_empty() {
+            debug!(log, "Found required env variable"; "name" => v, "value" => &vars[*v]);
+        } else {
+            debug!(log, "Missing required env variables"; "name" => v);
+            return false;
+        }
+    }
+
+    true
 }
 
 fn main() {
+    // logging log
+    let log = init_logging();
+
     parse_env();
-    if !check_env() {
+    if !check_env(&log) {
         // XXX: Improve format and print environment variables found and missing
-        println!("Failed to validate environment.\nPlease check all required variables are present and valid\nExiting..");
+        error!(log, "Failed to validate environment.\nPlease check all required variables are present and valid\nExiting..");
         return;
     }
 
@@ -54,13 +83,11 @@ fn main() {
         DatabaseExecutor::new(&db_url).expect("Failed to instantiate DatabaseExecutor")
     });
 
-    // logging drain
-    let drain = make_drain();
-
+    let tmp = log.clone();
     server::new(move || {
         let state = AppState::new(cfg.clone(), db.clone());
         App::with_state(state)
-            .middleware(SlogLogger::new(drain.clone()))
+            .middleware(SlogLogger::new(tmp.clone()))
             .resource("/", |r| r.get().f(api::index))
             .resource("/register", |r| r.post().with(api::user::register))
             .resource("/token", |r| r.post().with(api::user::token))
@@ -69,11 +96,11 @@ fn main() {
     .expect("Failed to start server")
     .start();
 
-    println!("Started server on: {}", &addr);
+    info!(log, "Started server on: {}", &addr);
     let _ = sys.run();
 }
 
-fn make_drain() -> slog::Logger {
+fn init_logging() -> slog::Logger {
     use slog::Drain;
 
     let decorator = slog_term::TermDecorator::new().build();

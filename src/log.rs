@@ -6,6 +6,7 @@ use actix_web::{
 };
 use chrono::{DateTime, Utc};
 use slog;
+use slog_stdlog;
 
 struct StartTime(DateTime<Utc>);
 
@@ -14,9 +15,11 @@ pub struct SlogLogger {
 }
 
 impl SlogLogger {
-    pub fn new(log: impl Into<slog::Logger>) -> SlogLogger {
+    pub fn new(log: impl Into<Option<slog::Logger>>) -> SlogLogger {
+        use slog::Drain;
+
         SlogLogger {
-            log: log.into()
+            log: log.into().unwrap_or(slog::Logger::root(slog_stdlog::StdLog.fuse(), o!()))
         }
     }
 
