@@ -9,7 +9,7 @@
  * |
  * | POST | `/auth` | TokenRequest | obtain authentication token |
  */
-use actix_web::{http::StatusCode, AsyncResponder, Either, HttpResponse, Json, Responder, State};
+use actix_web::{AsyncResponder, Either, HttpResponse, Json, Responder, State};
 use futures::Future;
 
 use auth::{TokenClaims, UserGuard};
@@ -53,7 +53,7 @@ pub fn register((state, req): (State<AppState>, Json<UserCreationRequest>)) -> i
 
                 trace!(&state.log, "Endpoint {ep} returned",
                     ep = "user::register";
-                    "body" => ?&resp.body(),
+                    "response" => ?&resp.body(),
                     "statuscode" => %resp.status());
                 Ok(resp)
             })
@@ -128,7 +128,7 @@ pub fn token((state, req): (State<AppState>, Json<TokenRequest>)) -> impl Respon
 
             trace!(&state.log, "Endpoint {ep} returned",
                 ep = "user::token";
-                "body" => ?&resp.body(),
+                "response" => ?&resp.body(),
                 "statuscode" => %&resp.status());
             Ok(resp)
         })
