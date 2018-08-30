@@ -1,4 +1,9 @@
 #[derive(Debug, Serialize)]
+pub struct TokenResponse {
+    pub token: String,
+}
+
+#[derive(Debug, Serialize)]
 pub struct ErrorResponse {
     error: String,
 }
@@ -9,16 +14,15 @@ impl ErrorResponse {
         ErrorResponse { error: err.into() }
     }
 
-    pub fn server_error() -> ErrorResponse {
+    pub fn internal_server_error() -> ErrorResponse {
         ErrorResponse::new("Internal server error")
     }
 
     pub fn not_implemented() -> ErrorResponse {
         ErrorResponse::new("Not implemented yet")
     }
-}
 
-#[derive(Debug, Serialize)]
-pub struct TokenResponse {
-    pub token: String,
+    pub fn unauthorized() -> ErrorResponse {
+        ErrorResponse::new("Unauthorized")
+    }
 }

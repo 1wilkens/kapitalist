@@ -87,20 +87,21 @@ impl Handler<NewUser> for DatabaseExecutor {
 
 
 impl Message for GetUser {
-    type Result = Result<User, Error>;
+    type Result = Result<Option<User>, Error>;
 }
 
 impl Handler<GetUser> for DatabaseExecutor {
-    type Result = Result<User, Error>;
+    type Result = Result<Option<User>, Error>;
 
     fn handle(&mut self, msg: GetUser, _: &mut Self::Context) -> Self::Result {
         use db::schema::users::dsl::*;
 
         // XXX: Figure out error type to be used here and add conversion functions for convenience
-        let user: User = users
+        let user = users
             .filter(email.eq(&msg.0))
             .get_result(&self.0)
-            .map_err(|_| error::ErrorInternalServerError("Error getting user`"))?;
+            .optional()
+            .map_err(|_| error::ErrorInternalServerError("Error getting user"))?;
         Ok(user)
     }
 }

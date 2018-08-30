@@ -42,20 +42,22 @@ pub fn register((state, req): (State<AppState>, Json<UserCreationRequest>)) -> i
         state
             .db
             .send(new_user)
-            .and_then(move |res| match res {
-                Ok(user) => {
-                    trace!(&state.log, "Endpoint {ep} returned", ep = "user::register";
-                        "response" => ?&user,
-                        "statuscode" => 200);
-                    Ok(HttpResponse::Ok().json(user))
-                }
-                Err(e) => {
-                    trace!(&state.log, "Endpoint {ep} returned", ep = "user::register";
-                        "error" => ?e,
-                        "statuscode" => 500);
-                    Ok(HttpResponse::InternalServerError().into())
-                }
-            }).responder(),
+            .and_then(move |res| {
+                let resp = match res {
+                    Ok(user) => HttpResponse::Ok().json(user),
+                    Err(err) => {
+                        debug!(&state.log, "Error inserting user into database"; "error" => %&err);
+                        HttpResponse::InternalServerError().into()
+                    }
+                };
+
+                trace!(&state.log, "Endpoint {ep} returned",
+                    ep = "user::register";
+                    "body" => ?&resp.body(),
+                    "statuscode" => %resp.status());
+                Ok(resp)
+            })
+            .responder(),
     )
 }
 pub fn get_me((state, user): (State<AppState>, UserGuard)) -> impl Responder {
@@ -94,8 +96,8 @@ pub fn token((state, req): (State<AppState>, Json<TokenRequest>)) -> impl Respon
         .db
         .send(GetUser(req.email.clone()))
         .and_then(move |res| {
-            match res {
-                Ok(user) => {
+            let resp = match res {
+                Ok(Some(user)) => {
                     // XXX: Should handle errors here as well
                     let hasher = HashBuilder::from_phc(&user.secret)
                         .expect("[CRIT] Failed to create Hasher");
@@ -109,22 +111,26 @@ pub fn token((state, req): (State<AppState>, Json<TokenRequest>)) -> impl Respon
                         ).expect("Failed to encode jwt token");
                         let token = TokenResponse { token: jwt };
 
-                        trace!(&state.log, "Endpoint {ep} returned",
-                            ep = "user::token";
-                            "response" => ?&token,
-                            "statuscode" => 200);
-                        Ok(HttpResponse::Ok().json(token))
+                        HttpResponse::Ok().json(token)
                     } else {
                         // Password check failed -> Return 401 - Unauthorized
-
-                        trace!(&state.log, "Endpoint {ep} returned",
-                            ep = "user::token";
-                            "statuscode" => 401);
-                        Ok(HttpResponse::build(StatusCode::UNAUTHORIZED).json("Unauthorized"))
+                        HttpResponse::Unauthorized().json(ErrorResponse::unauthorized())
                     }
                 }
-                // XXX: Fix error type from DbExecutor and match here to differentiate between 4XX and 5XX errors
-                Err(_) => Ok(HttpResponse::InternalServerError().into()),
-            }
-        }).responder()
+                // User entity was not found in database -> Return 401 to prevent information leakage
+                Ok(None) => HttpResponse::Unauthorized().json(ErrorResponse::unauthorized()),
+                // There was an error contacting the db -> Log error and return 500
+                Err(err) => {
+                    debug!(&state.log, "Error loading user from database"; "error" => %&err);
+                    HttpResponse::InternalServerError().json(ErrorResponse::internal_server_error())
+                }
+            };
+
+            trace!(&state.log, "Endpoint {ep} returned",
+                ep = "user::token";
+                "body" => ?&resp.body(),
+                "statuscode" => %&resp.status());
+            Ok(resp)
+        })
+        .responder()
 }
