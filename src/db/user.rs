@@ -6,24 +6,40 @@ use chrono::NaiveDateTime;
 use diesel::{self, prelude::*};
 
 use db::{schema::users, DatabaseExecutor};
-use request::{UserCreationRequest, UserUpdateRequest};
+use request::{UserCreationRequest, /*UserUpdateRequest*/};
 
+/// Database entity representing a user account
+///
+/// id                   - database id
+/// email                - user's current email address
+/// password_fingerprint - salt and hash of the user's password
+/// username             - user's current username
+/// created_at           - creation date of the user account
 #[derive(Debug, Deserialize, Serialize, Queryable)]
 pub struct User {
     pub id: i32,
     pub email: String,
-    pub secret_hash: String,
+    pub password_fingerprint: String,
     pub username: String,
     pub created_at: NaiveDateTime,
 }
 
+/// Insertable database entity to create new user accounts
+///
+/// email                - user's email address used to register
+/// password_fingerprint - salt and hash of the user's password
+/// username             - user's chosen username used to register
 #[derive(Debug, Insertable)]
 #[table_name = "users"]
 pub struct NewUser {
     pub email: String,
-    pub secret_hash: String,
+    pub password_fingerprint: String,
     pub username: String,
 }
+
+/// Actix message to retrieve a user entity from the database
+pub struct GetUser(pub String);
+
 
 impl NewUser {
     /// XXX: This should return a result, figure out fitting error type
@@ -35,7 +51,7 @@ impl NewUser {
         let hash = hasher.hash(&req.password).ok()?;
         Some(NewUser {
             email: req.email,
-            secret_hash: hash,
+            password_fingerprint: hash,
             username: req.name,
         })
     }
@@ -69,7 +85,6 @@ impl Handler<NewUser> for DatabaseExecutor {
     }
 }
 
-pub struct GetUser(pub String);
 
 impl Message for GetUser {
     type Result = Result<User, Error>;

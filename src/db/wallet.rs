@@ -8,6 +8,14 @@ use diesel::{self, prelude::*};
 use db::{schema::wallets, DatabaseExecutor};
 use request::{WalletCreationRequest};
 
+/// Database entity representing a user's wallet
+///
+/// id              -
+/// name            -
+/// initial_balance -
+/// current_balance -
+/// color           -
+/// created_at      -
 #[derive(Debug, Deserialize, Serialize, Queryable)]
 pub struct Wallet {
     pub id: i32,
@@ -18,6 +26,12 @@ pub struct Wallet {
     pub created_at: NaiveDateTime,
 }
 
+/// Insertable database entity to create new wallets
+///
+/// name            -
+/// initial_balance -
+/// current_balance -
+/// color           -
 #[derive(Debug, Insertable)]
 #[table_name = "wallets"]
 pub struct NewWallet {
