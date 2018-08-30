@@ -96,12 +96,11 @@ impl Handler<GetUser> for DatabaseExecutor {
     fn handle(&mut self, msg: GetUser, _: &mut Self::Context) -> Self::Result {
         use db::schema::users::dsl::*;
 
-        // XXX: Figure out error type to be used here and add conversion functions for convenience
         let user = users
             .filter(email.eq(&msg.0))
             .get_result(&self.0)
             .optional()
-            .map_err(|_| error::ErrorInternalServerError("Error getting user"))?;
+            .map_err(error::ErrorInternalServerError)?;
         Ok(user)
     }
 }
