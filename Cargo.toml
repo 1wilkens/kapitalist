@@ -36,4 +36,4 @@ futures = "0.1"
 
 jsonwebtoken = "5.0"
 
-libreauth = "0.10"
+libreauth = "0.11"

@@ -11,6 +11,7 @@ use request::{WalletCreationRequest};
 /// Database entity representing a user's wallet
 ///
 /// id              -
+/// user_id         -
 /// name            -
 /// initial_balance -
 /// current_balance -
@@ -19,6 +20,7 @@ use request::{WalletCreationRequest};
 #[derive(Debug, Deserialize, Serialize, Queryable)]
 pub struct Wallet {
     pub id: i32,
+    pub user_id: i32,
     pub name: String,
     pub initial_balance: i32,
     pub current_balance: i32,
@@ -35,6 +37,7 @@ pub struct Wallet {
 #[derive(Debug, Insertable)]
 #[table_name = "wallets"]
 pub struct NewWallet {
+    pub user_id: i32,
     pub name: String,
     pub initial_balance: i32,
     pub current_balance: i32,
@@ -45,6 +48,7 @@ impl NewWallet {
     pub fn from_request(req: WalletCreationRequest) -> NewWallet {
         NewWallet {
             name: req.name,
+            user_id: req.user_id,
             initial_balance: req.balance,
             current_balance: req.balance,
             color: req.color,
@@ -61,6 +65,7 @@ impl Handler<NewWallet> for DatabaseExecutor {
 
     fn handle(&mut self, msg: NewWallet, _: &mut Self::Context) -> Self::Result {
         use db::schema::wallets::dsl::*;
+        trace!(self.1, "Received db action"; "msg" => ?msg);
 
         // XXX: Figure out error type to be used here and add conversion functions for convenience
         /*let exists: bool = diesel::select(diesel::dsl::exists(wallets.filter(email.eq(&msg.email))))
@@ -75,7 +80,11 @@ impl Handler<NewWallet> for DatabaseExecutor {
         let wallet: Wallet = diesel::insert_into(wallets)
             .values(&msg)
             .get_result(&self.0)
-            .map_err(|_| error::ErrorInternalServerError("Error inserting wallet"))?;
+            .map_err(|e| {
+                trace!(self.1, "Error during db transaction"; "error" => %e);
+                return error::ErrorInternalServerError("Error inserting wallet");
+            })?;
+        trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?wallet);
         Ok(wallet)
     }
 }

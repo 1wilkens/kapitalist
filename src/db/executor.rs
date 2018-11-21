@@ -2,20 +2,20 @@ use actix_web::{
     actix::{Actor, Handler, Message, SyncContext},
     error::Error,
 };
-
-use diesel::prelude::*;
+use diesel::{Connection, pg::PgConnection};
+use slog::Logger;
 
 /// The database executor actor
-pub struct DatabaseExecutor(pub(crate) PgConnection);
+pub struct DatabaseExecutor(pub(crate) PgConnection, pub(crate) Logger);
 
 impl Actor for DatabaseExecutor {
     type Context = SyncContext<Self>;
 }
 
 impl DatabaseExecutor {
-    pub fn new(db_url: &str) -> Option<DatabaseExecutor> {
+    pub fn new(db_url: &str, log: Logger) -> Option<DatabaseExecutor> {
         let conn = PgConnection::establish(db_url).ok()?;
-        Some(DatabaseExecutor(conn))
+        Some(DatabaseExecutor(conn, log))
     }
 }
 

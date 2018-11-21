@@ -10,30 +10,30 @@ use request::{UserCreationRequest, /*UserUpdateRequest*/};
 
 /// Database entity representing a user account
 ///
-/// id                   - database id
-/// email                - user's current email address
-/// password_fingerprint - salt and hash of the user's password
-/// username             - user's current username
-/// created_at           - creation date of the user account
+/// id         - database id
+/// email      - user's current email address
+/// secret     - salt and hash of the user's password
+/// username   - user's current username
+/// created_at - creation date of the user account
 #[derive(Debug, Deserialize, Serialize, Queryable)]
 pub struct User {
     pub id: i32,
     pub email: String,
-    pub password_fingerprint: String,
+    pub secret: String,
     pub username: String,
     pub created_at: NaiveDateTime,
 }
 
 /// Insertable database entity to create new user accounts
 ///
-/// email                - user's email address used to register
-/// password_fingerprint - salt and hash of the user's password
-/// username             - user's chosen username used to register
+/// email    - user's email address used to register
+/// secret   - salt and hash of the user's password
+/// username - user's chosen username used to register
 #[derive(Debug, Insertable)]
 #[table_name = "users"]
 pub struct NewUser {
     pub email: String,
-    pub password_fingerprint: String,
+    pub secret: String,
     pub username: String,
 }
 
@@ -51,7 +51,7 @@ impl NewUser {
         let hash = hasher.hash(&req.password).ok()?;
         Some(NewUser {
             email: req.email,
-            password_fingerprint: hash,
+            secret: hash,
             username: req.name,
         })
     }

@@ -97,7 +97,7 @@ pub fn token((state, req): (State<AppState>, Json<TokenRequest>)) -> impl Respon
             match res {
                 Ok(user) => {
                     // XXX: Should handle errors here as well
-                    let hasher = HashBuilder::from_phc(user.password_fingerprint)
+                    let hasher = HashBuilder::from_phc(&user.secret)
                         .expect("[CRIT] Failed to create Hasher");
                     if hasher.is_valid(&req.password) {
                         // Password check succeeded -> Issuing token

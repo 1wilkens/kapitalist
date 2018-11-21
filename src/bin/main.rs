@@ -90,9 +90,10 @@ fn main() {
 
     // database connection
     let url = cfg.db_url.clone();
+    let log_ = log.clone();
     let db = actix::SyncArbiter::start(3, move || {
         // XXX: Need to check for errors here somehow. Currently the actor thread just panicks
-        DatabaseExecutor::new(&url).expect("Failed to instantiate DatabaseExecutor")
+        DatabaseExecutor::new(&url, log_.clone()).expect("Failed to instantiate DatabaseExecutor")
     });
 
     let log_ = log.clone();
@@ -107,6 +108,7 @@ fn main() {
             .resource("/register", |r| r.post().with(api::user::register))
             .resource("/token", |r| r.post().with(api::user::token))
             .resource("/me", |r| r.get().with(api::user::get_me))
+            .resource("/wallet", |r| r.post().with(api::wallet::post))
     }).bind(&cfg.addr.clone())
     .expect("Failed to start server")
     .start();

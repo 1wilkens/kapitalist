@@ -4,7 +4,7 @@ use actix_web::{
     FromRequest, HttpRequest,
 };
 use chrono::serde::ts_seconds::{deserialize as from_ts, serialize as to_ts};
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, offset::FixedOffset, Utc};
 use jwt::{decode, Validation};
 
 use state::AppState;
@@ -40,7 +40,7 @@ impl TokenClaims {
             aud: "kapitalist".into(),
             sub: sub.into(),
             iat: Utc::now(),
-            exp: Utc::now(),
+            exp: Utc::now() + FixedOffset::east(12 * 3600),
             uid: uid,
         }
     }
@@ -74,9 +74,14 @@ impl FromRequest<AppState> for UserGuard {
                     leeway: 60,
                     ..Default::default()
                 };
+                debug!(&req.state().log, "Validating bearer token"; "token" => &parts[1]);
                 let token = match decode::<TokenClaims>(&parts[1], secret, &validation) {
                     Ok(token) => token,
-                    Err(_) => continue,
+                    Err(e) => {
+                        // Print errors on debug output and continue to next token if any
+                        debug!(&req.state().log, "Validation failed"; "error" => %e);
+                        continue;
+                    },
                 };
                 return Ok(UserGuard {
                     user_id: token.claims.uid,
