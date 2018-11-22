@@ -38,8 +38,8 @@ pub struct NewUser {
 }
 
 /// Actix message to retrieve a user entity from the database
+#[derive(Debug)]
 pub struct GetUser(pub String);
-
 
 impl NewUser {
     /// XXX: This should return a result, figure out fitting error type
@@ -66,6 +66,7 @@ impl Handler<NewUser> for DatabaseExecutor {
 
     fn handle(&mut self, msg: NewUser, _: &mut Self::Context) -> Self::Result {
         use db::schema::users::dsl::*;
+        trace!(self.1, "Received db action"; "msg" => ?msg);
 
         // XXX: Figure out error type to be used here and add conversion functions for convenience
         let exists: bool = diesel::select(diesel::dsl::exists(users.filter(email.eq(&msg.email))))
@@ -81,10 +82,10 @@ impl Handler<NewUser> for DatabaseExecutor {
             .values(&msg)
             .get_result(&self.0)
             .map_err(|_| error::ErrorInternalServerError("Error inserting user"))?;
+        trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?user);
         Ok(user)
     }
 }
-
 
 impl Message for GetUser {
     type Result = Result<Option<User>, Error>;
@@ -95,12 +96,14 @@ impl Handler<GetUser> for DatabaseExecutor {
 
     fn handle(&mut self, msg: GetUser, _: &mut Self::Context) -> Self::Result {
         use db::schema::users::dsl::*;
+        trace!(self.1, "Received db action"; "msg" => ?msg);
 
         let user = users
             .filter(email.eq(&msg.0))
             .get_result(&self.0)
             .optional()
             .map_err(error::ErrorInternalServerError)?;
+        trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?user);
         Ok(user)
     }
 }

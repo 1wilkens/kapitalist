@@ -13,25 +13,25 @@
  * | PUT | `/wallet/{wid}/transaction/{tid}` | TransactionUpdateRequest | update transaction details |
  */
 
-use actix_web::{AsyncResponder, HttpResponse, Json, Responder, State};
+use actix_web::{AsyncResponder, HttpResponse, Json, Path, Responder, State};
 use futures::Future;
 
 use auth::UserGuard;
-use db::wallet::NewWallet;
+use db::wallet::{GetWallet, NewWallet};
 use request::WalletCreationRequest;
 use response::ErrorResponse;
 use state::AppState;
 
-pub fn post((state, _user, req): (State<AppState>, UserGuard, Json<WalletCreationRequest>)) -> impl Responder {
+pub fn post((state, user, req): (State<AppState>, UserGuard, Json<WalletCreationRequest>)) -> impl Responder {
     trace!(&state.log, "Endpoint {ep} called", ep = "wallet::post"; "request" => ?&req.0);
 
-    let new_wallet = NewWallet::from_request(req.0);
+    let new_wallet = NewWallet::from_request(req.0, user.user_id);
     state
         .db
         .send(new_wallet)
         .and_then(move |res| {
             let resp = match res {
-                Ok(user) => HttpResponse::Ok().json(user),
+                Ok(wallet) => HttpResponse::Ok().json(wallet),
                 Err(err) => {
                     debug!(&state.log, "Error inserting wallet into database";
                         "error" => %&err);
@@ -47,9 +47,29 @@ pub fn post((state, _user, req): (State<AppState>, UserGuard, Json<WalletCreatio
         .responder()
 }
 
-pub fn get((state, _user, _wid): (State<AppState>, UserGuard, u64)) -> impl Responder {
+pub fn get((state, user, wid): (State<AppState>, UserGuard, Path<(i32)>)) -> impl Responder {
     trace!(&state.log, "Endpoint {ep} called", ep = "wallet::get");
-    HttpResponse::InternalServerError().json(ErrorResponse::not_implemented())
+    let get_wallet = GetWallet::new(*wid, user.user_id);
+    state
+        .db
+        .send(get_wallet)
+        .and_then(move |res| {
+            let resp = match res {
+                Ok(Some(wallet)) => HttpResponse::Ok().json(wallet),
+                // XXX: Handle this properly and add utility method for 404
+                Ok(None) => HttpResponse::NotFound().json("not found"),
+                Err(err) => {
+                    debug!(&state.log, "Error getting wallet from database";
+                        "error" => %&err);
+                    HttpResponse::InternalServerError().json(ErrorResponse::internal_server_error())
+                }
+            };
+
+            trace!(&state.log, "Endpoint {ep} returned", ep = "wallet::get";
+                            "response" => ?&resp.body(),
+                            "statuscode" => %&resp.status());
+            Ok(resp)
+        }).responder()
 }
 
 pub fn put((state, _user, _wid): (State<AppState>, UserGuard, u64)) -> impl Responder {

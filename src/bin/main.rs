@@ -109,6 +109,7 @@ fn main() {
             .resource("/token", |r| r.post().with(api::user::token))
             .resource("/me", |r| r.get().with(api::user::get_me))
             .resource("/wallet", |r| r.post().with(api::wallet::post))
+            .resource("/wallet/{id}", |r| r.get().with(api::wallet::get))
     }).bind(&cfg.addr.clone())
     .expect("Failed to start server")
     .start();

@@ -20,7 +20,6 @@ pub struct TokenRequest {
 
 #[derive(Debug, Deserialize)]
 pub struct WalletCreationRequest {
-    pub user_id: i32,
     pub name: String,
     pub balance: i32,
     pub color: String,
