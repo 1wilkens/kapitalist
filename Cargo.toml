@@ -6,6 +6,8 @@ license = "MIT OR Apache-2.0"
 readme = "README.md"
 repository = "https://github.com/1wilkens/kapitalist"
 
+edition = "2018"
+
 [lib]
 name = "kapitalist"
 path = "src/lib.rs"

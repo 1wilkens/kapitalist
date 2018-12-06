@@ -5,8 +5,8 @@ use actix_web::{
 use chrono::NaiveDateTime;
 use diesel::{self, prelude::*};
 
-use db::{schema::wallets, DatabaseExecutor};
-use request::{WalletCreationRequest};
+use crate::db::{schema::wallets, DatabaseExecutor};
+use crate::request::{WalletCreationRequest};
 
 /// Database entity representing a user's wallet
 ///
@@ -72,7 +72,7 @@ impl Handler<NewWallet> for DatabaseExecutor {
     type Result = Result<Wallet, Error>;
 
     fn handle(&mut self, msg: NewWallet, _: &mut Self::Context) -> Self::Result {
-        use db::schema::wallets::dsl::*;
+        use crate::db::schema::wallets::dsl::*;
         trace!(self.1, "Received db action"; "msg" => ?msg);
 
         // XXX: Figure out error type to be used here and add conversion functions for convenience
@@ -111,7 +111,7 @@ impl Handler<GetWallet> for DatabaseExecutor {
     type Result = Result<Option<Wallet>, Error>;
 
     fn handle(&mut self, msg: GetWallet, _: &mut Self::Context) -> Self::Result {
-        use db::schema::wallets::dsl::*;
+        use crate::db::schema::wallets::dsl::*;
         trace!(self.1, "Received db action"; "msg" => ?msg);
 
         // XXX: Verify this is enough to protect unauthorized access

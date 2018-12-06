@@ -5,9 +5,9 @@ use actix_web::{
 };
 use chrono::serde::ts_seconds::{deserialize as from_ts, serialize as to_ts};
 use chrono::{DateTime, offset::FixedOffset, Utc};
-use jwt::{decode, Validation};
+use crate::jwt::{decode, Validation};
 
-use state::AppState;
+use crate::state::AppState;
 
 #[derive(Debug, Clone)]
 pub struct JwtSecret(pub String);
@@ -70,7 +70,7 @@ impl FromRequest<AppState> for UserGuard {
             let parts: Vec<&str> = value.split(' ').collect();
             if parts.len() == 2 && parts[0] == "Bearer" {
                 // We have a bearer token
-                let mut validation = Validation {
+                let validation = Validation {
                     leeway: 60,
                     ..Default::default()
                 };

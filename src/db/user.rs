@@ -5,8 +5,8 @@ use actix_web::{
 use chrono::NaiveDateTime;
 use diesel::{self, prelude::*};
 
-use db::{schema::users, DatabaseExecutor};
-use request::{UserCreationRequest, /*UserUpdateRequest*/};
+use crate::db::{schema::users, DatabaseExecutor};
+use crate::request::{UserCreationRequest, /*UserUpdateRequest*/};
 
 /// Database entity representing a user account
 ///
@@ -65,7 +65,7 @@ impl Handler<NewUser> for DatabaseExecutor {
     type Result = Result<User, Error>;
 
     fn handle(&mut self, msg: NewUser, _: &mut Self::Context) -> Self::Result {
-        use db::schema::users::dsl::*;
+        use crate::db::schema::users::dsl::*;
         trace!(self.1, "Received db action"; "msg" => ?msg);
 
         // XXX: Figure out error type to be used here and add conversion functions for convenience
@@ -95,7 +95,7 @@ impl Handler<GetUser> for DatabaseExecutor {
     type Result = Result<Option<User>, Error>;
 
     fn handle(&mut self, msg: GetUser, _: &mut Self::Context) -> Self::Result {
-        use db::schema::users::dsl::*;
+        use crate::db::schema::users::dsl::*;
         trace!(self.1, "Received db action"; "msg" => ?msg);
 
         let user = users

@@ -12,11 +12,11 @@
 use actix_web::{AsyncResponder, Either, HttpResponse, Json, Responder, State};
 use futures::Future;
 
-use auth::{TokenClaims, UserGuard};
-use db::user::{GetUser, NewUser};
-use request::{TokenRequest, UserCreationRequest, UserUpdateRequest};
-use response::{ErrorResponse, TokenResponse};
-use state::AppState;
+use crate::auth::{TokenClaims, UserGuard};
+use crate::db::user::{GetUser, NewUser};
+use crate::request::{TokenRequest, UserCreationRequest, UserUpdateRequest};
+use crate::response::{ErrorResponse, TokenResponse};
+use crate::state::AppState;
 
 // TODO: Verify this use of Either
 pub fn register((state, req): (State<AppState>, Json<UserCreationRequest>)) -> impl Responder {
@@ -104,8 +104,8 @@ pub fn token((state, req): (State<AppState>, Json<TokenRequest>)) -> impl Respon
                     if hasher.is_valid(&req.password) {
                         // Password check succeeded -> Issuing token
                         let claims = TokenClaims::new("auth", user.id);
-                        let jwt = ::jwt::encode(
-                            &::jwt::Header::default(),
+                        let jwt = crate::jwt::encode(
+                            &crate::jwt::Header::default(),
                             &claims,
                             state.config.jwt_secret.0.as_ref(),
                         ).expect("Failed to encode jwt token");
