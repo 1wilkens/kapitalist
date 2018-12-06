@@ -77,26 +77,3 @@ pub fn put((state, _user, _wid): (State<AppState>, UserGuard, u64)) -> impl Resp
     HttpResponse::InternalServerError().json(ErrorResponse::not_implemented())
 }
 
-pub fn tx_get_all((state, _user, _wid): (State<AppState>, UserGuard, u64)) -> impl Responder {
-    trace!(&state.log, "Endpoint {ep} called", ep = "wallet::tx_get_all");
-    HttpResponse::InternalServerError().json(ErrorResponse::not_implemented())
-}
-
-pub fn tx_post((state, _user, _wid): (State<AppState>, UserGuard, u64)) -> impl Responder {
-    trace!(&state.log, "Endpoint {ep} called", ep = "wallet::tx_post");
-    HttpResponse::InternalServerError().json(ErrorResponse::not_implemented())
-}
-
-pub fn tx_get(
-    (state, _user, _wid, _tid): (State<AppState>, UserGuard, u64, u64),
-) -> impl Responder {
-    trace!(&state.log, "Endpoint {ep} called", ep = "wallet::tx_get");
-    HttpResponse::InternalServerError().json(ErrorResponse::not_implemented())
-}
-
-pub fn tx_put(
-    (state, _user, _wid, _tid): (State<AppState>, UserGuard, u64, u64),
-) -> impl Responder {
-    trace!(&state.log, "Endpoint {ep} called", ep = "wallet::tx_put");
-    HttpResponse::InternalServerError().json(ErrorResponse::not_implemented())
-}

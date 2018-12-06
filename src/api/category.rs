@@ -1,20 +1,18 @@
-/*use actix_web::Json;
+use actix_web::{AsyncResponder, HttpResponse, Json, Responder, State};
 
-use auth::UserGuard;
-use db::DbConn;
+use crate::auth::UserGuard;
+use crate::db::category::{GetCategory, NewCategory};
+use crate::request::CategoryCreationRequest;
+use crate::response::ErrorResponse;
+use crate::state::AppState;
 
-use model::{Category};
-use request::*;
-use response::*;
+pub fn get((state, user): (State<AppState>, UserGuard)) -> impl Responder {
+    use crate::db::schema::categories;
 
-//#[get("/<id>")]
-pub fn get(db: DbConn, _user: UserGuard, id: i32) -> Result<Json<Category>, Json<ErrorResponse>> {
-    use schema::categories;
+    /*let c = categories::table
+    .filter(categories::columns::id.eq(id))
+    .get_result(&*db)
+    .map_err(|_| Json(ErrorResponse::server_error()))?;*/
 
-    let c = categories::table
-        .filter(categories::columns::id.eq(id))
-        .get_result(&*db)
-        .map_err(|_| Json(ErrorResponse::server_error()))?;
-
-    Ok(Json(c))
-}*/
+    HttpResponse::InternalServerError().json(ErrorResponse::not_implemented())
+}

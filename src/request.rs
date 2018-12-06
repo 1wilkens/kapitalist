@@ -24,3 +24,9 @@ pub struct WalletCreationRequest {
     pub balance: i32,
     pub color: String,
 }
+
+#[derive(Debug, Deserialize)]
+pub struct CategoryCreationRequest {
+    pub name: String,
+    pub color: String,
+}

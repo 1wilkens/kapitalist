@@ -23,6 +23,7 @@ table! {
 table! {
     categories {
         id         -> Int4,
+        user_id    -> Int4,
         name       -> Text,
         color      -> Nullable<Text>,
         created_at -> Timestamp,
@@ -40,7 +41,8 @@ table! {
 
 // XXX: Maybe add more joinable macro calls
 joinable!(wallets -> users (user_id));
+joinable!(categories -> users (user_id));
 joinable!(transactions -> wallets (wallet_id));
 joinable!(transactions -> categories (category_id));
 
-allow_tables_to_appear_in_same_query!(users, wallets, categories,);
+allow_tables_to_appear_in_same_query!(users, wallets, categories,transactions);

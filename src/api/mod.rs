@@ -2,7 +2,8 @@ use crate::state::AppState;
 
 use actix_web::HttpRequest;
 
-//pub mod category;
+pub mod category;
+pub mod transaction;
 pub mod user;
 pub mod wallet;
 
