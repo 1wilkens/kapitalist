@@ -54,7 +54,7 @@ impl AppState {
         AppStateBuilder {
             config: cfg,
             db: addr,
-            log: None
+            log: None,
         }
     }
 }

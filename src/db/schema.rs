@@ -45,4 +45,4 @@ joinable!(categories -> users (user_id));
 joinable!(transactions -> wallets (wallet_id));
 joinable!(transactions -> categories (category_id));
 
-allow_tables_to_appear_in_same_query!(users, wallets, categories,transactions);
+allow_tables_to_appear_in_same_query!(users, wallets, categories, transactions);

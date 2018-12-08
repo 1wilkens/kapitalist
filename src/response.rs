@@ -10,7 +10,9 @@ pub struct ErrorResponse {
 
 impl ErrorResponse {
     pub fn new<S>(err: S) -> ErrorResponse
-    where S: Into<String> {
+    where
+        S: Into<String>,
+    {
         ErrorResponse { error: err.into() }
     }
 

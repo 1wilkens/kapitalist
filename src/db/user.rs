@@ -6,7 +6,7 @@ use chrono::NaiveDateTime;
 use diesel::{self, prelude::*};
 
 use crate::db::{schema::users, DatabaseExecutor};
-use crate::request::{UserCreationRequest, /*UserUpdateRequest*/};
+use crate::request::UserCreationRequest;
 
 /// Database entity representing a user account
 ///

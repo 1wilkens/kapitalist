@@ -19,7 +19,9 @@ impl SlogLogger {
         use slog::Drain;
 
         SlogLogger {
-            log: log.into().unwrap_or(slog::Logger::root(slog_stdlog::StdLog.fuse(), o!()))
+            log: log
+                .into()
+                .unwrap_or(slog::Logger::root(slog_stdlog::StdLog.fuse(), o!())),
         }
     }
 

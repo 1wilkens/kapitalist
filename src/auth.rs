@@ -1,11 +1,11 @@
+use crate::jwt::{decode, Validation};
 use actix_web::{
     error::{Error, ErrorUnauthorized},
     http::header::AUTHORIZATION,
     FromRequest, HttpRequest,
 };
 use chrono::serde::ts_seconds::{deserialize as from_ts, serialize as to_ts};
-use chrono::{DateTime, offset::FixedOffset, Utc};
-use crate::jwt::{decode, Validation};
+use chrono::{offset::FixedOffset, DateTime, Utc};
 
 use crate::state::AppState;
 
@@ -81,7 +81,7 @@ impl FromRequest<AppState> for UserGuard {
                         // Print errors on debug output and continue to next token if any
                         debug!(&req.state().log, "Validation failed"; "error" => %e);
                         continue;
-                    },
+                    }
                 };
                 return Ok(UserGuard {
                     user_id: token.claims.uid,

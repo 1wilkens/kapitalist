@@ -69,11 +69,11 @@ pub fn get((state, user, wid): (State<AppState>, UserGuard, Path<(i32)>)) -> imp
                             "response" => ?&resp.body(),
                             "statuscode" => %&resp.status());
             Ok(resp)
-        }).responder()
+        })
+        .responder()
 }
 
 pub fn put((state, _user, _wid): (State<AppState>, UserGuard, u64)) -> impl Responder {
     trace!(&state.log, "Endpoint {ep} called", ep = "wallet::put");
     HttpResponse::InternalServerError().json(ErrorResponse::not_implemented())
 }
-

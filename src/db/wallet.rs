@@ -6,7 +6,7 @@ use chrono::NaiveDateTime;
 use diesel::{self, prelude::*};
 
 use crate::db::{schema::wallets, DatabaseExecutor};
-use crate::request::{WalletCreationRequest};
+use crate::request::WalletCreationRequest;
 
 /// Database entity representing a user's wallet
 ///

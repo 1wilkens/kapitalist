@@ -6,7 +6,7 @@ use crate::request::CategoryCreationRequest;
 use crate::response::ErrorResponse;
 use crate::state::AppState;
 
-pub fn get((state, user): (State<AppState>, UserGuard)) -> impl Responder {
+pub fn get((_state, _user): (State<AppState>, UserGuard)) -> impl Responder {
     use crate::db::schema::categories;
 
     /*let c = categories::table

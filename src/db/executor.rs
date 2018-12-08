@@ -2,7 +2,7 @@ use actix_web::{
     actix::{Actor, Handler, Message, SyncContext},
     error::Error,
 };
-use diesel::{Connection, pg::PgConnection};
+use diesel::{pg::PgConnection, Connection};
 use slog::Logger;
 
 /// The database executor actor

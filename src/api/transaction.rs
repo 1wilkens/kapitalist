@@ -1,4 +1,4 @@
-use actix_web::{Responder, HttpResponse, AsyncResponder, Json, State};
+use actix_web::{AsyncResponder, HttpResponse, Json, Responder, State};
 
 use crate::auth::UserGuard;
 /*use crate::db::category::{GetCategory, NewCategory};
@@ -16,16 +16,12 @@ pub fn post((state, _user, _wid): (State<AppState>, UserGuard, u64)) -> impl Res
     HttpResponse::InternalServerError().json(ErrorResponse::not_implemented())
 }
 
-pub fn get(
-    (state, _user, _wid, _tid): (State<AppState>, UserGuard, u64, u64),
-) -> impl Responder {
+pub fn get((state, _user, _wid, _tid): (State<AppState>, UserGuard, u64, u64)) -> impl Responder {
     trace!(&state.log, "Endpoint {ep} called", ep = "transaction::get");
     HttpResponse::InternalServerError().json(ErrorResponse::not_implemented())
 }
 
-pub fn put(
-    (state, _user, _wid, _tid): (State<AppState>, UserGuard, u64, u64),
-) -> impl Responder {
+pub fn put((state, _user, _wid, _tid): (State<AppState>, UserGuard, u64, u64)) -> impl Responder {
     trace!(&state.log, "Endpoint {ep} called", ep = "transaction::put");
     HttpResponse::InternalServerError().json(ErrorResponse::not_implemented())
 }

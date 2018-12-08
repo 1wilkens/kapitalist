@@ -32,10 +32,7 @@ pub fn register((state, req): (State<AppState>, Json<UserCreationRequest>)) -> i
     let new_user = match NewUser::from_request(req.0) {
         Some(u) => u,
         None => {
-            return Either::A(
-                HttpResponse::BadRequest()
-                    .json(ErrorResponse::new("Password does not match criteria")),
-            )
+            return Either::A(HttpResponse::BadRequest().json(ErrorResponse::new("Password does not match criteria")))
         }
     };
     Either::B(
@@ -67,9 +64,7 @@ pub fn get_me((state, user): (State<AppState>, UserGuard)) -> impl Responder {
 }
 
 // XXX: This should probably return Result instead of Option
-pub fn put_me(
-    (state, _user, req): (State<AppState>, UserGuard, Json<UserUpdateRequest>),
-) -> impl Responder {
+pub fn put_me((state, _user, req): (State<AppState>, UserGuard, Json<UserUpdateRequest>)) -> impl Responder {
     trace!(&state.log, "Endpoint {ep} called", ep = "user::put_me"; "request" => ?&req.0);
 
     if req.email.is_none() && req.password.is_none() && req.name.is_none() {
@@ -99,8 +94,7 @@ pub fn token((state, req): (State<AppState>, Json<TokenRequest>)) -> impl Respon
             let resp = match res {
                 Ok(Some(user)) => {
                     // XXX: Should handle errors here as well
-                    let hasher = HashBuilder::from_phc(&user.secret)
-                        .expect("[CRIT] Failed to create Hasher");
+                    let hasher = HashBuilder::from_phc(&user.secret).expect("[CRIT] Failed to create Hasher");
                     if hasher.is_valid(&req.password) {
                         // Password check succeeded -> Issuing token
                         let claims = TokenClaims::new("auth", user.id);
@@ -108,7 +102,8 @@ pub fn token((state, req): (State<AppState>, Json<TokenRequest>)) -> impl Respon
                             &crate::jwt::Header::default(),
                             &claims,
                             state.config.jwt_secret.0.as_ref(),
-                        ).expect("Failed to encode jwt token");
+                        )
+                        .expect("Failed to encode jwt token");
                         let token = TokenResponse { token: jwt };
 
                         HttpResponse::Ok().json(token)

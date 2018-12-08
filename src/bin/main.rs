@@ -31,7 +31,7 @@ static REQUIRED_VARIABLES: [&str; 4] = [
     "KAPITALIST_HOST",
     "KAPITALIST_PORT",
     "KAPITALIST_DB",
-    "KAPITALIST_JWT_SECRET"
+    "KAPITALIST_JWT_SECRET",
 ];
 
 fn load_env() {
@@ -78,7 +78,7 @@ fn main() {
     // load configuration
     let cfg = match Config::from_env() {
         Ok(cfg) => cfg,
-        Err(e)  => {
+        Err(e) => {
             error!(log, "Failed to parse configuration"; "error" => ?e);
             return;
         }
@@ -86,7 +86,6 @@ fn main() {
 
     // actix main system
     let sys = actix::System::new("kapitalist");
-
 
     // database connection
     let url = cfg.db_url.clone();
@@ -110,7 +109,8 @@ fn main() {
             .resource("/me", |r| r.get().with(api::user::get_me))
             .resource("/wallet", |r| r.post().with(api::wallet::post))
             .resource("/wallet/{id}", |r| r.get().with(api::wallet::get))
-    }).bind(&cfg.addr.clone())
+    })
+    .bind(&cfg.addr.clone())
     .expect("Failed to start server")
     .start();
 
