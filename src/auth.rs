@@ -1,4 +1,3 @@
-use crate::jwt::{decode, Validation};
 use actix_web::{
     error::{Error, ErrorUnauthorized},
     http::header::AUTHORIZATION,
@@ -6,6 +5,8 @@ use actix_web::{
 };
 use chrono::serde::ts_seconds::{deserialize as from_ts, serialize as to_ts};
 use chrono::{offset::FixedOffset, DateTime, Utc};
+use jsonwebtoken::{decode, Validation};
+use slog::debug;
 
 use crate::state::AppState;
 

@@ -1,12 +1,12 @@
-use crate::state::AppState;
-
 use actix_web::{
     middleware::{Finished, Middleware, Started},
     HttpRequest, HttpResponse, Result,
 };
 use chrono::{DateTime, Utc};
-use slog;
+use slog::{self, o, trace};
 use slog_stdlog;
+
+use crate::state::AppState;
 
 struct StartTime(DateTime<Utc>);
 

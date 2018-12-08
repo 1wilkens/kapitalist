@@ -4,6 +4,7 @@ use actix_web::{
 };
 use chrono::NaiveDateTime;
 use diesel::{self, prelude::*};
+use slog::trace;
 
 use crate::db::{schema::users, DatabaseExecutor};
 use crate::request::UserCreationRequest;

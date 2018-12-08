@@ -5,7 +5,7 @@ use std::convert::From;
 use std::{env, net};
 
 use actix_web::actix;
-use slog;
+use slog::{self, o};
 use slog_stdlog;
 
 #[derive(Debug, Clone)]

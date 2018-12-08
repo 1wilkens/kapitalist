@@ -1,4 +1,5 @@
 use actix_web::{AsyncResponder, HttpResponse, Json, Responder, State};
+use slog::trace;
 
 use crate::auth::UserGuard;
 /*use crate::db::category::{GetCategory, NewCategory};

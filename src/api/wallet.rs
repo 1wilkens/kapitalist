@@ -15,6 +15,7 @@
 
 use actix_web::{AsyncResponder, HttpResponse, Json, Path, Responder, State};
 use futures::Future;
+use slog::{debug, trace};
 
 use crate::auth::UserGuard;
 use crate::db::wallet::{GetWallet, NewWallet};

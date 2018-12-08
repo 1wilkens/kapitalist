@@ -11,6 +11,8 @@
  */
 use actix_web::{AsyncResponder, Either, HttpResponse, Json, Responder, State};
 use futures::Future;
+use jsonwebtoken as jwt;
+use slog::{debug, trace};
 
 use crate::auth::{TokenClaims, UserGuard};
 use crate::db::user::{GetUser, NewUser};
@@ -98,12 +100,8 @@ pub fn token((state, req): (State<AppState>, Json<TokenRequest>)) -> impl Respon
                     if hasher.is_valid(&req.password) {
                         // Password check succeeded -> Issuing token
                         let claims = TokenClaims::new("auth", user.id);
-                        let jwt = crate::jwt::encode(
-                            &crate::jwt::Header::default(),
-                            &claims,
-                            state.config.jwt_secret.0.as_ref(),
-                        )
-                        .expect("Failed to encode jwt token");
+                        let jwt = jwt::encode(&jwt::Header::default(), &claims, state.config.jwt_secret.0.as_ref())
+                            .expect("Failed to encode jwt token");
                         let token = TokenResponse { token: jwt };
 
                         HttpResponse::Ok().json(token)

@@ -1,12 +1,10 @@
-extern crate actix_web;
-extern crate dotenv;
-
-#[macro_use]
-extern crate slog;
-extern crate slog_async;
-extern crate slog_term;
-
 extern crate kapitalist;
+
+use actix_web::{actix, server, App};
+use slog::{debug, error, info, o, trace, Logger};
+
+use std::collections::HashMap;
+use std::env;
 
 use kapitalist::{
     api,
@@ -14,12 +12,6 @@ use kapitalist::{
     log::SlogLogger,
     state::{AppState, Config},
 };
-
-use std::collections::HashMap;
-use std::env;
-
-use actix_web::{actix, server, App};
-use slog::Logger;
 
 /// Required environment variables for kapitalist
 ///
