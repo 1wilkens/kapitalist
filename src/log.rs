@@ -21,7 +21,7 @@ impl SlogLogger {
         SlogLogger {
             log: log
                 .into()
-                .unwrap_or(slog::Logger::root(slog_stdlog::StdLog.fuse(), o!())),
+                .unwrap_or_else(|| slog::Logger::root(slog_stdlog::StdLog.fuse(), o!())),
         }
     }
 

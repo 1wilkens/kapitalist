@@ -2,7 +2,6 @@ use actix_web::{
     actix::{Handler, Message},
     error::{self, Error},
 };
-use chrono::NaiveDateTime;
 use diesel::{self, prelude::*};
 
 use crate::db::{schema::categories, DatabaseExecutor};

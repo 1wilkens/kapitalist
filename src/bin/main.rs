@@ -102,7 +102,7 @@ fn main() {
             .resource("/wallet", |r| r.post().with(api::wallet::post))
             .resource("/wallet/{id}", |r| r.get().with(api::wallet::get))
     })
-    .bind(&cfg.addr.clone())
+    .bind(&cfg.addr)
     .expect("Failed to start server")
     .start();
 
