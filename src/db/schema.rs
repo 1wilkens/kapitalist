@@ -23,7 +23,7 @@ table! {
 table! {
     categories {
         id         -> Int4,
-        user_id    -> Int4,
+        user_id    -> Nullable<Int4>,
         name       -> Text,
         color      -> Nullable<Text>,
         created_at -> Timestamp,
