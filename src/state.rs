@@ -68,7 +68,9 @@ impl AppStateBuilder {
     pub fn build(self) -> AppState {
         use slog::Drain;
 
-        let log = self.log.unwrap_or_else(|| slog::Logger::root(slog_stdlog::StdLog.fuse(), o!()));
+        let log = self
+            .log
+            .unwrap_or_else(|| slog::Logger::root(slog_stdlog::StdLog.fuse(), o!()));
         AppState {
             log: log,
             config: self.config,
