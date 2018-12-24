@@ -40,8 +40,9 @@ pub struct NewUser {
 }
 
 /// Actix message to retrieve a user entity from the database
+/// XXX: Change this to take Options of i32 and String to allow for multiple selection methods
 #[derive(Debug)]
-pub struct GetUser(pub String);
+pub struct GetUser(pub(crate) String);
 
 impl NewUser {
     /// XXX: This should return a result, figure out fitting error type

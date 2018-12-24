@@ -30,7 +30,7 @@ pub struct Wallet {
     pub wallet_type: String,
     pub initial_balance: i32,
     pub current_balance: i32,
-    pub color: Option<String>,
+    pub color: String,
     pub created_at: NaiveDateTime,
 }
 

@@ -20,9 +20,10 @@ use crate::request::CategoryCreationRequest;
 #[derive(Debug, Deserialize, Serialize, Queryable)]
 pub struct Category {
     pub id: i32,
+    pub parent_id: Option<i32>,
     pub user_id: Option<i32>,
     pub name: String,
-    pub color: Option<String>,
+    pub color: String,
     pub created_at: NaiveDateTime,
 }
 
@@ -34,21 +35,23 @@ pub struct Category {
 #[derive(Debug, Insertable)]
 #[table_name = "categories"]
 pub struct NewCategory {
+    pub parent_id: Option<i32>,
     pub user_id: i32,
     pub name: String,
-    pub color: Option<String>,
+    pub color: String,
 }
 
 /// Actix message to retrieve a wallet entity from the database
 #[derive(Debug)]
 pub struct GetCategory {
     pub(crate) cid: i32,
-    pub(crate) uid: Option<i32>,
+    pub(crate) uid: i32,
 }
 
 impl NewCategory {
     pub fn from_request(req: CategoryCreationRequest, uid: i32) -> NewCategory {
         NewCategory {
+            parent_id: req.parent_id,
             user_id: uid,
             name: req.name,
             color: req.color,
@@ -72,6 +75,29 @@ impl Handler<NewCategory> for DatabaseExecutor {
             .get_result(&self.0)
             .map_err(error::ErrorInternalServerError)?;
 
+        trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?category);
+        Ok(category)
+    }
+}
+
+impl Message for GetCategory {
+    type Result = Result<Option<Category>, Error>;
+}
+
+impl Handler<GetCategory> for DatabaseExecutor {
+    type Result = Result<Option<Category>, Error>;
+
+    fn handle(&mut self, msg: GetCategory, _: &mut Self::Context) -> Self::Result {
+        use crate::db::schema::categories::dsl::*;
+        trace!(self.1, "Received db action"; "msg" => ?msg);
+
+        // XXX: Verify this is enough to protect unauthorized access
+        let category = categories
+            .filter(id.eq(&msg.cid))
+            .filter(user_id.is_null().or(user_id.eq(&msg.uid)))
+            .get_result(&self.0)
+            .optional()
+            .map_err(error::ErrorInternalServerError)?;
         trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?category);
         Ok(category)
     }

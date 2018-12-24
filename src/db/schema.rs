@@ -16,7 +16,7 @@ table! {
         wallet_type     -> Text,
         initial_balance -> Int4,
         current_balance -> Int4,
-        color           -> Nullable<Text>,
+        color           -> Text,
         created_at      -> Timestamp,
     }
 }
@@ -24,9 +24,10 @@ table! {
 table! {
     categories {
         id         -> Int4,
+        parent_id  -> Nullable<Int4>,
         user_id    -> Nullable<Int4>,
         name       -> Text,
-        color      -> Nullable<Text>,
+        color      -> Text,
         created_at -> Timestamp,
     }
 }
@@ -42,6 +43,8 @@ table! {
 
 // XXX: Maybe add more joinable macro calls
 joinable!(wallets -> users (user_id));
+// XXX: This seems to be invalid in diesel? Investigate..
+// joinable!(categories -> categories (parent_id));
 joinable!(categories -> users (user_id));
 joinable!(transactions -> wallets (wallet_id));
 joinable!(transactions -> categories (category_id));

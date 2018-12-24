@@ -31,5 +31,6 @@ pub struct WalletCreationRequest {
 #[derive(Debug, Deserialize)]
 pub struct CategoryCreationRequest {
     pub name: String,
-    pub color: Option<String>,
+    pub parent_id: Option<i32>,
+    pub color: String,
 }
