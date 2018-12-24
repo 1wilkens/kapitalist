@@ -4,6 +4,7 @@ use actix_web::{
 };
 use chrono::NaiveDateTime;
 use diesel::{self, prelude::*};
+use serde::{Deserialize, Serialize};
 use slog::trace;
 
 use crate::db::{schema::wallets, DatabaseExecutor};

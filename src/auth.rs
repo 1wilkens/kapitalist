@@ -6,6 +6,7 @@ use actix_web::{
 use chrono::serde::ts_seconds::{deserialize as from_ts, serialize as to_ts};
 use chrono::{offset::FixedOffset, DateTime, Utc};
 use jsonwebtoken::{decode, Validation};
+use serde::{Deserialize, Serialize};
 use slog::debug;
 
 use crate::state::AppState;
