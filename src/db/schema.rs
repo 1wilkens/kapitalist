@@ -13,6 +13,7 @@ table! {
         id              -> Int4,
         user_id         -> Int4,
         name            -> Text,
+        wallet_type     -> Text,
         initial_balance -> Int4,
         current_balance -> Int4,
         color           -> Nullable<Text>,

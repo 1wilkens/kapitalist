@@ -23,6 +23,7 @@ pub struct TokenRequest {
 #[derive(Debug, Deserialize)]
 pub struct WalletCreationRequest {
     pub name: String,
+    pub wallet_type: String,
     pub balance: i32,
     pub color: String,
 }

@@ -10,11 +10,14 @@ use slog::trace;
 use crate::db::{schema::wallets, DatabaseExecutor};
 use crate::request::WalletCreationRequest;
 
+// XXX: Make wallet_type an enum once we figure out which values belong there
+
 /// Database entity representing a user's wallet
 ///
 /// id              -
 /// user_id         -
 /// name            -
+/// wallet_type     -
 /// initial_balance -
 /// current_balance -
 /// color           -
@@ -24,6 +27,7 @@ pub struct Wallet {
     pub id: i32,
     pub user_id: i32,
     pub name: String,
+    pub wallet_type: String,
     pub initial_balance: i32,
     pub current_balance: i32,
     pub color: Option<String>,
@@ -42,6 +46,7 @@ pub struct Wallet {
 pub struct NewWallet {
     pub user_id: i32,
     pub name: String,
+    pub wallet_type: String,
     pub initial_balance: i32,
     pub current_balance: i32,
     pub color: String,
@@ -57,8 +62,9 @@ pub struct GetWallet {
 impl NewWallet {
     pub fn from_request(req: WalletCreationRequest, uid: i32) -> NewWallet {
         NewWallet {
-            name: req.name,
             user_id: uid,
+            name: req.name,
+            wallet_type: req.wallet_type,
             initial_balance: req.balance,
             current_balance: req.balance,
             color: req.color,
