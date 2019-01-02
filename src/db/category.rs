@@ -80,6 +80,15 @@ impl Handler<NewCategory> for DatabaseExecutor {
     }
 }
 
+impl GetCategory {
+    pub fn new(category_id: i32, user_id: i32) -> GetCategory {
+        GetCategory {
+            cid: category_id,
+            uid: user_id,
+        }
+    }
+}
+
 impl Message for GetCategory {
     type Result = Result<Option<Category>, Error>;
 }

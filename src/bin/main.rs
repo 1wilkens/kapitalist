@@ -102,6 +102,7 @@ fn main() {
             .resource("/wallet", |r| r.post().with(api::wallet::post))
             .resource("/wallet/{id}", |r| r.get().with(api::wallet::get))
             .resource("/category", |r| r.post().with(api::category::post))
+            .resource("/category/{id}", |r| r.get().with(api::category::get))
     })
     .bind(&cfg.addr)
     .expect("Failed to start server")
