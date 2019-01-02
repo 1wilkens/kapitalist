@@ -9,7 +9,7 @@ use std::env;
 use kapitalist::{
     api,
     db::DatabaseExecutor,
-    log::SlogLogger,
+    log::SlogMiddleware,
     state::{AppState, Config},
 };
 
@@ -94,7 +94,7 @@ fn main() {
             .with_logger(log_.clone())
             .build();
         App::with_state(state)
-            .middleware(SlogLogger::new(log_.clone()))
+            .middleware(SlogMiddleware::new(log_.clone()))
             .resource("/", |r| r.get().f(api::index))
             .resource("/register", |r| r.post().with(api::user::register))
             .resource("/token", |r| r.post().with(api::user::token))
