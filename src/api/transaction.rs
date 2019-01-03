@@ -7,22 +7,18 @@ use crate::request::CategoryCreationRequest;*/
 use crate::response::ErrorResponse;
 use crate::state::AppState;
 
-pub fn get_all((state, _user, _wid): (State<AppState>, UserGuard, u64)) -> impl Responder {
-    trace!(&state.log, "Endpoint {ep} called", ep = "transaction::get_all");
+pub fn get_all((_state, _user, _wid): (State<AppState>, UserGuard, u64)) -> impl Responder {
     HttpResponse::InternalServerError().json(ErrorResponse::not_implemented())
 }
 
-pub fn post((state, _user, _wid): (State<AppState>, UserGuard, u64)) -> impl Responder {
-    trace!(&state.log, "Endpoint {ep} called", ep = "transaction::post");
+pub fn post((_state, _user, _wid): (State<AppState>, UserGuard, u64)) -> impl Responder {
     HttpResponse::InternalServerError().json(ErrorResponse::not_implemented())
 }
 
-pub fn get((state, _user, _wid, _tid): (State<AppState>, UserGuard, u64, u64)) -> impl Responder {
-    trace!(&state.log, "Endpoint {ep} called", ep = "transaction::get");
+pub fn get((_state, _user, _wid, _tid): (State<AppState>, UserGuard, u64, u64)) -> impl Responder {
     HttpResponse::InternalServerError().json(ErrorResponse::not_implemented())
 }
 
-pub fn put((state, _user, _wid, _tid): (State<AppState>, UserGuard, u64, u64)) -> impl Responder {
-    trace!(&state.log, "Endpoint {ep} called", ep = "transaction::put");
+pub fn put((_state, _user, _wid, _tid): (State<AppState>, UserGuard, u64, u64)) -> impl Responder {
     HttpResponse::InternalServerError().json(ErrorResponse::not_implemented())
 }

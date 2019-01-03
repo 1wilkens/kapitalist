@@ -29,8 +29,6 @@ pub fn register((state, req): (State<AppState>, Json<UserCreationRequest>)) -> i
      * - Insert into DB
      * - Figure out what to return (redirect to me?)
      */
-    trace!(&state.log, "Endpoint {ep} called",ep = "user::register"; "request" => ?&req.0);
-
     let new_user = match NewUser::from_request(req.0) {
         Some(u) => u,
         None => {
@@ -49,11 +47,6 @@ pub fn register((state, req): (State<AppState>, Json<UserCreationRequest>)) -> i
                         HttpResponse::InternalServerError().into()
                     }
                 };
-
-                trace!(&state.log, "Endpoint {ep} returned",
-                    ep = "user::register";
-                    "response" => ?&resp.body(),
-                    "statuscode" => %resp.status());
                 Ok(resp)
             })
             .responder(),
@@ -67,8 +60,7 @@ pub fn get_me((state, user): (State<AppState>, UserGuard)) -> impl Responder {
 
 // XXX: This should probably return Result instead of Option
 pub fn put_me((state, _user, req): (State<AppState>, UserGuard, Json<UserUpdateRequest>)) -> impl Responder {
-    trace!(&state.log, "Endpoint {ep} called", ep = "user::put_me"; "request" => ?&req.0);
-
+    // XXX: Move this into UserUpdateRequest.is_valid()?
     if req.email.is_none() && req.password.is_none() && req.name.is_none() {
         // At least one field has to be set, could also return 301 unchanged?
         return HttpResponse::BadRequest().json(ErrorResponse::new(
@@ -87,7 +79,6 @@ pub fn token((state, req): (State<AppState>, Json<TokenRequest>)) -> impl Respon
      * - Generate and return token
      */
     use libreauth::pass::HashBuilder;
-    trace!(&state.log, "Endpoint {ep} called", ep = "user::token"; "request" => ?&req.0);
 
     state
         .db
@@ -118,11 +109,6 @@ pub fn token((state, req): (State<AppState>, Json<TokenRequest>)) -> impl Respon
                     HttpResponse::InternalServerError().json(ErrorResponse::internal_server_error())
                 }
             };
-
-            trace!(&state.log, "Endpoint {ep} returned",
-                ep = "user::token";
-                "response" => ?&resp.body(),
-                "statuscode" => %&resp.status());
             Ok(resp)
         })
         .responder()

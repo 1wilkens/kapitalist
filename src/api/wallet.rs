@@ -24,8 +24,6 @@ use crate::response::ErrorResponse;
 use crate::state::AppState;
 
 pub fn post((state, user, req): (State<AppState>, UserGuard, Json<WalletCreationRequest>)) -> impl Responder {
-    trace!(&state.log, "Endpoint {ep} called", ep = "wallet::post"; "request" => ?&req.0);
-
     let new_wallet = NewWallet::from_request(req.0, user.user_id);
     state
         .db
@@ -39,17 +37,12 @@ pub fn post((state, user, req): (State<AppState>, UserGuard, Json<WalletCreation
                     HttpResponse::InternalServerError().json(ErrorResponse::internal_server_error())
                 }
             };
-
-            trace!(&state.log, "Endpoint {ep} returned", ep = "wallet::post";
-                            "response" => ?&resp.body(),
-                            "statuscode" => %&resp.status());
             Ok(resp)
         })
         .responder()
 }
 
 pub fn get((state, user, wid): (State<AppState>, UserGuard, Path<(i32)>)) -> impl Responder {
-    trace!(&state.log, "Endpoint {ep} called", ep = "wallet::get");
     let get_wallet = GetWallet::new(*wid, user.user_id);
     state
         .db
@@ -65,16 +58,11 @@ pub fn get((state, user, wid): (State<AppState>, UserGuard, Path<(i32)>)) -> imp
                     HttpResponse::InternalServerError().json(ErrorResponse::internal_server_error())
                 }
             };
-
-            trace!(&state.log, "Endpoint {ep} returned", ep = "wallet::get";
-                            "response" => ?&resp.body(),
-                            "statuscode" => %&resp.status());
             Ok(resp)
         })
         .responder()
 }
 
-pub fn put((state, _user, _wid): (State<AppState>, UserGuard, u64)) -> impl Responder {
-    trace!(&state.log, "Endpoint {ep} called", ep = "wallet::put");
+pub fn put((_state, _user, _wid): (State<AppState>, UserGuard, u64)) -> impl Responder {
     HttpResponse::InternalServerError().json(ErrorResponse::not_implemented())
 }
