@@ -1,3 +1,4 @@
+use chrono::NaiveDateTime;
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
@@ -33,4 +34,13 @@ pub struct CategoryCreationRequest {
     pub name: String,
     pub parent_id: Option<i32>,
     pub color: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct TransactionCreationRequest {
+    pub source_wallet_id: i32,
+    pub destination_wallet_id: Option<i32>,
+    pub category_id: i32,
+    pub amount: i32,
+    pub ts: NaiveDateTime,
 }
