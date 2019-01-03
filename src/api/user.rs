@@ -59,7 +59,7 @@ pub fn get_me((state, user): (State<AppState>, UserGuard)) -> impl Responder {
 }
 
 // XXX: This should probably return Result instead of Option
-pub fn put_me((state, _user, req): (State<AppState>, UserGuard, Json<UserUpdateRequest>)) -> impl Responder {
+pub fn put_me((_state, _user, req): (State<AppState>, UserGuard, Json<UserUpdateRequest>)) -> impl Responder {
     // XXX: Move this into UserUpdateRequest.is_valid()?
     if req.email.is_none() && req.password.is_none() && req.name.is_none() {
         // At least one field has to be set, could also return 301 unchanged?
