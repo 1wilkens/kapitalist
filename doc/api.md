@@ -33,11 +33,11 @@
 
 | Method | Endpoint | Payload/Params | Result | Description |
 | :--: | -- | -- | -- | -- |
-| GET | `/wallet/{wid}/transactions` | `from, to` | get transaction history |
-| POST | `/wallet/{wid}/transaction` | TransactionCreationRequest | create new transaction |
-| GET | `/wallet/{wid}/transaction/{tid}` | - | get transaction details |
-| PUT | `/wallet/{wid}/transaction/{tid}` | TransactionUpdateRequest | update transaction details |
-| DELETE | `/wallet/{wid}/transaction/{tid}` | - | delete transaction |
+| GET | `/transactions` | `from, to` | get transaction history |
+| POST | `/transaction` | TransactionCreationRequest | create new transaction |
+| GET | `/transaction/{tid}` | - | get transaction details |
+| PUT | `/transaction/{tid}` | TransactionUpdateRequest | update transaction details |
+| DELETE | `/transaction/{tid}` | - | delete transaction |
 
 ### Statistics
 | Method | Endpoint | Payload/Params | Description |
