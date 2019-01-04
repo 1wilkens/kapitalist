@@ -7,11 +7,7 @@ use diesel::{self, prelude::*};
 use serde::{Deserialize, Serialize};
 use slog::trace;
 
-use crate::db::{
-    schema::transactions,
-    wallet::{GetWallet, Wallet},
-    DatabaseExecutor,
-};
+use crate::db::{schema::transactions, wallet::GetWallet, DatabaseExecutor};
 use crate::request::TransactionCreationRequest;
 
 /// Database entity representing a transaction
@@ -96,12 +92,24 @@ impl Handler<NewTransaction> for DatabaseExecutor {
             return Err(error::ErrorUnauthorized("User already exists"));
         }*/
 
+        // XXX: This currently does NOT check if the user owns the source wallet
+        // Unfortunately we can't just add a user_id field to NewTransaction as it is directly
+        // Insertable. TODO: Figure out an elegant way to handle this!
         let transaction: Transaction = diesel::insert_into(transactions)
             .values(&msg)
             .get_result(&self.0)
             .map_err(error::ErrorInternalServerError)?;
         trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?transaction);
         Ok(transaction)
+    }
+}
+
+impl GetTransaction {
+    pub fn new(transaction_id: i32, user_id: i32) -> GetTransaction {
+        GetTransaction {
+            tid: transaction_id,
+            uid: user_id,
+        }
     }
 }
 
@@ -140,6 +148,15 @@ impl Handler<GetTransaction> for DatabaseExecutor {
     }
 }
 
+impl GetTransactionsFromWallet {
+    pub fn new(wallet_id: i32, user_id: i32) -> GetTransactionsFromWallet {
+        GetTransactionsFromWallet {
+            wid: wallet_id,
+            uid: user_id,
+        }
+    }
+}
+
 impl Message for GetTransactionsFromWallet {
     type Result = Result<Option<Vec<Transaction>>, Error>;
 }
@@ -151,6 +168,7 @@ impl Handler<GetTransactionsFromWallet> for DatabaseExecutor {
         use crate::db::schema::transactions::dsl::*;
         trace!(self.1, "Received db action"; "msg" => ?msg);
 
+        // Check user has access to source wallet
         let get_wallet = GetWallet::new(msg.wid, msg.uid);
         let wallet = self.handle(get_wallet, ctx);
 
