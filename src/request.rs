@@ -5,7 +5,7 @@ use serde::Deserialize;
 pub struct UserCreationRequest {
     pub email: String,
     pub password: String,
-    pub name: String,
+    pub name: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]

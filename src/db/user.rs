@@ -52,10 +52,16 @@ impl NewUser {
         let hasher = HashBuilder::new().finalize().expect("[CRIT] Failed to create Hasher");
         // XXX: Should handle hash errors here
         let hash = hasher.hash(&req.password).ok()?;
+        // XXX: This looks rather ugly, but unwrap_or_else tries to move req
+        let name = if let Some(name) = req.name {
+            name
+        } else {
+            req.email.clone()
+        };
         Some(NewUser {
             email: req.email,
             secret: hash,
-            username: req.name,
+            username: name,
         })
     }
 }
