@@ -1,6 +1,6 @@
 use actix_web::{AsyncResponder, HttpResponse, Json, Path, Responder, State};
 use futures::Future;
-use slog::{debug, trace};
+use slog::debug;
 
 use crate::auth::UserGuard;
 use crate::db::category::{GetCategory, NewCategory};
