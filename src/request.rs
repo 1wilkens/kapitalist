@@ -46,5 +46,6 @@ pub struct TransactionCreationRequest {
     pub wallet_id: i32,
     pub category_id: i32,
     pub amount: i32,
-    pub ts: NaiveDateTime,
+    #[serde(default)]
+    pub ts: Option<NaiveDateTime>,
 }

@@ -2,7 +2,7 @@ use actix_web::{
     actix::{Handler, Message},
     error::{self, Error},
 };
-use chrono::NaiveDateTime;
+use chrono::{NaiveDateTime, Utc};
 use diesel::{self, prelude::*};
 use serde::{Deserialize, Serialize};
 use slog::trace;
@@ -61,7 +61,10 @@ impl NewTransaction {
             wallet_id: req.wallet_id,
             category_id: req.category_id,
             amount: req.amount,
-            ts: req.ts,
+            ts: req
+                .ts
+                // XXX: Check this is correct in regards to timezone
+                .unwrap_or_else(|| NaiveDateTime::from_timestamp(Utc::now().timestamp(), 0)),
         }
     }
 }
