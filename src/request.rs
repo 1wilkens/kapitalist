@@ -38,8 +38,7 @@ pub struct CategoryCreationRequest {
 
 #[derive(Debug, Deserialize)]
 pub struct TransactionCreationRequest {
-    pub source_wallet_id: i32,
-    pub destination_wallet_id: Option<i32>,
+    pub wallet_id: i32,
     pub category_id: i32,
     pub amount: i32,
     pub ts: NaiveDateTime,

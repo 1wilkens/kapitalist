@@ -12,17 +12,15 @@ use crate::request::TransactionCreationRequest;
 
 /// Database entity representing a transaction
 ///
-/// id                    -
-/// source_wallet_id      -
-/// destination_wallet_id -
-/// category_id           -
-/// amount                -
-/// ts                    -
+/// id          -
+/// wallet_id   -
+/// category_id -
+/// amount      -
+/// ts          -
 #[derive(Debug, Deserialize, Serialize, Queryable)]
 pub struct Transaction {
     pub id: i32,
-    pub source_wallet_id: i32,
-    pub destination_wallet_id: Option<i32>,
+    pub wallet_id: i32,
     pub category_id: i32,
     pub amount: i32,
     pub ts: NaiveDateTime,
@@ -30,16 +28,14 @@ pub struct Transaction {
 
 /// Insertable database entity to create new transactions
 ///
-/// source_wallet_id      -
-/// destination_wallet_id -
-/// category_id           -
-/// amount                -
-/// ts                    -
+/// wallet_id   -
+/// category_id -
+/// amount      -
+/// ts          -
 #[derive(Debug, Insertable)]
 #[table_name = "transactions"]
 pub struct NewTransaction {
-    pub source_wallet_id: i32,
-    pub destination_wallet_id: Option<i32>,
+    pub wallet_id: i32,
     pub category_id: i32,
     pub amount: i32,
     pub ts: NaiveDateTime,
@@ -62,8 +58,7 @@ pub struct GetTransactionsFromWallet {
 impl NewTransaction {
     pub fn from_request(req: TransactionCreationRequest) -> NewTransaction {
         NewTransaction {
-            source_wallet_id: req.source_wallet_id,
-            destination_wallet_id: req.destination_wallet_id,
+            wallet_id: req.wallet_id,
             category_id: req.category_id,
             amount: req.amount,
             ts: req.ts,
@@ -136,7 +131,7 @@ impl Handler<GetTransaction> for DatabaseExecutor {
         };
 
         // XXX: Verify this is enough to protect against unauthorized access
-        let wallet = self.handle(GetWallet::new(transaction.source_wallet_id, msg.uid), ctx);
+        let wallet = self.handle(GetWallet::new(transaction.wallet_id, msg.uid), ctx);
 
         let result = match wallet {
             Ok(Some(_)) => Some(transaction),
@@ -175,7 +170,7 @@ impl Handler<GetTransactionsFromWallet> for DatabaseExecutor {
         let result = match wallet {
             Ok(Some(_)) => {
                 let txs = transactions
-                    .filter(source_wallet_id.eq(msg.wid))
+                    .filter(wallet_id.eq(msg.wid))
                     .get_results(&self.0)
                     .map_err(error::ErrorInternalServerError)?;
                 Some(txs)

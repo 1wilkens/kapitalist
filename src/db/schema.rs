@@ -35,8 +35,7 @@ table! {
 table! {
     transactions (id) {
         id -> Int4,
-        source_wallet_id -> Int4,
-        destination_wallet_id -> Nullable<Int4>,
+        wallet_id -> Int4,
         category_id -> Int4,
         amount -> Int4,
         ts -> Timestamp,
@@ -48,8 +47,7 @@ joinable!(wallets -> users (user_id));
 // XXX: This seems to be invalid in diesel? Investigate..
 // joinable!(categories -> categories (parent_id));
 joinable!(categories -> users (user_id));
-joinable!(transactions -> wallets (source_wallet_id));
-//joinable!(transactions -> wallets (destination_wallet_id));
+joinable!(transactions -> wallets (wallet_id));
 joinable!(transactions -> categories (category_id));
 
 allow_tables_to_appear_in_same_query!(users, wallets, categories, transactions);
