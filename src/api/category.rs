@@ -3,7 +3,7 @@ use futures::Future;
 use slog::debug;
 
 use crate::auth::UserGuard;
-use crate::db::category::{GetCategory, NewCategory};
+use crate::db::category::{DeleteCategory, GetCategory, NewCategory};
 use crate::request::CategoryCreationRequest;
 use crate::response::ErrorResponse;
 use crate::state::AppState;
@@ -37,6 +37,26 @@ pub fn get((state, user, tid): (State<AppState>, UserGuard, Path<i32>)) -> impl 
                 Ok(Some(category)) => HttpResponse::Ok().json(category),
                 // XXX: Handle this properly and add utility method for 404
                 Ok(None) => HttpResponse::NotFound().json("not found"),
+                Err(err) => {
+                    debug!(&state.log, "Error getting category from database";
+                        "error" => %&err);
+                    HttpResponse::InternalServerError().json(ErrorResponse::internal_server_error())
+                }
+            };
+            Ok(resp)
+        })
+        .responder()
+}
+
+pub fn delete((state, user, tid): (State<AppState>, UserGuard, Path<i32>)) -> impl Responder {
+    let delete_category = DeleteCategory::new(*tid, user.user_id);
+    state
+        .db
+        .send(delete_category)
+        .and_then(move |res| {
+            let resp = match res {
+                Ok(true) => HttpResponse::Ok().json(""),
+                Ok(false) => HttpResponse::NotFound().json("not found"),
                 Err(err) => {
                     debug!(&state.log, "Error getting category from database";
                         "error" => %&err);

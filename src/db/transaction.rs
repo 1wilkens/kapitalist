@@ -55,6 +55,13 @@ pub struct GetTransactionsFromWallet {
     pub(crate) uid: i32,
 }
 
+/// Actix message to delete a transaction entity from the database
+#[derive(Debug)]
+pub struct DeleteTransaction {
+    pub(crate) tid: i32,
+    pub(crate) uid: i32,
+}
+
 impl NewTransaction {
     pub fn from_request(req: TransactionCreationRequest) -> NewTransaction {
         NewTransaction {
@@ -167,8 +174,7 @@ impl Handler<GetTransactionsFromWallet> for DatabaseExecutor {
         trace!(self.1, "Received db action"; "msg" => ?msg);
 
         // Check user has access to source wallet
-        let get_wallet = GetWallet::new(msg.wid, msg.uid);
-        let wallet = self.handle(get_wallet, ctx);
+        let wallet = self.handle(GetWallet::new(msg.wid, msg.uid), ctx);
 
         let result = match wallet {
             Ok(Some(_)) => {
@@ -183,5 +189,46 @@ impl Handler<GetTransactionsFromWallet> for DatabaseExecutor {
 
         trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?result);
         Ok(result)
+    }
+}
+
+impl DeleteTransaction {
+    pub fn new(transaction_id: i32, user_id: i32) -> DeleteTransaction {
+        DeleteTransaction {
+            tid: transaction_id,
+            uid: user_id,
+        }
+    }
+}
+
+impl Message for DeleteTransaction {
+    type Result = Result<bool, Error>;
+}
+
+impl Handler<DeleteTransaction> for DatabaseExecutor {
+    type Result = Result<bool, Error>;
+
+    fn handle(&mut self, msg: DeleteTransaction, ctx: &mut Self::Context) -> Self::Result {
+        use crate::db::schema::transactions::dsl::*;
+        trace!(self.1, "Received db action"; "msg" => ?msg);
+
+        let tx = self.handle(GetTransaction::new(msg.tid, msg.uid), ctx);
+        let tx = match tx {
+            Ok(Some(t)) => t,
+            _ => return Ok(false),
+        };
+
+        // XXX: Verify this is enough to protect against unauthorized access
+        let wallet = self.handle(GetWallet::new(tx.wallet_id, msg.uid), ctx);
+        let result = match wallet {
+            Ok(Some(_)) => diesel::delete(transactions)
+                .filter(id.eq(&msg.tid))
+                .execute(&self.0)
+                .map_err(error::ErrorInternalServerError)?,
+            _ => 0,
+        };
+
+        trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?result);
+        Ok(result > 0)
     }
 }

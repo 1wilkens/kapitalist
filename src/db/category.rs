@@ -48,6 +48,13 @@ pub struct GetCategory {
     pub(crate) uid: i32,
 }
 
+/// Actix message to delete a wallet entity from the database
+#[derive(Debug)]
+pub struct DeleteCategory {
+    pub(crate) cid: i32,
+    pub(crate) uid: i32,
+}
+
 impl NewCategory {
     pub fn from_request(req: CategoryCreationRequest, uid: i32) -> NewCategory {
         NewCategory {
@@ -109,5 +116,36 @@ impl Handler<GetCategory> for DatabaseExecutor {
             .map_err(error::ErrorInternalServerError)?;
         trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?category);
         Ok(category)
+    }
+}
+
+impl DeleteCategory {
+    pub fn new(category_id: i32, user_id: i32) -> DeleteCategory {
+        DeleteCategory {
+            cid: category_id,
+            uid: user_id,
+        }
+    }
+}
+
+impl Message for DeleteCategory {
+    type Result = Result<bool, Error>;
+}
+
+impl Handler<DeleteCategory> for DatabaseExecutor {
+    type Result = Result<bool, Error>;
+
+    fn handle(&mut self, msg: DeleteCategory, _: &mut Self::Context) -> Self::Result {
+        use crate::db::schema::categories::dsl::*;
+        trace!(self.1, "Received db action"; "msg" => ?msg);
+
+        // XXX: Verify this is enough to protect unauthorized access
+        let res = diesel::delete(categories)
+            .filter(id.eq(&msg.cid))
+            .filter(user_id.is_null().or(user_id.eq(&msg.uid)))
+            .execute(&self.0)
+            .map_err(error::ErrorInternalServerError)?;
+        trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?res);
+        Ok(res > 0)
     }
 }

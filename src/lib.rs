@@ -37,9 +37,12 @@ pub fn build_app(config: &state::Config, log: &Logger) -> actix_web::App<state::
         .resource("/me", |r| r.get().with(api::user::get_me))
         .resource("/wallet", |r| r.post().with(api::wallet::post))
         .resource("/wallet/{id}", |r| r.get().with(api::wallet::get))
+        .resource("/wallet/{id}", |r| r.delete().with(api::wallet::delete))
         .resource("/category", |r| r.post().with(api::category::post))
         .resource("/category/{id}", |r| r.get().with(api::category::get))
-        .resource("/transactions/{id}", |r| r.post().with(api::transaction::get_all))
+        .resource("/category/{id}", |r| r.delete().with(api::category::delete))
+        .resource("/transactions/{id}", |r| r.get().with(api::transaction::get_all))
         .resource("/transaction", |r| r.post().with(api::transaction::post))
         .resource("/transaction/{id}", |r| r.get().with(api::transaction::get))
+        .resource("/transaction/{id}", |r| r.delete().with(api::transaction::delete))
 }

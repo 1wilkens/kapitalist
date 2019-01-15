@@ -59,6 +59,13 @@ pub struct GetWallet {
     pub(crate) uid: i32,
 }
 
+/// Actix message to delete a wallet entity from the database
+#[derive(Debug)]
+pub struct DeleteWallet {
+    pub(crate) wid: i32,
+    pub(crate) uid: i32,
+}
+
 impl NewWallet {
     pub fn from_request(req: WalletCreationRequest, uid: i32) -> NewWallet {
         NewWallet {
@@ -131,5 +138,36 @@ impl Handler<GetWallet> for DatabaseExecutor {
             .map_err(error::ErrorInternalServerError)?;
         trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?wallet);
         Ok(wallet)
+    }
+}
+
+impl DeleteWallet {
+    pub fn new(wallet_id: i32, user_id: i32) -> DeleteWallet {
+        DeleteWallet {
+            wid: wallet_id,
+            uid: user_id,
+        }
+    }
+}
+
+impl Message for DeleteWallet {
+    type Result = Result<bool, Error>;
+}
+
+impl Handler<DeleteWallet> for DatabaseExecutor {
+    type Result = Result<bool, Error>;
+
+    fn handle(&mut self, msg: DeleteWallet, _: &mut Self::Context) -> Self::Result {
+        use crate::db::schema::wallets::dsl::*;
+        trace!(self.1, "Received db action"; "msg" => ?msg);
+
+        // XXX: Verify this is enough to protect unauthorized access
+        let res = diesel::delete(wallets)
+            .filter(id.eq(&msg.wid))
+            .filter(user_id.eq(&msg.uid))
+            .execute(&self.0)
+            .map_err(error::ErrorInternalServerError)?;
+        trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?res);
+        Ok(res > 0)
     }
 }

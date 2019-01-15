@@ -3,7 +3,7 @@ use futures::future::Future;
 use slog::debug;
 
 use crate::auth::UserGuard;
-use crate::db::transaction::{GetTransaction, GetTransactionsFromWallet, NewTransaction};
+use crate::db::transaction::{DeleteTransaction, GetTransaction, GetTransactionsFromWallet, NewTransaction};
 use crate::request::TransactionCreationRequest;
 use crate::response::ErrorResponse;
 use crate::state::AppState;
@@ -68,6 +68,32 @@ pub fn get((state, user, tid): (State<AppState>, UserGuard, Path<i32>)) -> impl 
         .responder()
 }
 
-/*pub fn put((state, user, req): (State<AppState>, UserGuard, Json<TransactionUpdateRequest>)) -> impl Responder {
+pub fn put(
+    (state, user, tid /*, req*/): (
+        State<AppState>,
+        UserGuard,
+        Path<i32>, /*, Json<TransactionUpdateRequest>*/
+    ),
+) -> impl Responder {
     HttpResponse::InternalServerError().json(ErrorResponse::not_implemented())
-}*/
+}
+
+pub fn delete((state, user, tid): (State<AppState>, UserGuard, Path<i32>)) -> impl Responder {
+    let delete_tx = DeleteTransaction::new(*tid, user.user_id);
+    state
+        .db
+        .send(delete_tx)
+        .and_then(move |res| {
+            let resp = match res {
+                Ok(true) => HttpResponse::Ok().json(""),
+                Ok(false) => HttpResponse::NotFound().json("not found"),
+                Err(err) => {
+                    debug!(&state.log, "Error deleting transaction from database";
+                        "error" => %&err);
+                    HttpResponse::InternalServerError().json(ErrorResponse::internal_server_error())
+                }
+            };
+            Ok(resp)
+        })
+        .responder()
+}

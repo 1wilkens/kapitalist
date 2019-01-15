@@ -18,7 +18,7 @@ use futures::Future;
 use slog::debug;
 
 use crate::auth::UserGuard;
-use crate::db::wallet::{GetWallet, NewWallet};
+use crate::db::wallet::{DeleteWallet, GetWallet, NewWallet};
 use crate::request::WalletCreationRequest;
 use crate::response::ErrorResponse;
 use crate::state::AppState;
@@ -65,4 +65,24 @@ pub fn get((state, user, wid): (State<AppState>, UserGuard, Path<(i32)>)) -> imp
 
 pub fn put((_state, _user, _wid): (State<AppState>, UserGuard, u64)) -> impl Responder {
     HttpResponse::InternalServerError().json(ErrorResponse::not_implemented())
+}
+
+pub fn delete((state, user, wid): (State<AppState>, UserGuard, Path<(i32)>)) -> impl Responder {
+    let delete_wallet = DeleteWallet::new(*wid, user.user_id);
+    state
+        .db
+        .send(delete_wallet)
+        .and_then(move |res| {
+            let resp = match res {
+                Ok(true) => HttpResponse::Ok().json(""),
+                Ok(false) => HttpResponse::NotFound().json("not found"),
+                Err(err) => {
+                    debug!(&state.log, "Error delete wallet from database";
+                        "error" => %&err);
+                    HttpResponse::InternalServerError().json(ErrorResponse::internal_server_error())
+                }
+            };
+            Ok(resp)
+        })
+        .responder()
 }
