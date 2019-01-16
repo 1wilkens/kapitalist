@@ -34,6 +34,18 @@ pub struct WalletCreationRequest {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct WalletUpdateRequest {
+    #[serde(default)]
+    pub name: Option<String>,
+    #[serde(default)]
+    pub wallet_type: Option<String>,
+    #[serde(default)]
+    pub balance: Option<i32>,
+    #[serde(default)]
+    pub color: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct CategoryCreationRequest {
     pub name: String,
     #[serde(default)]

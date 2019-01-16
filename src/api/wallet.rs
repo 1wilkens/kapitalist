@@ -18,19 +18,20 @@ use futures::Future;
 use slog::debug;
 
 use crate::auth::UserGuard;
-use crate::db::wallet::{DeleteWallet, GetWallet, NewWallet};
-use crate::request::WalletCreationRequest;
+use crate::db::wallet::{DeleteWallet, GetWallet, NewWallet, UpdateWallet};
+use crate::request::{WalletCreationRequest, WalletUpdateRequest};
 use crate::response::ErrorResponse;
 use crate::state::AppState;
 
 pub fn post((state, user, req): (State<AppState>, UserGuard, Json<WalletCreationRequest>)) -> impl Responder {
-    let new_wallet = NewWallet::from_request(req.0, user.user_id);
+    let new_wallet = NewWallet::from_request(user.user_id, req.0);
     state
         .db
         .send(new_wallet)
         .and_then(move |res| {
             let resp = match res {
-                Ok(wallet) => HttpResponse::Ok().json(wallet),
+                // XXX: Set location header
+                Ok(wallet) => HttpResponse::Created().json(wallet),
                 Err(err) => {
                     debug!(&state.log, "Error inserting wallet into database";
                         "error" => %&err);
@@ -43,7 +44,7 @@ pub fn post((state, user, req): (State<AppState>, UserGuard, Json<WalletCreation
 }
 
 pub fn get((state, user, wid): (State<AppState>, UserGuard, Path<(i32)>)) -> impl Responder {
-    let get_wallet = GetWallet::new(*wid, user.user_id);
+    let get_wallet = GetWallet::new(user.user_id, *wid);
     state
         .db
         .send(get_wallet)
@@ -51,7 +52,7 @@ pub fn get((state, user, wid): (State<AppState>, UserGuard, Path<(i32)>)) -> imp
             let resp = match res {
                 Ok(Some(wallet)) => HttpResponse::Ok().json(wallet),
                 // XXX: Handle this properly and add utility method for 404
-                Ok(None) => HttpResponse::NotFound().json("not found"),
+                Ok(None) => super::util::not_found(&"wallet"),
                 Err(err) => {
                     debug!(&state.log, "Error getting wallet from database";
                         "error" => %&err);
@@ -63,19 +64,38 @@ pub fn get((state, user, wid): (State<AppState>, UserGuard, Path<(i32)>)) -> imp
         .responder()
 }
 
-pub fn put((_state, _user, _wid): (State<AppState>, UserGuard, u64)) -> impl Responder {
-    HttpResponse::InternalServerError().json(ErrorResponse::not_implemented())
+pub fn put(
+    (state, user, wid, req): (State<AppState>, UserGuard, Path<i32>, Json<WalletUpdateRequest>),
+) -> impl Responder {
+    let update_wallet = UpdateWallet::from_request(user.user_id, *wid, req.0);
+    state
+        .db
+        .send(update_wallet)
+        .and_then(move |res| {
+            let resp = match res {
+                Ok(Some(wallet)) => HttpResponse::Ok().json(wallet),
+                // XXX: Handle this properly and add utility method for 404
+                Ok(None) => super::util::not_found(&"wallet"),
+                Err(err) => {
+                    debug!(&state.log, "Error updating wallet in database";
+                        "error" => %&err);
+                    HttpResponse::InternalServerError().json(ErrorResponse::internal_server_error())
+                }
+            };
+            Ok(resp)
+        })
+        .responder()
 }
 
 pub fn delete((state, user, wid): (State<AppState>, UserGuard, Path<(i32)>)) -> impl Responder {
-    let delete_wallet = DeleteWallet::new(*wid, user.user_id);
+    let delete_wallet = DeleteWallet::new(user.user_id, *wid);
     state
         .db
         .send(delete_wallet)
         .and_then(move |res| {
             let resp = match res {
                 Ok(true) => HttpResponse::Ok().json(""),
-                Ok(false) => HttpResponse::NotFound().json("not found"),
+                Ok(false) => super::util::not_found(&"wallet"),
                 Err(err) => {
                     debug!(&state.log, "Error delete wallet from database";
                         "error" => %&err);

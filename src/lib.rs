@@ -29,18 +29,24 @@ pub fn build_app(config: &state::Config, log: &Logger) -> actix_web::App<state::
     let state = state::AppState::new(cfg_.clone(), db.clone())
         .with_logger(log_.clone())
         .build();
+
     actix_web::App::with_state(state)
         .middleware(log::SlogMiddleware::new(log_.clone()))
+        // User management
         .resource("/", |r| r.get().f(api::index))
         .resource("/register", |r| r.post().with(api::user::register))
         .resource("/token", |r| r.post().with(api::user::token))
         .resource("/me", |r| r.get().with(api::user::get_me))
+        // Wallets
         .resource("/wallet", |r| r.post().with(api::wallet::post))
         .resource("/wallet/{id}", |r| r.get().with(api::wallet::get))
+        .resource("/wallet/{id}", |r| r.put().with(api::wallet::put))
         .resource("/wallet/{id}", |r| r.delete().with(api::wallet::delete))
+        // Categories
         .resource("/category", |r| r.post().with(api::category::post))
         .resource("/category/{id}", |r| r.get().with(api::category::get))
         .resource("/category/{id}", |r| r.delete().with(api::category::delete))
+        // Transactions
         .resource("/transactions/{id}", |r| r.get().with(api::transaction::get_all))
         .resource("/transaction", |r| r.post().with(api::transaction::post))
         .resource("/transaction/{id}", |r| r.get().with(api::transaction::get))
