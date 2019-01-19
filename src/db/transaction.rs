@@ -17,7 +17,7 @@ use crate::request::TransactionCreationRequest;
 /// category_id -
 /// amount      -
 /// ts          -
-#[derive(Debug, Deserialize, Serialize, Queryable)]
+#[derive(Debug, Deserialize, Serialize, Queryable, Identifiable, AsChangeset)]
 pub struct Transaction {
     pub id: i32,
     pub wallet_id: i32,
@@ -87,20 +87,10 @@ impl Handler<NewTransaction> for DatabaseExecutor {
         use crate::db::schema::transactions::dsl::*;
         trace!(self.1, "Received db action"; "msg" => ?msg);
 
-        // XXX: Figure out error type to be used here and add conversion functions for convenience
-        /*let exists: bool = diesel::select(diesel::dsl::exists(wallets.filter(email.eq(&msg.email))))
-            .get_result(&self.0)
-            .map_err(|_| error::ErrorInternalServerError("Error getting User from Db"))?;
-
-        if exists {
-            // TODO: should we really return this message?
-            return Err(error::ErrorUnauthorized("User already exists"));
-        }*/
-
         // XXX: This currently does NOT check if the user owns the source wallet
         // Unfortunately we can't just add a user_id field to NewTransaction as it is directly
         // Insertable. TODO: Figure out an elegant way to handle this!
-        let transaction: Transaction = diesel::insert_into(transactions)
+        let transaction = diesel::insert_into(transactions)
             .values(&msg)
             .get_result(&self.0)
             .map_err(error::ErrorInternalServerError)?;
@@ -137,12 +127,15 @@ impl Handler<GetTransaction> for DatabaseExecutor {
 
         let transaction = match transaction {
             Some(t) => t,
-            None => return Ok(None),
+            None => {
+                // XXX: This is ugly
+                trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => "Ok(None(");
+                return Ok(None);
+            }
         };
 
         // XXX: Verify this is enough to protect against unauthorized access
         let wallet = self.handle(GetWallet::new(transaction.wallet_id, msg.uid), ctx);
-
         let result = match wallet {
             Ok(Some(_)) => Some(transaction),
             _ => None,
@@ -175,7 +168,6 @@ impl Handler<GetTransactionsFromWallet> for DatabaseExecutor {
 
         // Check user has access to source wallet
         let wallet = self.handle(GetWallet::new(msg.wid, msg.uid), ctx);
-
         let result = match wallet {
             Ok(Some(_)) => {
                 let txs = transactions
@@ -221,8 +213,7 @@ impl Handler<DeleteTransaction> for DatabaseExecutor {
         // XXX: Verify this is enough to protect against unauthorized access
         let wallet = self.handle(GetWallet::new(tx.wallet_id, msg.uid), ctx);
         let result = match wallet {
-            Ok(Some(_)) => diesel::delete(transactions)
-                .filter(id.eq(&msg.tid))
+            Ok(Some(_)) => diesel::delete(&tx)
                 .execute(&self.0)
                 .map_err(error::ErrorInternalServerError)?,
             _ => 0,

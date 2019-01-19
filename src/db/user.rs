@@ -17,7 +17,7 @@ use crate::request::UserCreationRequest;
 /// secret     - salt and hash of the user's password
 /// username   - user's current username
 /// created_at - creation date of the user account
-#[derive(Debug, Deserialize, Serialize, Queryable)]
+#[derive(Debug, Deserialize, Serialize, Queryable, Identifiable, AsChangeset)]
 pub struct User {
     pub id: i32,
     pub email: String,
@@ -42,7 +42,9 @@ pub struct NewUser {
 /// Actix message to retrieve a user entity from the database
 /// XXX: Change this to take Options of i32 and String to allow for multiple selection methods
 #[derive(Debug)]
-pub struct GetUser(pub(crate) String);
+pub struct GetUser {
+    pub email: String,
+}
 
 impl NewUser {
     /// XXX: This should return a result, figure out fitting error type
@@ -67,32 +69,30 @@ impl NewUser {
 }
 
 impl Message for NewUser {
-    type Result = Result<User, Error>;
+    type Result = Result<Option<User>, Error>;
 }
 
 impl Handler<NewUser> for DatabaseExecutor {
-    type Result = Result<User, Error>;
+    type Result = Result<Option<User>, Error>;
 
     fn handle(&mut self, msg: NewUser, _: &mut Self::Context) -> Self::Result {
         use crate::db::schema::users::dsl::*;
         trace!(self.1, "Received db action"; "msg" => ?msg);
 
-        // XXX: Figure out error type to be used here and add conversion functions for convenience
         let exists: bool = diesel::select(diesel::dsl::exists(users.filter(email.eq(&msg.email))))
             .get_result(&self.0)
             .map_err(|_| error::ErrorInternalServerError("Error getting User from Db"))?;
 
         if exists {
-            // TODO: should we really return this message?
-            return Err(error::ErrorUnauthorized("User already exists"));
+            return Ok(None);
         }
 
-        let user: User = diesel::insert_into(users)
+        let user = diesel::insert_into(users)
             .values(&msg)
             .get_result(&self.0)
             .map_err(|_| error::ErrorInternalServerError("Error inserting user"))?;
         trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?user);
-        Ok(user)
+        Ok(Some(user))
     }
 }
 
@@ -108,7 +108,7 @@ impl Handler<GetUser> for DatabaseExecutor {
         trace!(self.1, "Received db action"; "msg" => ?msg);
 
         let user = users
-            .filter(email.eq(&msg.0))
+            .filter(email.eq(&msg.email))
             .get_result(&self.0)
             .optional()
             .map_err(error::ErrorInternalServerError)?;

@@ -100,7 +100,7 @@ impl Handler<NewWallet> for DatabaseExecutor {
         use crate::db::schema::wallets::dsl::*;
         trace!(self.1, "Received db action"; "msg" => ?msg);
 
-        let wallet: Wallet = diesel::insert_into(wallets)
+        let wallet = diesel::insert_into(wallets)
             .values(&msg)
             .get_result(&self.0)
             .map_err(error::ErrorInternalServerError)?;

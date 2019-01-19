@@ -17,7 +17,8 @@ use crate::request::CategoryCreationRequest;
 /// name      -
 /// color     -
 /// create_at -
-#[derive(Debug, Deserialize, Serialize, Queryable)]
+#[derive(Debug, Deserialize, Serialize, Queryable, Identifiable, AsChangeset)]
+#[table_name = "categories"]
 pub struct Category {
     pub id: i32,
     pub parent_id: Option<i32>,

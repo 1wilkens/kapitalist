@@ -32,7 +32,7 @@ pub fn register((state, req): (State<AppState>, Json<UserCreationRequest>)) -> i
     let new_user = match NewUser::from_request(req.0) {
         Some(u) => u,
         None => {
-            return Either::A(HttpResponse::BadRequest().json(ErrorResponse::new("Password does not match criteria")))
+            return Either::A(HttpResponse::BadRequest().json(ErrorResponse::new("Password does not match criteria")));
         }
     };
     Either::B(
@@ -41,7 +41,8 @@ pub fn register((state, req): (State<AppState>, Json<UserCreationRequest>)) -> i
             .send(new_user)
             .and_then(move |res| {
                 let resp = match res {
-                    Ok(user) => HttpResponse::Ok().json(user),
+                    Ok(Some(user)) => HttpResponse::Ok().json(user),
+                    Ok(None) => super::util::unauthorized(),
                     Err(err) => {
                         debug!(&state.log, "Error inserting user into database"; "error" => %&err);
                         HttpResponse::InternalServerError().into()
@@ -80,9 +81,12 @@ pub fn token((state, req): (State<AppState>, Json<TokenRequest>)) -> impl Respon
      */
     use libreauth::pass::HashBuilder;
 
+    let get_user = GetUser {
+        email: req.email.clone(),
+    };
     state
         .db
-        .send(GetUser(req.email.clone()))
+        .send(get_user)
         .and_then(move |res| {
             let resp = match res {
                 Ok(Some(user)) => {
@@ -98,11 +102,11 @@ pub fn token((state, req): (State<AppState>, Json<TokenRequest>)) -> impl Respon
                         HttpResponse::Ok().json(token)
                     } else {
                         // Password check failed -> Return 401 - Unauthorized
-                        HttpResponse::Unauthorized().json(ErrorResponse::unauthorized())
+                        super::util::unauthorized()
                     }
                 }
                 // User entity was not found in database -> Return 401 to prevent information leakage
-                Ok(None) => HttpResponse::Unauthorized().json(ErrorResponse::unauthorized()),
+                Ok(None) => super::util::unauthorized(),
                 // There was an error contacting the db -> Log error and return 500
                 Err(err) => {
                     debug!(&state.log, "Error loading user from database"; "error" => %&err);
