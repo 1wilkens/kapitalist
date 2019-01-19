@@ -22,7 +22,7 @@ use crate::request::{WalletCreationRequest, WalletUpdateRequest};
 /// current_balance -
 /// color           -
 /// created_at      -
-#[derive(Debug, Deserialize, Serialize, Queryable)]
+#[derive(Debug, Deserialize, Serialize, Queryable, Identifiable, AsChangeset)]
 pub struct Wallet {
     pub id: i32,
     pub user_id: i32,
@@ -66,7 +66,6 @@ pub struct UpdateWallet {
     pub wid: i32,
     pub name: Option<String>,
     pub wallet_type: Option<String>,
-    pub initial_balance: Option<i32>,
     pub color: Option<String>,
 }
 
@@ -100,16 +99,6 @@ impl Handler<NewWallet> for DatabaseExecutor {
     fn handle(&mut self, msg: NewWallet, _: &mut Self::Context) -> Self::Result {
         use crate::db::schema::wallets::dsl::*;
         trace!(self.1, "Received db action"; "msg" => ?msg);
-
-        // XXX: Figure out error type to be used here and add conversion functions for convenience
-        /*let exists: bool = diesel::select(diesel::dsl::exists(wallets.filter(email.eq(&msg.email))))
-            .get_result(&self.0)
-            .map_err(|_| error::ErrorInternalServerError("Error getting User from Db"))?;
-
-        if exists {
-            // TODO: should we really return this message?
-            return Err(error::ErrorUnauthorized("User already exists"));
-        }*/
 
         let wallet: Wallet = diesel::insert_into(wallets)
             .values(&msg)
@@ -159,7 +148,6 @@ impl UpdateWallet {
             wid: wid,
             name: req.name,
             wallet_type: req.wallet_type,
-            initial_balance: req.balance,
             color: req.color,
         }
     }
@@ -179,23 +167,18 @@ impl Handler<UpdateWallet> for DatabaseExecutor {
         // XXX: Verify this is enough to protect unauthorized access
         let wallet = self.handle(GetWallet::new(msg.uid, msg.wid), ctx);
         let result = match wallet {
-            Ok(Some(w)) => {
-                // XXX: These clones are sad =(
-                let name_new = msg.name.clone().unwrap_or(w.name);
-                let wallet_type_new = msg.wallet_type.clone().unwrap_or(w.wallet_type);
-                let initial_balance_new = msg.initial_balance.clone().unwrap_or(w.initial_balance);
-                let color_new = msg.color.clone().unwrap_or(w.color);
-
-                diesel::update(wallets)
-                    .filter(id.eq(&msg.wid))
-                    .filter(user_id.eq(&msg.uid))
-                    // XXX: This always updates all fields. use #[derive(AsChangeset)]?
-                    .set((
-                        name.eq(name_new),
-                        wallet_type.eq(wallet_type_new),
-                        initial_balance.eq(initial_balance_new),
-                        color.eq(color_new),
-                    ))
+            Ok(Some(mut w)) => {
+                if let Some(ref n) = msg.name {
+                    w.name = n.clone();
+                }
+                if let Some(ref wt) = msg.wallet_type {
+                    w.wallet_type = wt.clone();
+                }
+                if let Some(ref c) = msg.color {
+                    w.color = c.clone()
+                }
+                diesel::update(&w)
+                    .set(&w)
                     .get_result(&self.0)
                     .optional()
                     .map_err(error::ErrorInternalServerError)?

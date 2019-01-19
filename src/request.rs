@@ -40,8 +40,6 @@ pub struct WalletUpdateRequest {
     #[serde(default)]
     pub wallet_type: Option<String>,
     #[serde(default)]
-    pub balance: Option<i32>,
-    #[serde(default)]
     pub color: Option<String>,
 }
 
