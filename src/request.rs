@@ -52,6 +52,16 @@ pub struct CategoryCreationRequest {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct CategoryUpdateRequest {
+    #[serde(default)]
+    pub name: Option<String>,
+    #[serde(default)]
+    pub parent_id: Option<Option<i32>>,
+    #[serde(default)]
+    pub color: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct TransactionCreationRequest {
     pub wallet_id: i32,
     pub category_id: i32,

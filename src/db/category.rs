@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use slog::trace;
 
 use crate::db::{schema::categories, DatabaseExecutor};
-use crate::request::CategoryCreationRequest;
+use crate::request::{CategoryCreationRequest, CategoryUpdateRequest};
 
 /// Database entity representing a transaction category
 ///
@@ -42,14 +42,24 @@ pub struct NewCategory {
     pub color: String,
 }
 
-/// Actix message to retrieve a wallet entity from the database
+/// Actix message to retrieve a category entity from the database
 #[derive(Debug)]
 pub struct GetCategory {
     pub(crate) cid: i32,
     pub(crate) uid: i32,
 }
 
-/// Actix message to delete a wallet entity from the database
+/// Actix message to update a category entity in the database
+#[derive(Debug)]
+pub struct UpdateCategory {
+    pub uid: i32,
+    pub cid: i32,
+    pub parent_id: Option<Option<i32>>,
+    pub name: Option<String>,
+    pub color: Option<String>,
+}
+
+/// Actix message to delete a category entity from the database
 #[derive(Debug)]
 pub struct DeleteCategory {
     pub(crate) cid: i32,
@@ -120,8 +130,56 @@ impl Handler<GetCategory> for DatabaseExecutor {
     }
 }
 
+impl UpdateCategory {
+    pub fn from_request(user_id: i32, category_id: i32, req: CategoryUpdateRequest) -> UpdateCategory {
+        UpdateCategory {
+            uid: user_id,
+            cid: category_id,
+            parent_id: req.parent_id,
+            name: req.name,
+            color: req.color,
+        }
+    }
+}
+
+impl Message for UpdateCategory {
+    type Result = Result<Option<Category>, Error>;
+}
+
+impl Handler<UpdateCategory> for DatabaseExecutor {
+    type Result = Result<Option<Category>, Error>;
+
+    fn handle(&mut self, msg: UpdateCategory, ctx: &mut Self::Context) -> Self::Result {
+        trace!(self.1, "Received db action"; "msg" => ?msg);
+
+        // XXX: Verify this is enough to protect unauthorized access
+        let category = self.handle(GetCategory::new(msg.uid, msg.cid), ctx);
+        let result = match category {
+            Ok(Some(mut c)) => {
+                if let Some(pid) = msg.parent_id {
+                    c.parent_id = pid;
+                }
+                if let Some(ref name) = msg.name {
+                    c.name = name.clone();
+                }
+                if let Some(ref color) = msg.color {
+                    c.color = color.clone();
+                }
+                diesel::update(&c)
+                    .set(&c)
+                    .get_result(&self.0)
+                    .optional()
+                    .map_err(error::ErrorInternalServerError)?
+            }
+            _ => None,
+        };
+        trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?result);
+        Ok(result)
+    }
+}
+
 impl DeleteCategory {
-    pub fn new(category_id: i32, user_id: i32) -> DeleteCategory {
+    pub fn new(user_id: i32, category_id: i32) -> DeleteCategory {
         DeleteCategory {
             cid: category_id,
             uid: user_id,

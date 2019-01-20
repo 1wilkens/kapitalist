@@ -3,8 +3,8 @@ use futures::Future;
 use slog::debug;
 
 use crate::auth::UserGuard;
-use crate::db::category::{DeleteCategory, GetCategory, NewCategory};
-use crate::request::CategoryCreationRequest;
+use crate::db::category::{DeleteCategory, GetCategory, NewCategory, UpdateCategory};
+use crate::request::{CategoryCreationRequest, CategoryUpdateRequest};
 use crate::response::ErrorResponse;
 use crate::state::AppState;
 
@@ -36,7 +36,29 @@ pub fn get((state, user, tid): (State<AppState>, UserGuard, Path<i32>)) -> impl 
             let resp = match res {
                 Ok(Some(category)) => HttpResponse::Ok().json(category),
                 // XXX: Handle this properly and add utility method for 404
-                Ok(None) => HttpResponse::NotFound().json("not found"),
+                Ok(None) => super::util::not_found(&"category"),
+                Err(err) => {
+                    debug!(&state.log, "Error getting category from database";
+                        "error" => %&err);
+                    HttpResponse::InternalServerError().json(ErrorResponse::internal_server_error())
+                }
+            };
+            Ok(resp)
+        })
+        .responder()
+}
+
+pub fn put(
+    (state, user, tid, req): (State<AppState>, UserGuard, Path<i32>, Json<CategoryUpdateRequest>),
+) -> impl Responder {
+    let update_category = UpdateCategory::from_request(user.user_id, *tid, req.0);
+    state
+        .db
+        .send(update_category)
+        .and_then(move |res| {
+            let resp = match res {
+                Ok(Some(category)) => HttpResponse::Ok().json(category),
+                Ok(None) => super::util::not_found(&"category"),
                 Err(err) => {
                     debug!(&state.log, "Error getting category from database";
                         "error" => %&err);
@@ -49,14 +71,14 @@ pub fn get((state, user, tid): (State<AppState>, UserGuard, Path<i32>)) -> impl 
 }
 
 pub fn delete((state, user, tid): (State<AppState>, UserGuard, Path<i32>)) -> impl Responder {
-    let delete_category = DeleteCategory::new(*tid, user.user_id);
+    let delete_category = DeleteCategory::new(user.user_id, *tid);
     state
         .db
         .send(delete_category)
         .and_then(move |res| {
             let resp = match res {
                 Ok(true) => HttpResponse::Ok().json(""),
-                Ok(false) => HttpResponse::NotFound().json("not found"),
+                Ok(false) => super::util::not_found(&"category"),
                 Err(err) => {
                     debug!(&state.log, "Error getting category from database";
                         "error" => %&err);

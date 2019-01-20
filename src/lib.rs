@@ -45,6 +45,7 @@ pub fn build_app(config: &state::Config, log: &Logger) -> actix_web::App<state::
         // Categories
         .resource("/category", |r| r.post().with(api::category::post))
         .resource("/category/{id}", |r| r.get().with(api::category::get))
+        .resource("/category/{id}", |r| r.put().with(api::category::put))
         .resource("/category/{id}", |r| r.delete().with(api::category::delete))
         // Transactions
         .resource("/transactions/{id}", |r| r.get().with(api::transaction::get_all))

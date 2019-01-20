@@ -161,21 +161,20 @@ impl Handler<UpdateWallet> for DatabaseExecutor {
     type Result = Result<Option<Wallet>, Error>;
 
     fn handle(&mut self, msg: UpdateWallet, ctx: &mut Self::Context) -> Self::Result {
-        use crate::db::schema::wallets::dsl::*;
         trace!(self.1, "Received db action"; "msg" => ?msg);
 
         // XXX: Verify this is enough to protect unauthorized access
         let wallet = self.handle(GetWallet::new(msg.uid, msg.wid), ctx);
         let result = match wallet {
             Ok(Some(mut w)) => {
-                if let Some(ref n) = msg.name {
-                    w.name = n.clone();
+                if let Some(ref name) = msg.name {
+                    w.name = name.clone();
                 }
-                if let Some(ref wt) = msg.wallet_type {
-                    w.wallet_type = wt.clone();
+                if let Some(ref wallet_type) = msg.wallet_type {
+                    w.wallet_type = wallet_type.clone();
                 }
-                if let Some(ref c) = msg.color {
-                    w.color = c.clone()
+                if let Some(ref color) = msg.color {
+                    w.color = color.clone()
                 }
                 diesel::update(&w)
                     .set(&w)
@@ -193,8 +192,8 @@ impl Handler<UpdateWallet> for DatabaseExecutor {
 impl DeleteWallet {
     pub fn new(user_id: i32, wallet_id: i32) -> DeleteWallet {
         DeleteWallet {
-            wid: wallet_id,
             uid: user_id,
+            wid: wallet_id,
         }
     }
 }
