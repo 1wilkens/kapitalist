@@ -69,3 +69,15 @@ pub struct TransactionCreationRequest {
     #[serde(default)]
     pub ts: Option<NaiveDateTime>,
 }
+
+#[derive(Debug, Deserialize)]
+pub struct TransactionUpdateRequest {
+    #[serde(default)]
+    pub wallet_id: Option<i64>,
+    #[serde(default)]
+    pub category_id: Option<i64>,
+    #[serde(default)]
+    pub amount: Option<i64>,
+    #[serde(default)]
+    pub ts: Option<NaiveDateTime>,
+}

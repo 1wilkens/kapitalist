@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use slog::trace;
 
 use crate::db::{schema::transactions, wallet::GetWallet, DatabaseExecutor};
-use crate::request::TransactionCreationRequest;
+use crate::request::{TransactionCreationRequest, TransactionUpdateRequest};
 
 /// Database entity representing a transaction
 ///
@@ -44,22 +44,32 @@ pub struct NewTransaction {
 /// Actix message to retrieve a transaction entity from the database
 #[derive(Debug)]
 pub struct GetTransaction {
-    pub(crate) tid: i64,
     pub(crate) uid: i64,
+    pub(crate) tid: i64,
 }
 
 /// Actix message to retrieve all transactions of a given wallet from the database
 #[derive(Debug)]
 pub struct GetTransactionsFromWallet {
-    pub(crate) wid: i64,
     pub(crate) uid: i64,
+    pub(crate) wid: i64,
+}
+
+#[derive(Debug)]
+pub struct UpdateTransaction {
+    pub(crate) uid: i64,
+    pub(crate) tid: i64,
+    pub(crate) wallet_id: Option<i64>,
+    pub(crate) category_id: Option<i64>,
+    pub(crate) amount: Option<i64>,
+    pub(crate) ts: Option<NaiveDateTime>,
 }
 
 /// Actix message to delete a transaction entity from the database
 #[derive(Debug)]
 pub struct DeleteTransaction {
-    pub(crate) tid: i64,
     pub(crate) uid: i64,
+    pub(crate) tid: i64,
 }
 
 impl NewTransaction {
@@ -100,10 +110,10 @@ impl Handler<NewTransaction> for DatabaseExecutor {
 }
 
 impl GetTransaction {
-    pub fn new(transaction_id: i64, user_id: i64) -> GetTransaction {
+    pub fn new(user_id: i64, transaction_id: i64) -> GetTransaction {
         GetTransaction {
-            tid: transaction_id,
             uid: user_id,
+            tid: transaction_id,
         }
     }
 }
@@ -147,10 +157,10 @@ impl Handler<GetTransaction> for DatabaseExecutor {
 }
 
 impl GetTransactionsFromWallet {
-    pub fn new(wallet_id: i64, user_id: i64) -> GetTransactionsFromWallet {
+    pub fn new(user_id: i64, wallet_id: i64) -> GetTransactionsFromWallet {
         GetTransactionsFromWallet {
-            wid: wallet_id,
             uid: user_id,
+            wid: wallet_id,
         }
     }
 }
@@ -184,11 +194,63 @@ impl Handler<GetTransactionsFromWallet> for DatabaseExecutor {
     }
 }
 
-impl DeleteTransaction {
-    pub fn new(transaction_id: i64, user_id: i64) -> DeleteTransaction {
-        DeleteTransaction {
-            tid: transaction_id,
+impl UpdateTransaction {
+    pub fn from_request(user_id: i64, transaction_id: i64, req: TransactionUpdateRequest) -> UpdateTransaction {
+        UpdateTransaction {
             uid: user_id,
+            tid: transaction_id,
+            wallet_id: req.wallet_id,
+            category_id: req.category_id,
+            amount: req.amount,
+            ts: req.ts,
+        }
+    }
+}
+
+impl Message for UpdateTransaction {
+    type Result = Result<Option<Transaction>, Error>;
+}
+
+impl Handler<UpdateTransaction> for DatabaseExecutor {
+    type Result = Result<Option<Transaction>, Error>;
+
+    fn handle(&mut self, msg: UpdateTransaction, ctx: &mut Self::Context) -> Self::Result {
+        trace!(self.1, "Received db action"; "msg" => ?msg);
+
+        // XXX: Verify this is enough to protect unauthorized access
+        let transaction = self.handle(GetTransaction::new(msg.uid, msg.tid), ctx);
+        let result = match transaction {
+            Ok(Some(mut tx)) => {
+                if let Some(wallet_id) = msg.wallet_id {
+                    tx.wallet_id = wallet_id;
+                }
+                if let Some(category_id) = msg.category_id {
+                    tx.category_id = category_id;
+                }
+                if let Some(amount) = msg.amount {
+                    tx.amount = amount;
+                }
+                if let Some(ts) = msg.ts {
+                    tx.ts = ts;
+                }
+                diesel::update(&tx)
+                    .set(&tx)
+                    .get_result(&self.0)
+                    .optional()
+                    .map_err(error::ErrorInternalServerError)?
+            }
+            _ => None,
+        };
+        trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?result);
+        Ok(result)
+    }
+}
+
+impl DeleteTransaction {
+    pub fn new(user_id: i64, transaction_id: i64) -> DeleteTransaction {
+        DeleteTransaction {
+            uid: user_id,
+            tid: transaction_id,
         }
     }
 }
@@ -201,7 +263,6 @@ impl Handler<DeleteTransaction> for DatabaseExecutor {
     type Result = Result<bool, Error>;
 
     fn handle(&mut self, msg: DeleteTransaction, ctx: &mut Self::Context) -> Self::Result {
-        use crate::db::schema::transactions::dsl::*;
         trace!(self.1, "Received db action"; "msg" => ?msg);
 
         let tx = self.handle(GetTransaction::new(msg.tid, msg.uid), ctx);

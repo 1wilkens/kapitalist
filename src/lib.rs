@@ -51,5 +51,6 @@ pub fn build_app(config: &state::Config, log: &Logger) -> actix_web::App<state::
         .resource("/transactions/{id}", |r| r.get().with(api::transaction::get_all))
         .resource("/transaction", |r| r.post().with(api::transaction::post))
         .resource("/transaction/{id}", |r| r.get().with(api::transaction::get))
+        .resource("/transaction/{id}", |r| r.put().with(api::transaction::put))
         .resource("/transaction/{id}", |r| r.delete().with(api::transaction::delete))
 }

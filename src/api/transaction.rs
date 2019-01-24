@@ -3,13 +3,15 @@ use futures::future::Future;
 use slog::debug;
 
 use crate::auth::UserGuard;
-use crate::db::transaction::{DeleteTransaction, GetTransaction, GetTransactionsFromWallet, NewTransaction};
-use crate::request::TransactionCreationRequest;
+use crate::db::transaction::{
+    DeleteTransaction, GetTransaction, GetTransactionsFromWallet, NewTransaction, UpdateTransaction,
+};
+use crate::request::{TransactionCreationRequest, TransactionUpdateRequest};
 use crate::response::ErrorResponse;
 use crate::state::AppState;
 
 pub fn get_all((state, user, wid): (State<AppState>, UserGuard, Path<i64>)) -> impl Responder {
-    let get_txs = GetTransactionsFromWallet::new(*wid, user.user_id);
+    let get_txs = GetTransactionsFromWallet::new(user.user_id, *wid);
     state
         .db
         .send(get_txs)
@@ -50,7 +52,7 @@ pub fn post((state, user, req): (State<AppState>, UserGuard, Json<TransactionCre
 }
 
 pub fn get((state, user, tid): (State<AppState>, UserGuard, Path<i64>)) -> impl Responder {
-    let get_tx = GetTransaction::new(*tid, user.user_id);
+    let get_tx = GetTransaction::new(user.user_id, *tid);
     state
         .db
         .send(get_tx)
@@ -69,13 +71,26 @@ pub fn get((state, user, tid): (State<AppState>, UserGuard, Path<i64>)) -> impl 
 }
 
 pub fn put(
-    (state, user, tid /*, req*/): (
-        State<AppState>,
-        UserGuard,
-        Path<i64>, /*, Json<TransactionUpdateRequest>*/
-    ),
+    (state, user, tid, req): (State<AppState>, UserGuard, Path<i64>, Json<TransactionUpdateRequest>),
 ) -> impl Responder {
-    HttpResponse::InternalServerError().json(ErrorResponse::not_implemented())
+    let update_tx = UpdateTransaction::from_request(user.user_id, *tid, req.0);
+    state
+        .db
+        .send(update_tx)
+        .and_then(move |res| {
+            let resp = match res {
+                Ok(Some(tx)) => HttpResponse::Ok().json(tx),
+                // XXX: Handle this properly and add utility method for 404
+                Ok(None) => super::util::not_found(&"transaction"),
+                Err(err) => {
+                    debug!(&state.log, "Error updating transaction in database";
+                        "error" => %&err);
+                    HttpResponse::InternalServerError().json(ErrorResponse::internal_server_error())
+                }
+            };
+            Ok(resp)
+        })
+        .responder()
 }
 
 pub fn delete((state, user, tid): (State<AppState>, UserGuard, Path<i64>)) -> impl Responder {
