@@ -30,12 +30,12 @@ pub struct TokenClaims {
     #[serde(serialize_with = "to_ts", deserialize_with = "from_ts")]
     pub exp: DateTime<Utc>,
     // User Id
-    pub uid: i32,
+    pub uid: i64,
 }
 
 impl TokenClaims {
     /// Create a new TokenClaims instance with the given subject and user is
-    pub fn new(sub: &str, uid: i32) -> TokenClaims {
+    pub fn new(sub: &str, uid: i64) -> TokenClaims {
         // TODO: make this configurable and use real urls
         TokenClaims {
             iss: "kapitalist".into(),
@@ -50,7 +50,7 @@ impl TokenClaims {
 
 /// Request guard which validates the user's token
 pub struct UserGuard {
-    pub user_id: i32, // TODO: Add more fields as required
+    pub user_id: i64, // TODO: Add more fields as required
 }
 
 impl FromRequest<AppState> for UserGuard {

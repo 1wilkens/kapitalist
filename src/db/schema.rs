@@ -1,6 +1,6 @@
 table! {
     users {
-        id         -> Int4,
+        id         -> Int8,
         email      -> Text,
         secret     -> Text,
         username   -> Text,
@@ -10,12 +10,12 @@ table! {
 
 table! {
     wallets {
-        id              -> Int4,
-        user_id         -> Int4,
+        id              -> Int8,
+        user_id         -> Int8,
         name            -> Text,
         wallet_type     -> Text,
-        initial_balance -> Int4,
-        current_balance -> Int4,
+        initial_balance -> Int8,
+        current_balance -> Int8,
         color           -> Text,
         created_at      -> Timestamp,
     }
@@ -23,9 +23,9 @@ table! {
 
 table! {
     categories {
-        id         -> Int4,
-        parent_id  -> Nullable<Int4>,
-        user_id    -> Nullable<Int4>,
+        id         -> Int8,
+        parent_id  -> Nullable<Int8>,
+        user_id    -> Nullable<Int8>,
         name       -> Text,
         color      -> Text,
         created_at -> Timestamp,
@@ -34,11 +34,11 @@ table! {
 
 table! {
     transactions (id) {
-        id -> Int4,
-        wallet_id -> Int4,
-        category_id -> Int4,
-        amount -> Int4,
-        ts -> Timestamp,
+        id          -> Int8,
+        wallet_id   -> Int8,
+        category_id -> Int8,
+        amount      -> Int8,
+        ts          -> Timestamp,
     }
 }
 

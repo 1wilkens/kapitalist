@@ -29,7 +29,7 @@ pub struct TokenRequest {
 pub struct WalletCreationRequest {
     pub name: String,
     pub wallet_type: String,
-    pub balance: i32,
+    pub balance: i64,
     pub color: String,
 }
 
@@ -47,7 +47,7 @@ pub struct WalletUpdateRequest {
 pub struct CategoryCreationRequest {
     pub name: String,
     #[serde(default)]
-    pub parent_id: Option<i32>,
+    pub parent_id: Option<i64>,
     pub color: String,
 }
 
@@ -56,16 +56,16 @@ pub struct CategoryUpdateRequest {
     #[serde(default)]
     pub name: Option<String>,
     #[serde(default)]
-    pub parent_id: Option<Option<i32>>,
+    pub parent_id: Option<Option<i64>>,
     #[serde(default)]
     pub color: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct TransactionCreationRequest {
-    pub wallet_id: i32,
-    pub category_id: i32,
-    pub amount: i32,
+    pub wallet_id: i64,
+    pub category_id: i64,
+    pub amount: i64,
     #[serde(default)]
     pub ts: Option<NaiveDateTime>,
 }

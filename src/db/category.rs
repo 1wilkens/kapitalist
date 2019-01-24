@@ -20,9 +20,9 @@ use crate::request::{CategoryCreationRequest, CategoryUpdateRequest};
 #[derive(Debug, Deserialize, Serialize, Queryable, Identifiable, AsChangeset)]
 #[table_name = "categories"]
 pub struct Category {
-    pub id: i32,
-    pub parent_id: Option<i32>,
-    pub user_id: Option<i32>,
+    pub id: i64,
+    pub parent_id: Option<i64>,
+    pub user_id: Option<i64>,
     pub name: String,
     pub color: String,
     pub created_at: NaiveDateTime,
@@ -36,8 +36,8 @@ pub struct Category {
 #[derive(Debug, Insertable)]
 #[table_name = "categories"]
 pub struct NewCategory {
-    pub parent_id: Option<i32>,
-    pub user_id: i32,
+    pub parent_id: Option<i64>,
+    pub user_id: i64,
     pub name: String,
     pub color: String,
 }
@@ -45,16 +45,16 @@ pub struct NewCategory {
 /// Actix message to retrieve a category entity from the database
 #[derive(Debug)]
 pub struct GetCategory {
-    pub(crate) cid: i32,
-    pub(crate) uid: i32,
+    pub(crate) cid: i64,
+    pub(crate) uid: i64,
 }
 
 /// Actix message to update a category entity in the database
 #[derive(Debug)]
 pub struct UpdateCategory {
-    pub uid: i32,
-    pub cid: i32,
-    pub parent_id: Option<Option<i32>>,
+    pub uid: i64,
+    pub cid: i64,
+    pub parent_id: Option<Option<i64>>,
     pub name: Option<String>,
     pub color: Option<String>,
 }
@@ -62,12 +62,12 @@ pub struct UpdateCategory {
 /// Actix message to delete a category entity from the database
 #[derive(Debug)]
 pub struct DeleteCategory {
-    pub(crate) cid: i32,
-    pub(crate) uid: i32,
+    pub(crate) cid: i64,
+    pub(crate) uid: i64,
 }
 
 impl NewCategory {
-    pub fn from_request(req: CategoryCreationRequest, uid: i32) -> NewCategory {
+    pub fn from_request(req: CategoryCreationRequest, uid: i64) -> NewCategory {
         NewCategory {
             parent_id: req.parent_id,
             user_id: uid,
@@ -99,7 +99,7 @@ impl Handler<NewCategory> for DatabaseExecutor {
 }
 
 impl GetCategory {
-    pub fn new(category_id: i32, user_id: i32) -> GetCategory {
+    pub fn new(category_id: i64, user_id: i64) -> GetCategory {
         GetCategory {
             cid: category_id,
             uid: user_id,
@@ -131,7 +131,7 @@ impl Handler<GetCategory> for DatabaseExecutor {
 }
 
 impl UpdateCategory {
-    pub fn from_request(user_id: i32, category_id: i32, req: CategoryUpdateRequest) -> UpdateCategory {
+    pub fn from_request(user_id: i64, category_id: i64, req: CategoryUpdateRequest) -> UpdateCategory {
         UpdateCategory {
             uid: user_id,
             cid: category_id,
@@ -179,7 +179,7 @@ impl Handler<UpdateCategory> for DatabaseExecutor {
 }
 
 impl DeleteCategory {
-    pub fn new(user_id: i32, category_id: i32) -> DeleteCategory {
+    pub fn new(user_id: i64, category_id: i64) -> DeleteCategory {
         DeleteCategory {
             cid: category_id,
             uid: user_id,

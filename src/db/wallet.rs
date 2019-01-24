@@ -24,12 +24,12 @@ use crate::request::{WalletCreationRequest, WalletUpdateRequest};
 /// created_at      -
 #[derive(Debug, Deserialize, Serialize, Queryable, Identifiable, AsChangeset)]
 pub struct Wallet {
-    pub id: i32,
-    pub user_id: i32,
+    pub id: i64,
+    pub user_id: i64,
     pub name: String,
     pub wallet_type: String,
-    pub initial_balance: i32,
-    pub current_balance: i32,
+    pub initial_balance: i64,
+    pub current_balance: i64,
     pub color: String,
     pub created_at: NaiveDateTime,
 }
@@ -44,26 +44,26 @@ pub struct Wallet {
 #[derive(Debug, Insertable)]
 #[table_name = "wallets"]
 pub struct NewWallet {
-    pub user_id: i32,
+    pub user_id: i64,
     pub name: String,
     pub wallet_type: String,
-    pub initial_balance: i32,
-    pub current_balance: i32,
+    pub initial_balance: i64,
+    pub current_balance: i64,
     pub color: String,
 }
 
 /// Actix message to retrieve a wallet entity from the database
 #[derive(Debug)]
 pub struct GetWallet {
-    pub(crate) uid: i32,
-    pub(crate) wid: i32,
+    pub(crate) uid: i64,
+    pub(crate) wid: i64,
 }
 
 /// Actix message to update a wallet entity in the database
 #[derive(Debug)]
 pub struct UpdateWallet {
-    pub uid: i32,
-    pub wid: i32,
+    pub uid: i64,
+    pub wid: i64,
     pub name: Option<String>,
     pub wallet_type: Option<String>,
     pub color: Option<String>,
@@ -72,12 +72,12 @@ pub struct UpdateWallet {
 /// Actix message to delete a wallet entity from the database
 #[derive(Debug)]
 pub struct DeleteWallet {
-    pub(crate) uid: i32,
-    pub(crate) wid: i32,
+    pub(crate) uid: i64,
+    pub(crate) wid: i64,
 }
 
 impl NewWallet {
-    pub fn from_request(uid: i32, req: WalletCreationRequest) -> NewWallet {
+    pub fn from_request(uid: i64, req: WalletCreationRequest) -> NewWallet {
         NewWallet {
             user_id: uid,
             name: req.name,
@@ -110,7 +110,7 @@ impl Handler<NewWallet> for DatabaseExecutor {
 }
 
 impl GetWallet {
-    pub fn new(user_id: i32, wallet_id: i32) -> GetWallet {
+    pub fn new(user_id: i64, wallet_id: i64) -> GetWallet {
         GetWallet {
             wid: wallet_id,
             uid: user_id,
@@ -142,7 +142,7 @@ impl Handler<GetWallet> for DatabaseExecutor {
 }
 
 impl UpdateWallet {
-    pub fn from_request(uid: i32, wid: i32, req: WalletUpdateRequest) -> UpdateWallet {
+    pub fn from_request(uid: i64, wid: i64, req: WalletUpdateRequest) -> UpdateWallet {
         UpdateWallet {
             uid: uid,
             wid: wid,
@@ -190,7 +190,7 @@ impl Handler<UpdateWallet> for DatabaseExecutor {
 }
 
 impl DeleteWallet {
-    pub fn new(user_id: i32, wallet_id: i32) -> DeleteWallet {
+    pub fn new(user_id: i64, wallet_id: i64) -> DeleteWallet {
         DeleteWallet {
             uid: user_id,
             wid: wallet_id,

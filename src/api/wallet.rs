@@ -43,7 +43,7 @@ pub fn post((state, user, req): (State<AppState>, UserGuard, Json<WalletCreation
         .responder()
 }
 
-pub fn get((state, user, wid): (State<AppState>, UserGuard, Path<(i32)>)) -> impl Responder {
+pub fn get((state, user, wid): (State<AppState>, UserGuard, Path<i64>)) -> impl Responder {
     let get_wallet = GetWallet::new(user.user_id, *wid);
     state
         .db
@@ -65,7 +65,7 @@ pub fn get((state, user, wid): (State<AppState>, UserGuard, Path<(i32)>)) -> imp
 }
 
 pub fn put(
-    (state, user, wid, req): (State<AppState>, UserGuard, Path<i32>, Json<WalletUpdateRequest>),
+    (state, user, wid, req): (State<AppState>, UserGuard, Path<i64>, Json<WalletUpdateRequest>),
 ) -> impl Responder {
     let update_wallet = UpdateWallet::from_request(user.user_id, *wid, req.0);
     state
@@ -87,7 +87,7 @@ pub fn put(
         .responder()
 }
 
-pub fn delete((state, user, wid): (State<AppState>, UserGuard, Path<(i32)>)) -> impl Responder {
+pub fn delete((state, user, wid): (State<AppState>, UserGuard, Path<i64>)) -> impl Responder {
     let delete_wallet = DeleteWallet::new(user.user_id, *wid);
     state
         .db

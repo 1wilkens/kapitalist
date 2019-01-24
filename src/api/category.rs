@@ -27,7 +27,7 @@ pub fn post((state, user, req): (State<AppState>, UserGuard, Json<CategoryCreati
         .responder()
 }
 
-pub fn get((state, user, tid): (State<AppState>, UserGuard, Path<i32>)) -> impl Responder {
+pub fn get((state, user, tid): (State<AppState>, UserGuard, Path<i64>)) -> impl Responder {
     let get_category = GetCategory::new(*tid, user.user_id);
     state
         .db
@@ -49,7 +49,7 @@ pub fn get((state, user, tid): (State<AppState>, UserGuard, Path<i32>)) -> impl 
 }
 
 pub fn put(
-    (state, user, tid, req): (State<AppState>, UserGuard, Path<i32>, Json<CategoryUpdateRequest>),
+    (state, user, tid, req): (State<AppState>, UserGuard, Path<i64>, Json<CategoryUpdateRequest>),
 ) -> impl Responder {
     let update_category = UpdateCategory::from_request(user.user_id, *tid, req.0);
     state
@@ -70,7 +70,7 @@ pub fn put(
         .responder()
 }
 
-pub fn delete((state, user, tid): (State<AppState>, UserGuard, Path<i32>)) -> impl Responder {
+pub fn delete((state, user, tid): (State<AppState>, UserGuard, Path<i64>)) -> impl Responder {
     let delete_category = DeleteCategory::new(user.user_id, *tid);
     state
         .db

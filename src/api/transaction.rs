@@ -8,7 +8,7 @@ use crate::request::TransactionCreationRequest;
 use crate::response::ErrorResponse;
 use crate::state::AppState;
 
-pub fn get_all((state, user, wid): (State<AppState>, UserGuard, Path<i32>)) -> impl Responder {
+pub fn get_all((state, user, wid): (State<AppState>, UserGuard, Path<i64>)) -> impl Responder {
     let get_txs = GetTransactionsFromWallet::new(*wid, user.user_id);
     state
         .db
@@ -49,7 +49,7 @@ pub fn post((state, user, req): (State<AppState>, UserGuard, Json<TransactionCre
         .responder()
 }
 
-pub fn get((state, user, tid): (State<AppState>, UserGuard, Path<i32>)) -> impl Responder {
+pub fn get((state, user, tid): (State<AppState>, UserGuard, Path<i64>)) -> impl Responder {
     let get_tx = GetTransaction::new(*tid, user.user_id);
     state
         .db
@@ -72,13 +72,13 @@ pub fn put(
     (state, user, tid /*, req*/): (
         State<AppState>,
         UserGuard,
-        Path<i32>, /*, Json<TransactionUpdateRequest>*/
+        Path<i64>, /*, Json<TransactionUpdateRequest>*/
     ),
 ) -> impl Responder {
     HttpResponse::InternalServerError().json(ErrorResponse::not_implemented())
 }
 
-pub fn delete((state, user, tid): (State<AppState>, UserGuard, Path<i32>)) -> impl Responder {
+pub fn delete((state, user, tid): (State<AppState>, UserGuard, Path<i64>)) -> impl Responder {
     let delete_tx = DeleteTransaction::new(*tid, user.user_id);
     state
         .db

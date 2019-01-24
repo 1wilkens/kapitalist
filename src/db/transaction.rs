@@ -19,10 +19,10 @@ use crate::request::TransactionCreationRequest;
 /// ts          -
 #[derive(Debug, Deserialize, Serialize, Queryable, Identifiable, AsChangeset)]
 pub struct Transaction {
-    pub id: i32,
-    pub wallet_id: i32,
-    pub category_id: i32,
-    pub amount: i32,
+    pub id: i64,
+    pub wallet_id: i64,
+    pub category_id: i64,
+    pub amount: i64,
     pub ts: NaiveDateTime,
 }
 
@@ -35,31 +35,31 @@ pub struct Transaction {
 #[derive(Debug, Insertable)]
 #[table_name = "transactions"]
 pub struct NewTransaction {
-    pub wallet_id: i32,
-    pub category_id: i32,
-    pub amount: i32,
+    pub wallet_id: i64,
+    pub category_id: i64,
+    pub amount: i64,
     pub ts: NaiveDateTime,
 }
 
 /// Actix message to retrieve a transaction entity from the database
 #[derive(Debug)]
 pub struct GetTransaction {
-    pub(crate) tid: i32,
-    pub(crate) uid: i32,
+    pub(crate) tid: i64,
+    pub(crate) uid: i64,
 }
 
 /// Actix message to retrieve all transactions of a given wallet from the database
 #[derive(Debug)]
 pub struct GetTransactionsFromWallet {
-    pub(crate) wid: i32,
-    pub(crate) uid: i32,
+    pub(crate) wid: i64,
+    pub(crate) uid: i64,
 }
 
 /// Actix message to delete a transaction entity from the database
 #[derive(Debug)]
 pub struct DeleteTransaction {
-    pub(crate) tid: i32,
-    pub(crate) uid: i32,
+    pub(crate) tid: i64,
+    pub(crate) uid: i64,
 }
 
 impl NewTransaction {
@@ -100,7 +100,7 @@ impl Handler<NewTransaction> for DatabaseExecutor {
 }
 
 impl GetTransaction {
-    pub fn new(transaction_id: i32, user_id: i32) -> GetTransaction {
+    pub fn new(transaction_id: i64, user_id: i64) -> GetTransaction {
         GetTransaction {
             tid: transaction_id,
             uid: user_id,
@@ -147,7 +147,7 @@ impl Handler<GetTransaction> for DatabaseExecutor {
 }
 
 impl GetTransactionsFromWallet {
-    pub fn new(wallet_id: i32, user_id: i32) -> GetTransactionsFromWallet {
+    pub fn new(wallet_id: i64, user_id: i64) -> GetTransactionsFromWallet {
         GetTransactionsFromWallet {
             wid: wallet_id,
             uid: user_id,
@@ -185,7 +185,7 @@ impl Handler<GetTransactionsFromWallet> for DatabaseExecutor {
 }
 
 impl DeleteTransaction {
-    pub fn new(transaction_id: i32, user_id: i32) -> DeleteTransaction {
+    pub fn new(transaction_id: i64, user_id: i64) -> DeleteTransaction {
         DeleteTransaction {
             tid: transaction_id,
             uid: user_id,

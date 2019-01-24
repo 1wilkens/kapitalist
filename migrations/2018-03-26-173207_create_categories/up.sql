@@ -1,7 +1,7 @@
 CREATE TABLE categories (
-    id          SERIAL NOT NULL PRIMARY KEY,
-    parent_id   INTEGER REFERENCES categories(id),
-    user_id     INTEGER REFERENCES users(id),
+    id          BIGSERIAL NOT NULL PRIMARY KEY,
+    parent_id   BIGINT REFERENCES categories(id),
+    user_id     BIGINT REFERENCES users(id),
     name        TEXT NOT NULL,
     color       TEXT NOT NULL,
     created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP

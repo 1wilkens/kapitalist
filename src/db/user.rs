@@ -19,7 +19,7 @@ use crate::request::UserCreationRequest;
 /// created_at - creation date of the user account
 #[derive(Debug, Deserialize, Serialize, Queryable, Identifiable, AsChangeset)]
 pub struct User {
-    pub id: i32,
+    pub id: i64,
     pub email: String,
     pub secret: String,
     pub username: String,
@@ -40,7 +40,7 @@ pub struct NewUser {
 }
 
 /// Actix message to retrieve a user entity from the database
-/// XXX: Change this to take Options of i32 and String to allow for multiple selection methods
+/// XXX: Change this to take Options of i64 and String to allow for multiple selection methods
 #[derive(Debug)]
 pub struct GetUser {
     pub email: String,
