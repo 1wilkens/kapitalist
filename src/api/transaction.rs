@@ -1,4 +1,4 @@
-use actix_web::{AsyncResponder, HttpResponse, Json, Path, Responder, State};
+use actix_web::{http, AsyncResponder, HttpResponse, Json, Path, Responder, State};
 use futures::future::Future;
 use slog::debug;
 
@@ -39,7 +39,9 @@ pub fn post((state, user, req): (State<AppState>, UserGuard, Json<TransactionCre
         .send(new_tx)
         .and_then(move |res| {
             let resp = match res {
-                Ok(tx) => HttpResponse::Ok().json(tx),
+                Ok(tx) => HttpResponse::Created()
+                    .header(http::header::LOCATION, format!("/transaction/{}", tx.id))
+                    .json(tx),
                 Err(err) => {
                     debug!(&state.log, "Error inserting transaction into database";
                         "error" => %&err);

@@ -13,7 +13,7 @@
  * | PUT | `/wallet/{wid}/transaction/{tid}` | TransactionUpdateRequest | update transaction details |
  */
 
-use actix_web::{AsyncResponder, HttpResponse, Json, Path, Responder, State};
+use actix_web::{http, AsyncResponder, HttpResponse, Json, Path, Responder, State};
 use futures::Future;
 use slog::debug;
 
@@ -31,7 +31,9 @@ pub fn post((state, user, req): (State<AppState>, UserGuard, Json<WalletCreation
         .and_then(move |res| {
             let resp = match res {
                 // XXX: Set location header
-                Ok(wallet) => HttpResponse::Created().json(wallet),
+                Ok(wallet) => HttpResponse::Created()
+                    .header(http::header::LOCATION, format!("/wallet/{}", wallet.id))
+                    .json(wallet),
                 Err(err) => {
                     debug!(&state.log, "Error inserting wallet into database";
                         "error" => %&err);
