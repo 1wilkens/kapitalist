@@ -41,6 +41,13 @@ pub struct NewTransaction {
     pub ts: NaiveDateTime,
 }
 
+/// Activ message to create a new transaction in the the database
+#[derive(Debug)]
+pub struct CreateNewTransaction {
+    user_id: i64,
+    tx: NewTransaction,
+}
+
 /// Actix message to retrieve a transaction entity from the database
 #[derive(Debug)]
 pub struct GetTransaction {
@@ -72,40 +79,49 @@ pub struct DeleteTransaction {
     pub(crate) tid: i64,
 }
 
-impl NewTransaction {
-    pub fn from_request(req: TransactionCreationRequest) -> NewTransaction {
-        NewTransaction {
-            wallet_id: req.wallet_id,
-            category_id: req.category_id,
-            amount: req.amount,
-            ts: req
-                .ts
-                // XXX: Check this is correct in regards to timezone
-                .unwrap_or_else(|| NaiveDateTime::from_timestamp(Utc::now().timestamp(), 0)),
+impl CreateNewTransaction {
+    pub fn from_request(user_id: i64, req: TransactionCreationRequest) -> CreateNewTransaction {
+        CreateNewTransaction {
+            user_id: user_id,
+            tx: NewTransaction {
+                wallet_id: req.wallet_id,
+                category_id: req.category_id,
+                amount: req.amount,
+                ts: req
+                    .ts
+                    // XXX: Check this is correct in regards to timezone
+                    .unwrap_or_else(|| NaiveDateTime::from_timestamp(Utc::now().timestamp(), 0)),
+            },
         }
     }
 }
 
-impl Message for NewTransaction {
-    type Result = Result<Transaction, Error>;
+impl Message for CreateNewTransaction {
+    type Result = Result<Option<Transaction>, Error>;
 }
 
-impl Handler<NewTransaction> for DatabaseExecutor {
-    type Result = Result<Transaction, Error>;
+impl Handler<CreateNewTransaction> for DatabaseExecutor {
+    type Result = Result<Option<Transaction>, Error>;
 
-    fn handle(&mut self, msg: NewTransaction, _: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, msg: CreateNewTransaction, ctx: &mut Self::Context) -> Self::Result {
         use crate::db::schema::transactions::dsl::*;
         trace!(self.1, "Received db action"; "msg" => ?msg);
 
-        // XXX: This currently does NOT check if the user owns the source wallet
-        // Unfortunately we can't just add a user_id field to NewTransaction as it is directly
-        // Insertable. TODO: Figure out an elegant way to handle this!
-        let transaction = diesel::insert_into(transactions)
-            .values(&msg)
-            .get_result(&self.0)
-            .map_err(error::ErrorInternalServerError)?;
-        trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?transaction);
-        Ok(transaction)
+        let wallet = self.handle(GetWallet::new(msg.user_id, msg.tx.wallet_id), ctx);
+        let result = match wallet {
+            Ok(Some(_)) => {
+                // User owns the target wallet
+                let tx = diesel::insert_into(transactions)
+                    .values(&msg.tx)
+                    .get_result(&self.0)
+                    .map_err(error::ErrorInternalServerError)?;
+                Some(tx)
+            }
+            _ => None,
+        };
+
+        trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?result);
+        Ok(result)
     }
 }
 

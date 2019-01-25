@@ -4,7 +4,7 @@ use slog::debug;
 
 use crate::auth::UserGuard;
 use crate::db::transaction::{
-    DeleteTransaction, GetTransaction, GetTransactionsFromWallet, NewTransaction, UpdateTransaction,
+    CreateNewTransaction, DeleteTransaction, GetTransaction, GetTransactionsFromWallet, UpdateTransaction,
 };
 use crate::request::{TransactionCreationRequest, TransactionUpdateRequest};
 use crate::response::ErrorResponse;
@@ -30,18 +30,16 @@ pub fn get_all((state, user, wid): (State<AppState>, UserGuard, Path<i64>)) -> i
 }
 
 pub fn post((state, user, req): (State<AppState>, UserGuard, Json<TransactionCreationRequest>)) -> impl Responder {
-    // XXX: This currently does NOT check if the user owns the source wallet
-    // Unfortunately we can't just add a user_id field to NewTransaction as it is directly
-    // Insertable. TODO: Figure out an elegant way to handle this!
-    let new_tx = NewTransaction::from_request(req.0);
+    let new_tx = CreateNewTransaction::from_request(user.user_id, req.0);
     state
         .db
         .send(new_tx)
         .and_then(move |res| {
             let resp = match res {
-                Ok(tx) => HttpResponse::Created()
+                Ok(Some(tx)) => HttpResponse::Created()
                     .header(http::header::LOCATION, format!("/transaction/{}", tx.id))
                     .json(tx),
+                Ok(None) => super::util::not_found(&"transaction"),
                 Err(err) => {
                     debug!(&state.log, "Error inserting transaction into database";
                         "error" => %&err);
@@ -82,7 +80,6 @@ pub fn put(
         .and_then(move |res| {
             let resp = match res {
                 Ok(Some(tx)) => HttpResponse::Ok().json(tx),
-                // XXX: Handle this properly and add utility method for 404
                 Ok(None) => super::util::not_found(&"transaction"),
                 Err(err) => {
                     debug!(&state.log, "Error updating transaction in database";
