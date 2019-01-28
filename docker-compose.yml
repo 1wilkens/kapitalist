@@ -11,7 +11,7 @@ services:
       DATABASE_URL: postgres://kapitalist:supersecretpassword@db/kapitalist
       KAPITALIST_DB: postgres://kapitalist:supersecretpassword@db/kapitalist
     ports:
-      - "127.0.0.1:3000:3000"
+        - "127.0.0.1:5454:5454"
     networks:
       - net
     volumes:
