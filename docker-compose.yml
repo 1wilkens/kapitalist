@@ -15,7 +15,7 @@ services:
     networks:
       - net
     volumes:
-      - ..:/usr/src/kapitalist
+      - .:/usr/src/kapitalist
       - rust-target:/usr/src/kapitalist/target
     depends_on:
       - db
