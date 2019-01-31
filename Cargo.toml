@@ -1,10 +1,10 @@
 [package]
-name = "kapitalist_backend"
+name = "kapitalist"
 version = "0.1.0"
-authors = ["Florian Wilkens <gh@1wilkens.org>"]
+authors = ["The kapitalist-app developers"]
 license = "MIT OR Apache-2.0"
 readme = "README.md"
-repository = "https://github.com/1wilkens/kapitalist"
+repository = "https://github.com/kapitalist-app/backend"
 
 edition = "2018"
 
@@ -16,19 +16,19 @@ path = "src/lib.rs"
 name = "kapitalist"
 path = "src/bin/main.rs"
 
+[profile.release]
+lto = true
+
 [dependencies]
-slog = { version = "2.3" }
-#slog = { version = "2.3", features = ["max_level_trace", "release_max_level_warn"] }
+clap = { version = "2.32", default-features = false, features = ["vec_map"] }
+slog = { version = "2.3", features = ["release_max_level_debug"] }
 slog-async = { version = "2.3", default-features = false }
 slog-stdlog = { version = "3.0", default-features = false }
 slog-term = { version = "2.4", default-features = false }
 
 dotenv = "0.13"
-
 serde = { version = "1.0", features = ["derive"] }
-
 chrono = { version = "0.4", features = ["serde"] }
-
 diesel = { version = "1.4", default-features = false, features = ["chrono", "postgres"] }
 
 actix = { version = "0.7", default-features = false }
@@ -36,5 +36,4 @@ actix-web = { version = "0.7", default-features = false }
 futures = "0.1"
 
 jsonwebtoken = "5.0"
-
 libreauth = "0.11"
