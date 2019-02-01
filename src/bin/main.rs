@@ -1,7 +1,12 @@
 extern crate kapitalist;
 
+// XXX: Remove this once it becomes obsolete
+#[macro_use]
+extern crate diesel_migrations;
+
 use actix_web::{actix, server};
 use clap::{App, AppSettings, Arg, ArgMatches, SubCommand};
+use diesel::{Connection, PgConnection};
 use slog::{error, info, o, Level};
 
 use std::env;
@@ -11,6 +16,9 @@ use kapitalist::{build_app, Config};
 
 const SUBCOMMAND_API: &str = "serve";
 const SUBCOMMAND_CRON: &str = "cron";
+const SUBCOMMAND_INIT: &str = "init";
+
+embed_migrations!();
 
 fn main() {
     // parse args
@@ -38,7 +46,12 @@ fn main() {
         cfg.db_url = db.into();
     }
 
-    if let Some(_) = args.subcommand_matches(SUBCOMMAND_CRON) {
+    if let Some(_) = args.subcommand_matches(SUBCOMMAND_INIT) {
+        // init - init db schema
+        let conn = PgConnection::establish(&cfg.db_url).expect("Could not establish connection to database");
+        let _ = embedded_migrations::run_with_output(&conn, &mut std::io::stdout());
+        return;
+    } else if let Some(_) = args.subcommand_matches(SUBCOMMAND_CRON) {
         // cron - scheduled maintenance tasks
         println!("This subcommand is not implemented yet!");
         return;
@@ -111,7 +124,8 @@ fn build_argparser<'a, 'b>() -> App<'a, 'b> {
                         .help("Which port to serve on. Overwrites value from KAPITALIST_PORT")
                         .takes_value(true),
                 ]),
-            SubCommand::with_name("cron").about("Perform scheduled maintenance tasks and exit"),
+            SubCommand::with_name(SUBCOMMAND_INIT).about("Initialize database"),
+            SubCommand::with_name(SUBCOMMAND_CRON).about("Perform scheduled maintenance tasks and exit"),
         ])
 }
 
