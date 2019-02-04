@@ -68,7 +68,9 @@ impl Config {
         Ok(())
     }
     pub fn from_env() -> Result<Config, ParseError> {
-        let addr = env::var("KAPITALIST_HOST")? + ":" + &env::var("KAPITALIST_PORT")?;
+        let ip = env::var("KAPITALIST_HOST").unwrap_or("0.0.0.0".into());
+        let port = env::var("KAPITALIST_PORT").unwrap_or("5454".into());
+        let addr = ip + ":" + &port;
         let addr: net::SocketAddr = addr.parse()?;
         let jwt_secret = env::var("KAPITALIST_JWT_SECRET")?;
         let db_url = env::var("KAPITALIST_DB")?;
