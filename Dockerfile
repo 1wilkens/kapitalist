@@ -1,10 +1,36 @@
-FROM rust:1.31
+# build container
+FROM rust:1.32 as build
 
-RUN cargo install -f cargo-watch
-RUN cargo install -f diesel_cli --no-default-features --features postgres
+# create a new empty shell project
+RUN USER=root cargo new --lib kapitalist
+WORKDIR /kapitalist
 
-WORKDIR /usr/src/kapitalist
-COPY docker/wait-for-port.sh .
+# copy over manifests
+COPY ./Cargo.lock ./Cargo.lock
+COPY ./Cargo.toml ./Cargo.toml
+RUN mkdir src/bin && echo 'fn main() {}' >> src/bin/main.rs
 
-EXPOSE 5454
-VOLUME ["/usr/local/cargo"]
+# cache dependencies
+RUN cargo build --release
+RUN rm -rf ./src/*
+RUN rm ./target/release/deps/*kapitalist*
+
+# copy source tree
+COPY ./src ./src
+COPY ./migrations ./migrations
+
+# build for release
+RUN cargo build --release
+
+# kapitalist container
+FROM debian:stretch-slim
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libpq5 \
+    && rm -rf /var/lib/apt/lists/*
+
+# copy the build artifact from the build stage
+COPY --from=build /kapitalist/target/release/kapitalist /usr/bin/kapitalist
+COPY docker/*.sh /usr/bin/
+
+CMD ["docker-entrypoint.sh"]

@@ -1,0 +1,6 @@
+# Ignore rust build artifacts
+target/
+
+# Ignore documentation and LICENSES
+doc/
+LICENSE-*

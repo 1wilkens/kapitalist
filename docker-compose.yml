@@ -5,21 +5,20 @@ services:
     container_name: kapitalist_api
     build: .
     image: kapitalist:latest
-    # diesel infer_schema macro gives warnings with this flag.
     environment:
-      CARGO_INCREMENTAL: 1
-      DATABASE_URL: postgres://kapitalist:supersecretpassword@db/kapitalist
+      # IP/port are already set per default
+      KAPITALIST_HOST: 0.0.0.0
+      KAPITALIST_PORT: 5454
+      # Database connection string
       KAPITALIST_DB: postgres://kapitalist:supersecretpassword@db/kapitalist
+      # JWT secret to sign auth tokens
+      KAPITALIST_JWT_SECRET: supersecretsecret
     ports:
         - "127.0.0.1:5454:5454"
     networks:
       - net
-    volumes:
-      - .:/usr/src/kapitalist
-      - rust-target:/usr/src/kapitalist/target
     depends_on:
       - db
-    command: bash -c "./docker/wait-for-port.sh db:5432 -q -- cargo --version && diesel setup && cargo watch -x run"
 
   db:
     container_name: kapitalist_db
@@ -40,5 +39,4 @@ networks:
   net:
 
 volumes:
-  rust-target: {}
   pgdata: {}
