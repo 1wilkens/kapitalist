@@ -148,10 +148,12 @@ fn init_logging(args: &ArgMatches) -> slog::Logger {
 }
 
 fn load_env() {
-    for item in dotenv::dotenv_iter().unwrap() {
-        if let Ok((key, val)) = item {
-            if let Err(env::VarError::NotPresent) = env::var(&key) {
-                env::set_var(&key, &val);
+    if let Ok(variables) = dotenv::dotenv_iter() {
+        for item in variables {
+            if let Ok((key, val)) = item {
+                if let Err(env::VarError::NotPresent) = env::var(&key) {
+                    env::set_var(&key, &val);
+                }
             }
         }
     }
