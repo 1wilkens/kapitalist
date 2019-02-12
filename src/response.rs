@@ -1,6 +1,11 @@
 use serde::Serialize;
 
 #[derive(Debug, Serialize)]
+pub struct VersionResponse {
+    pub version: String,
+}
+
+#[derive(Debug, Serialize)]
 pub struct TokenResponse {
     pub token: String,
 }

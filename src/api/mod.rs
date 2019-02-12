@@ -1,6 +1,6 @@
-use crate::state::AppState;
+use actix_web::{HttpRequest, Json};
 
-use actix_web::HttpRequest;
+use crate::{response::VersionResponse, state::AppState};
 
 pub mod category;
 pub mod transaction;
@@ -9,6 +9,12 @@ pub mod wallet;
 
 pub mod util;
 
-pub fn index(_req: &HttpRequest<AppState>) -> String {
+pub fn index(_: &HttpRequest<AppState>) -> String {
     "Kapitalist is running".into()
+}
+
+pub fn version(_: &HttpRequest<AppState>) -> Json<VersionResponse> {
+    Json(VersionResponse {
+        version: env!("CARGO_PKG_VERSION").to_string(),
+    })
 }

@@ -34,6 +34,7 @@ pub fn build_app(config: &state::Config, log: &Logger) -> actix_web::App<state::
         .middleware(log::SlogMiddleware::new(log_.clone()))
         // User management
         .resource("/", |r| r.get().f(api::index))
+        .resource("/version", |r| r.get().f(api::version))
         .resource("/register", |r| r.post().with(api::user::register))
         .resource("/token", |r| r.post().with(api::user::token))
         .resource("/me", |r| r.get().with(api::user::get_me))
