@@ -10,11 +10,9 @@ pub mod request;
 pub mod response;
 pub mod state;
 
-use slog::Logger;
-
 pub use crate::state::Config;
 
-pub fn build_app(config: &state::Config, log: &Logger) -> actix_web::App<state::AppState> {
+pub fn build_app(config: &state::Config, log: &slog::Logger) -> actix_web::App<state::AppState> {
     // database connection
     let url = config.db_url.clone();
     let log_ = log.clone();
