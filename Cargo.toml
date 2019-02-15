@@ -20,7 +20,7 @@ path = "src/bin/main.rs"
 lto = true
 
 [dependencies]
-kapitalist_types = { path = "../types" }
+kapitalist_types = { git = "https://github.com/kapitalist-app/types", branch = "develop" }
 
 clap = { version = "2.32", default-features = false, features = ["vec_map"] }
 slog = { version = "2.3", features = ["release_max_level_debug"] }
