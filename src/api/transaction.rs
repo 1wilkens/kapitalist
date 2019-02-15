@@ -2,12 +2,13 @@ use actix_web::{http, AsyncResponder, HttpResponse, Json, Path, Responder, State
 use futures::future::Future;
 use slog::debug;
 
+use kapitalist_types::request::{TransactionCreationRequest, TransactionUpdateRequest};
+use kapitalist_types::response::ErrorResponse;
+
 use crate::auth::UserGuard;
 use crate::db::transaction::{
     CreateNewTransaction, DeleteTransaction, GetTransaction, GetTransactionsFromWallet, UpdateTransaction,
 };
-use crate::request::{TransactionCreationRequest, TransactionUpdateRequest};
-use crate::response::ErrorResponse;
 use crate::state::AppState;
 
 pub fn get_all((state, user, wid): (State<AppState>, UserGuard, Path<i64>)) -> impl Responder {

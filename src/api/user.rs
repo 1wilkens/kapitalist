@@ -14,10 +14,11 @@ use futures::Future;
 use jsonwebtoken as jwt;
 use slog::{debug, trace};
 
+use kapitalist_types::request::{TokenRequest, UserCreationRequest, UserUpdateRequest};
+use kapitalist_types::response::{ErrorResponse, TokenResponse};
+
 use crate::auth::{TokenClaims, UserGuard};
 use crate::db::user::{GetUser, NewUser};
-use crate::request::{TokenRequest, UserCreationRequest, UserUpdateRequest};
-use crate::response::{ErrorResponse, TokenResponse};
 use crate::state::AppState;
 
 // TODO: Verify this use of Either

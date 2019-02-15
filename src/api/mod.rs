@@ -1,6 +1,7 @@
 use actix_web::{HttpRequest, Json};
+use kapitalist_types::response::VersionResponse;
 
-use crate::{response::VersionResponse, state::AppState};
+use crate::state::AppState;
 
 pub mod category;
 pub mod transaction;

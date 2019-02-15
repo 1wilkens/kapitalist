@@ -7,8 +7,9 @@ use diesel::{self, prelude::*};
 use serde::{Deserialize, Serialize};
 use slog::trace;
 
+use kapitalist_types::request::UserCreationRequest;
+
 use crate::db::{schema::users, DatabaseExecutor};
-use crate::request::UserCreationRequest;
 
 /// Database entity representing a user account
 ///

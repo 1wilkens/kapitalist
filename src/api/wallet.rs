@@ -17,10 +17,11 @@ use actix_web::{http, AsyncResponder, HttpResponse, Json, Path, Responder, State
 use futures::Future;
 use slog::debug;
 
+use kapitalist_types::request::{WalletCreationRequest, WalletUpdateRequest};
+use kapitalist_types::response::ErrorResponse;
+
 use crate::auth::UserGuard;
 use crate::db::wallet::{DeleteWallet, GetWallet, NewWallet, UpdateWallet};
-use crate::request::{WalletCreationRequest, WalletUpdateRequest};
-use crate::response::ErrorResponse;
 use crate::state::AppState;
 
 pub fn post((state, user, req): (State<AppState>, UserGuard, Json<WalletCreationRequest>)) -> impl Responder {

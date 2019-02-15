@@ -2,10 +2,11 @@ use actix_web::{http, AsyncResponder, HttpResponse, Json, Path, Responder, State
 use futures::Future;
 use slog::debug;
 
+use kapitalist_types::request::{CategoryCreationRequest, CategoryUpdateRequest};
+use kapitalist_types::response::ErrorResponse;
+
 use crate::auth::UserGuard;
 use crate::db::category::{DeleteCategory, GetCategory, NewCategory, UpdateCategory};
-use crate::request::{CategoryCreationRequest, CategoryUpdateRequest};
-use crate::response::ErrorResponse;
 use crate::state::AppState;
 
 pub fn post((state, user, req): (State<AppState>, UserGuard, Json<CategoryCreationRequest>)) -> impl Responder {

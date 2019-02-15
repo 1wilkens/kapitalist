@@ -7,8 +7,9 @@ use diesel::{self, prelude::*};
 use serde::{Deserialize, Serialize};
 use slog::trace;
 
+use kapitalist_types::request::{CategoryCreationRequest, CategoryUpdateRequest};
+
 use crate::db::{schema::categories, DatabaseExecutor};
-use crate::request::{CategoryCreationRequest, CategoryUpdateRequest};
 
 /// Database entity representing a transaction category
 ///

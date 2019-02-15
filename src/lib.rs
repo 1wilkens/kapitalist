@@ -6,8 +6,6 @@ pub mod db;
 
 pub mod auth;
 pub mod log;
-pub mod request;
-pub mod response;
 pub mod state;
 
 pub use crate::state::Config;

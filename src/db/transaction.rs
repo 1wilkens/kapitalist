@@ -7,8 +7,9 @@ use diesel::{self, prelude::*};
 use serde::{Deserialize, Serialize};
 use slog::trace;
 
+use kapitalist_types::request::{TransactionCreationRequest, TransactionUpdateRequest};
+
 use crate::db::{schema::transactions, wallet::GetWallet, DatabaseExecutor};
-use crate::request::{TransactionCreationRequest, TransactionUpdateRequest};
 
 /// Database entity representing a transaction
 ///

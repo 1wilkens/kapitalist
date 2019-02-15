@@ -7,11 +7,11 @@ use diesel::{self, prelude::*};
 use serde::{Deserialize, Serialize};
 use slog::trace;
 
+use kapitalist_types::request::{WalletCreationRequest, WalletUpdateRequest};
+
 use crate::db::{schema::wallets, DatabaseExecutor};
-use crate::request::{WalletCreationRequest, WalletUpdateRequest};
 
 // XXX: Make wallet_type an enum once we figure out which values belong there
-
 /// Database entity representing a user's wallet
 ///
 /// id              -
