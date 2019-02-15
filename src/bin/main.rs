@@ -7,7 +7,7 @@ extern crate diesel_migrations;
 use actix_web::{actix, server};
 use clap::{App, AppSettings, Arg, ArgMatches, SubCommand};
 use diesel::{Connection, PgConnection};
-use slog::{error, info, o, Level};
+use slog::{error, info, o};
 
 use std::env;
 use std::net::IpAddr;
@@ -133,11 +133,11 @@ fn init_logging(args: &ArgMatches) -> slog::Logger {
     use slog::Drain;
 
     let log_level = if args.is_present("debug") {
-        Level::Debug
+        slog::Level::Debug
     } else if args.is_present("verbose") {
-        Level::Info
+        slog::Level::Info
     } else {
-        Level::Error
+        slog::Level::Error
     };
 
     let decorator = slog_term::TermDecorator::new().build();
