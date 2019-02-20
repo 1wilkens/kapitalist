@@ -12,12 +12,6 @@ use kapitalist_types::request::{CategoryCreationRequest, CategoryUpdateRequest};
 use crate::db::{schema::categories, DatabaseExecutor};
 
 /// Database entity representing a transaction category
-///
-/// id        -
-/// user_id   -
-/// name      -
-/// color     -
-/// create_at -
 #[derive(Debug, Deserialize, Serialize, Queryable, Identifiable, AsChangeset)]
 #[table_name = "categories"]
 pub struct Category {
@@ -30,10 +24,6 @@ pub struct Category {
 }
 
 /// Insertable database entity to create a new category
-///
-/// user_id -
-/// name    -
-/// color   -
 #[derive(Debug, Insertable)]
 #[table_name = "categories"]
 pub struct NewCategory {

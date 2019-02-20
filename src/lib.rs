@@ -1,3 +1,6 @@
+#![deny(clippy::pedantic)]
+#![allow(clippy::redundant_field_names, clippy::stutter)]
+
 #[macro_use]
 extern crate diesel;
 

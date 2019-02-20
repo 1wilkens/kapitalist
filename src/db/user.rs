@@ -12,31 +12,29 @@ use kapitalist_types::request::UserCreationRequest;
 use crate::db::{schema::users, DatabaseExecutor};
 
 /// Database entity representing a user account
-///
-/// id         - database id
-/// email      - user's current email address
-/// secret     - salt and hash of the user's password
-/// username   - user's current username
-/// created_at - creation date of the user account
 #[derive(Debug, Deserialize, Serialize, Queryable, Identifiable, AsChangeset)]
 pub struct User {
+    /// Account Id
     pub id: i64,
+    /// User's current email address
     pub email: String,
+    /// Salt and hash of the user's password
     pub secret: String,
+    /// User's current username
     pub username: String,
+    /// Creation date of the user's account
     pub created_at: NaiveDateTime,
 }
 
 /// Insertable database entity to create new user accounts
-///
-/// email    - user's email address used to register
-/// secret   - salt and hash of the user's password
-/// username - user's chosen username used to register
 #[derive(Debug, Insertable)]
 #[table_name = "users"]
 pub struct NewUser {
+    /// The email address used to register
     pub email: String,
+    /// Salt and hash of the password used to register
     pub secret: String,
+    /// The username used to register
     pub username: String,
 }
 

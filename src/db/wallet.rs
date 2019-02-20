@@ -13,15 +13,6 @@ use crate::db::{schema::wallets, DatabaseExecutor};
 
 // XXX: Make wallet_type an enum once we figure out which values belong there
 /// Database entity representing a user's wallet
-///
-/// id              -
-/// user_id         -
-/// name            -
-/// wallet_type     -
-/// initial_balance -
-/// current_balance -
-/// color           -
-/// created_at      -
 #[derive(Debug, Deserialize, Serialize, Queryable, Identifiable, AsChangeset)]
 pub struct Wallet {
     pub id: i64,
@@ -35,12 +26,6 @@ pub struct Wallet {
 }
 
 /// Insertable database entity to create new wallets
-///
-/// user_id         -
-/// name            -
-/// initial_balance -
-/// current_balance -
-/// color           -
 #[derive(Debug, Insertable)]
 #[table_name = "wallets"]
 pub struct NewWallet {
@@ -142,10 +127,10 @@ impl Handler<GetWallet> for DatabaseExecutor {
 }
 
 impl UpdateWallet {
-    pub fn from_request(uid: i64, wid: i64, req: WalletUpdateRequest) -> UpdateWallet {
+    pub fn from_request(user_id: i64, wallet_id: i64, req: WalletUpdateRequest) -> UpdateWallet {
         UpdateWallet {
-            uid: uid,
-            wid: wid,
+            uid: user_id,
+            wid: wallet_id,
             name: req.name,
             wallet_type: req.wallet_type,
             color: req.color,
