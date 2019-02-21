@@ -10,12 +10,12 @@ use crate::state::AppState;
 
 struct StartTime(DateTime<Utc>);
 
-pub struct SlogMiddleware {
+pub(crate) struct SlogMiddleware {
     log: slog::Logger,
 }
 
 impl SlogMiddleware {
-    pub fn new(log: impl Into<Option<slog::Logger>>) -> SlogMiddleware {
+    pub(crate) fn new(log: impl Into<Option<slog::Logger>>) -> SlogMiddleware {
         use slog::Drain;
 
         SlogMiddleware {

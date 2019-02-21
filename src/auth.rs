@@ -16,7 +16,7 @@ pub struct JwtSecret(pub String);
 
 #[derive(Debug, Serialize, Deserialize)]
 /// Represents claims included in kapitalist issued json web tokens
-pub struct TokenClaims {
+pub(crate) struct TokenClaims {
     // Issuer
     pub iss: String,
     // Subjec
@@ -35,7 +35,7 @@ pub struct TokenClaims {
 
 impl TokenClaims {
     /// Create a new TokenClaims instance with the given subject and user is
-    pub fn new(sub: &str, uid: i64) -> TokenClaims {
+    pub(crate) fn new(sub: &str, uid: i64) -> TokenClaims {
         // TODO: make this configurable and use real urls
         TokenClaims {
             iss: "kapitalist".into(),

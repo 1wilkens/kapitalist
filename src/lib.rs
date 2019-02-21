@@ -8,11 +8,14 @@ pub mod api;
 pub mod db;
 
 pub mod auth;
-pub mod log;
 pub mod state;
+
+mod log;
 
 pub use crate::state::Config;
 
+/// Construct and configure an instance of an `actix_web::App` from the given `kapitalist::Config` and
+/// `slog::Logger`
 pub fn build_app(config: &state::Config, log: &slog::Logger) -> actix_web::App<state::AppState> {
     // database connection
     let url = config.db_url.clone();

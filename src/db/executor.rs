@@ -5,7 +5,7 @@ use actix_web::{
 use diesel::{pg::PgConnection, Connection};
 use slog::Logger;
 
-/// The database executor actor
+/// Actix actor that interacts with the database
 pub struct DatabaseExecutor(pub(crate) PgConnection, pub(crate) Logger);
 
 impl Actor for DatabaseExecutor {

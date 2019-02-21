@@ -1,5 +1,5 @@
-pub mod executor;
-pub mod schema;
+mod executor;
+mod schema;
 
 pub mod category;
 pub mod transaction;
