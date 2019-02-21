@@ -1,5 +1,6 @@
 [package]
 name = "kapitalist"
+description = "Kapitalist backend service"
 version = "0.1.0"
 authors = ["The kapitalist-app developers"]
 license = "MIT OR Apache-2.0"
@@ -20,7 +21,7 @@ path = "src/bin/main.rs"
 lto = true
 
 [dependencies]
-kapitalist_types = { git = "https://github.com/kapitalist-app/types", branch = "develop" }
+kapitalist_types = "0.1"
 
 clap = { version = "2.32", default-features = false, features = ["vec_map"] }
 slog = { version = "2.3", features = ["release_max_level_debug"] }
