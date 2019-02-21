@@ -58,8 +58,8 @@ pub struct DeleteCategory {
 }
 
 impl NewCategory {
-    pub fn from_request(req: CategoryCreationRequest, uid: i64) -> NewCategory {
-        NewCategory {
+    pub fn from_request(req: CategoryCreationRequest, uid: i64) -> Self {
+        Self {
             parent_id: req.parent_id,
             user_id: uid,
             name: req.name,
@@ -90,8 +90,8 @@ impl Handler<NewCategory> for DatabaseExecutor {
 }
 
 impl GetCategory {
-    pub fn new(category_id: i64, user_id: i64) -> GetCategory {
-        GetCategory {
+    pub fn new(category_id: i64, user_id: i64) -> Self {
+        Self {
             cid: category_id,
             uid: user_id,
         }
@@ -122,8 +122,8 @@ impl Handler<GetCategory> for DatabaseExecutor {
 }
 
 impl UpdateCategory {
-    pub fn from_request(user_id: i64, category_id: i64, req: CategoryUpdateRequest) -> UpdateCategory {
-        UpdateCategory {
+    pub fn from_request(user_id: i64, category_id: i64, req: CategoryUpdateRequest) -> Self {
+        Self {
             uid: user_id,
             cid: category_id,
             parent_id: req.parent_id,
@@ -170,8 +170,8 @@ impl Handler<UpdateCategory> for DatabaseExecutor {
 }
 
 impl DeleteCategory {
-    pub fn new(user_id: i64, category_id: i64) -> DeleteCategory {
-        DeleteCategory {
+    pub fn new(user_id: i64, category_id: i64) -> Self {
+        Self {
             cid: category_id,
             uid: user_id,
         }

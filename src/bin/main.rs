@@ -46,12 +46,12 @@ fn main() {
         cfg.db_url = db.into();
     }
 
-    if let Some(_) = args.subcommand_matches(SUBCOMMAND_INIT) {
+    if args.subcommand_matches(SUBCOMMAND_INIT).is_some() {
         // init - init db schema
         let conn = PgConnection::establish(&cfg.db_url).expect("Could not establish connection to database");
         let _ = embedded_migrations::run_with_output(&conn, &mut std::io::stdout());
         return;
-    } else if let Some(_) = args.subcommand_matches(SUBCOMMAND_CRON) {
+    } else if let Some(_sc) = args.subcommand_matches(SUBCOMMAND_CRON) {
         // cron - scheduled maintenance tasks
         println!("This subcommand is not implemented yet!");
         return;
@@ -83,7 +83,7 @@ fn main() {
         let log_ = log.clone();
         let server = server::new(move || build_app(&cfg_, &log_))
             .bind(&cfg.addr)
-            .expect(&format!("Failed to bind address from configuration: {}", &cfg.addr));
+            .unwrap_or_else(|_| panic!("Failed to bind address from configuration: {}", &cfg.addr));
 
         // start server
         server.start();

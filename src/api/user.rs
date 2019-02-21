@@ -30,11 +30,10 @@ pub fn register((state, req): (State<AppState>, Json<UserCreationRequest>)) -> i
      * - Insert into DB
      * - Figure out what to return (redirect to me?)
      */
-    let new_user = match NewUser::from_request(req.0) {
-        Some(u) => u,
-        None => {
-            return Either::A(HttpResponse::BadRequest().json(ErrorResponse::new("Password does not match criteria")));
-        }
+    let new_user = if let Some(u) = NewUser::from_request(req.0) {
+        u
+    } else {
+        return Either::A(HttpResponse::BadRequest().json(ErrorResponse::new("Password does not match criteria")));
     };
     Either::B(
         state

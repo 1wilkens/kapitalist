@@ -47,7 +47,7 @@ pub struct GetUser {
 
 impl NewUser {
     /// XXX: This should return a result, figure out fitting error type
-    pub fn from_request(req: UserCreationRequest) -> Option<NewUser> {
+    pub fn from_request(req: UserCreationRequest) -> Option<Self> {
         use libreauth::pass::HashBuilder;
 
         let hasher = HashBuilder::new().finalize().expect("[CRIT] Failed to create Hasher");
@@ -59,7 +59,7 @@ impl NewUser {
         } else {
             req.email.clone()
         };
-        Some(NewUser {
+        Some(Self {
             email: req.email,
             secret: hash,
             username: name,

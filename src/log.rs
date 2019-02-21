@@ -15,10 +15,10 @@ pub(crate) struct SlogMiddleware {
 }
 
 impl SlogMiddleware {
-    pub(crate) fn new(log: impl Into<Option<slog::Logger>>) -> SlogMiddleware {
+    pub(crate) fn new(log: impl Into<Option<slog::Logger>>) -> Self {
         use slog::Drain;
 
-        SlogMiddleware {
+        Self {
             log: log
                 .into()
                 .unwrap_or_else(|| slog::Logger::root(slog_stdlog::StdLog.fuse(), o!())),

@@ -62,8 +62,8 @@ pub struct DeleteWallet {
 }
 
 impl NewWallet {
-    pub fn from_request(uid: i64, req: WalletCreationRequest) -> NewWallet {
-        NewWallet {
+    pub fn from_request(uid: i64, req: WalletCreationRequest) -> Self {
+        Self {
             user_id: uid,
             name: req.name,
             wallet_type: req.wallet_type,
@@ -95,8 +95,8 @@ impl Handler<NewWallet> for DatabaseExecutor {
 }
 
 impl GetWallet {
-    pub fn new(user_id: i64, wallet_id: i64) -> GetWallet {
-        GetWallet {
+    pub fn new(user_id: i64, wallet_id: i64) -> Self {
+        Self {
             wid: wallet_id,
             uid: user_id,
         }
@@ -127,8 +127,8 @@ impl Handler<GetWallet> for DatabaseExecutor {
 }
 
 impl UpdateWallet {
-    pub fn from_request(user_id: i64, wallet_id: i64, req: WalletUpdateRequest) -> UpdateWallet {
-        UpdateWallet {
+    pub fn from_request(user_id: i64, wallet_id: i64, req: WalletUpdateRequest) -> Self {
+        Self {
             uid: user_id,
             wid: wallet_id,
             name: req.name,
@@ -175,8 +175,8 @@ impl Handler<UpdateWallet> for DatabaseExecutor {
 }
 
 impl DeleteWallet {
-    pub fn new(user_id: i64, wallet_id: i64) -> DeleteWallet {
-        DeleteWallet {
+    pub fn new(user_id: i64, wallet_id: i64) -> Self {
+        Self {
             uid: user_id,
             wid: wallet_id,
         }

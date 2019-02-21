@@ -12,12 +12,6 @@ use kapitalist_types::request::{TransactionCreationRequest, TransactionUpdateReq
 use crate::db::{schema::transactions, wallet::GetWallet, DatabaseExecutor};
 
 /// Database entity representing a transaction
-///
-/// id          -
-/// wallet_id   -
-/// category_id -
-/// amount      -
-/// ts          -
 #[derive(Debug, Deserialize, Serialize, Queryable, Identifiable, AsChangeset)]
 pub struct Transaction {
     pub id: i64,
@@ -28,11 +22,6 @@ pub struct Transaction {
 }
 
 /// Insertable database entity to create new transactions
-///
-/// wallet_id   -
-/// category_id -
-/// amount      -
-/// ts          -
 #[derive(Debug, Insertable)]
 #[table_name = "transactions"]
 pub struct NewTransaction {
@@ -81,8 +70,9 @@ pub struct DeleteTransaction {
 }
 
 impl CreateNewTransaction {
-    pub fn from_request(user_id: i64, req: TransactionCreationRequest) -> CreateNewTransaction {
-        CreateNewTransaction {
+    #[allow(clippy::needless_pass_by_value)]
+    pub fn from_request(user_id: i64, req: TransactionCreationRequest) -> Self {
+        Self {
             user_id: user_id,
             tx: NewTransaction {
                 wallet_id: req.wallet_id,
@@ -127,8 +117,8 @@ impl Handler<CreateNewTransaction> for DatabaseExecutor {
 }
 
 impl GetTransaction {
-    pub fn new(user_id: i64, transaction_id: i64) -> GetTransaction {
-        GetTransaction {
+    pub fn new(user_id: i64, transaction_id: i64) -> Self {
+        Self {
             uid: user_id,
             tid: transaction_id,
         }
@@ -142,6 +132,7 @@ impl Message for GetTransaction {
 impl Handler<GetTransaction> for DatabaseExecutor {
     type Result = Result<Option<Transaction>, Error>;
 
+    #[allow(clippy::single_match_else)]
     fn handle(&mut self, msg: GetTransaction, ctx: &mut Self::Context) -> Self::Result {
         use crate::db::schema::transactions::dsl::*;
         trace!(self.1, "Received db action"; "msg" => ?msg);
@@ -174,8 +165,8 @@ impl Handler<GetTransaction> for DatabaseExecutor {
 }
 
 impl GetTransactionsFromWallet {
-    pub fn new(user_id: i64, wallet_id: i64) -> GetTransactionsFromWallet {
-        GetTransactionsFromWallet {
+    pub fn new(user_id: i64, wallet_id: i64) -> Self {
+        Self {
             uid: user_id,
             wid: wallet_id,
         }
@@ -212,8 +203,9 @@ impl Handler<GetTransactionsFromWallet> for DatabaseExecutor {
 }
 
 impl UpdateTransaction {
-    pub fn from_request(user_id: i64, transaction_id: i64, req: TransactionUpdateRequest) -> UpdateTransaction {
-        UpdateTransaction {
+    #[allow(clippy::needless_pass_by_value)]
+    pub fn from_request(user_id: i64, transaction_id: i64, req: TransactionUpdateRequest) -> Self {
+        Self {
             uid: user_id,
             tid: transaction_id,
             wallet_id: req.wallet_id,
@@ -264,8 +256,8 @@ impl Handler<UpdateTransaction> for DatabaseExecutor {
 }
 
 impl DeleteTransaction {
-    pub fn new(user_id: i64, transaction_id: i64) -> DeleteTransaction {
-        DeleteTransaction {
+    pub fn new(user_id: i64, transaction_id: i64) -> Self {
+        Self {
             uid: user_id,
             tid: transaction_id,
         }

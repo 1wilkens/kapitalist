@@ -10,15 +10,15 @@ use crate::auth::JwtSecret;
 use crate::db::DatabaseExecutor;
 
 /// Required environment variables for kapitalist
-///
-/// - KAPITALIST_HOST       - Which IP address to listen on
-/// - KAPITALIST_PORT       - Which port to listen on
-/// - KAPITALIST_DB         - Connection string of the backing database (diesel format)
-/// - KAPITALIST_JWT_SECRET - JWT secret to sign tokens with
+#[allow(unused_doc_comments)]
 static REQUIRED_ENV_VARIABLES: [&str; 4] = [
+    /// Which IP address to listen on
     "KAPITALIST_HOST",
+    /// Which port to listen on
     "KAPITALIST_PORT",
+    /// Connection string of the backing database (diesel format)
     "KAPITALIST_DB",
+    /// JWT secret to sign tokens with
     "KAPITALIST_JWT_SECRET",
 ];
 
@@ -54,7 +54,7 @@ impl Config {
         trace!(&log, "Checking environment");
         let vars: HashMap<String, String> = env::vars().collect();
 
-        for v in REQUIRED_ENV_VARIABLES.iter() {
+        for v in &REQUIRED_ENV_VARIABLES {
             if vars.contains_key(*v) && !vars[*v].is_empty() {
                 debug!(&log, "Found required env variable";
                 "value" => &vars[*v],
@@ -67,14 +67,14 @@ impl Config {
 
         Ok(())
     }
-    pub fn from_env() -> Result<Config, ParseError> {
-        let ip = env::var("KAPITALIST_HOST").unwrap_or("0.0.0.0".into());
-        let port = env::var("KAPITALIST_PORT").unwrap_or("5454".into());
+    pub fn from_env() -> Result<Self, ParseError> {
+        let ip = env::var("KAPITALIST_HOST").unwrap_or_else(|_| "0.0.0.0".into());
+        let port = env::var("KAPITALIST_PORT").unwrap_or_else(|_| "5454".into());
         let addr = ip + ":" + &port;
         let addr: net::SocketAddr = addr.parse()?;
         let jwt_secret = env::var("KAPITALIST_JWT_SECRET")?;
         let db_url = env::var("KAPITALIST_DB")?;
-        Ok(Config {
+        Ok(Self {
             addr: addr,
             db_url: db_url,
             jwt_secret: JwtSecret(jwt_secret),
@@ -83,6 +83,7 @@ impl Config {
 }
 
 impl AppState {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new(cfg: Config, addr: actix::Addr<DatabaseExecutor>) -> AppStateBuilder {
         AppStateBuilder {
             config: cfg,
@@ -113,13 +114,13 @@ impl AppStateBuilder {
 }
 
 impl From<env::VarError> for ParseError {
-    fn from(error: env::VarError) -> ParseError {
+    fn from(error: env::VarError) -> Self {
         ParseError::InvalidEnvironment(error)
     }
 }
 
 impl From<net::AddrParseError> for ParseError {
-    fn from(error: net::AddrParseError) -> ParseError {
+    fn from(error: net::AddrParseError) -> Self {
         ParseError::InvalidAddress(error)
     }
 }

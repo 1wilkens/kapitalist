@@ -35,9 +35,9 @@ pub(crate) struct TokenClaims {
 
 impl TokenClaims {
     /// Create a new TokenClaims instance with the given subject and user is
-    pub(crate) fn new(sub: &str, uid: i64) -> TokenClaims {
+    pub(crate) fn new(sub: &str, uid: i64) -> Self {
         // TODO: make this configurable and use real urls
-        TokenClaims {
+        Self {
             iss: "kapitalist".into(),
             aud: "kapitalist".into(),
             sub: sub.into(),
@@ -55,7 +55,7 @@ pub struct UserGuard {
 
 impl FromRequest<AppState> for UserGuard {
     type Config = ();
-    type Result = Result<UserGuard, Error>;
+    type Result = Result<Self, Error>;
 
     #[inline]
     fn from_request(req: &HttpRequest<AppState>, _: &Self::Config) -> Self::Result {
@@ -74,7 +74,7 @@ impl FromRequest<AppState> for UserGuard {
                 // We have a bearer token
                 let validation = Validation {
                     leeway: 60,
-                    ..Default::default()
+                    ..Validation::default()
                 };
                 debug!(&req.state().log, "Validating bearer token"; "token" => &parts[1]);
                 let token = match decode::<TokenClaims>(&parts[1], secret, &validation) {
@@ -85,7 +85,7 @@ impl FromRequest<AppState> for UserGuard {
                         continue;
                     }
                 };
-                return Ok(UserGuard {
+                return Ok(Self {
                     user_id: token.claims.uid,
                 });
             }
