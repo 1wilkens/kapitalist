@@ -22,6 +22,10 @@ branches:
   only:
     - develop
 
+before_install:
+  - rustup component add clippy
+
 script:
-  - cargo check
-  - cargo test
+  - cargo check --verbose
+  - cargo clippy --verbose
+  - cargo test --verbose
