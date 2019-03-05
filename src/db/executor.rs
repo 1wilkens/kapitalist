@@ -15,7 +15,7 @@ impl Actor for DatabaseExecutor {
 impl DatabaseExecutor {
     pub fn new(db_url: &str, log: Logger) -> Option<Self> {
         let conn = PgConnection::establish(db_url).ok()?;
-        Some(DatabaseExecutor(conn, log))
+        Some(Self(conn, log))
     }
 }
 

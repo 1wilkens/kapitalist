@@ -675,7 +675,7 @@ dependencies = [
  "dotenv 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.1.25 (registry+https://github.com/rust-lang/crates.io-index)",
  "jsonwebtoken 5.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "kapitalist_types 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "kapitalist_types 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "libreauth 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.88 (registry+https://github.com/rust-lang/crates.io-index)",
  "slog 2.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -686,7 +686,7 @@ dependencies = [
 
 [[package]]
 name = "kapitalist_types"
-version = "0.1.0"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "chrono 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2023,7 +2023,7 @@ dependencies = [
 "checksum isatty 0.1.9 (registry+https://github.com/rust-lang/crates.io-index)" = "e31a8281fc93ec9693494da65fbf28c0c2aa60a2eaec25dc58e2f31952e95edc"
 "checksum itoa 0.4.3 (registry+https://github.com/rust-lang/crates.io-index)" = "1306f3464951f30e30d12373d31c79fbd52d236e5e896fd92f96ec7babbbe60b"
 "checksum jsonwebtoken 5.0.1 (registry+https://github.com/rust-lang/crates.io-index)" = "8d438ea707d465c230305963b67f8357a1d56fcfad9434797d7cb1c46c2e41df"
-"checksum kapitalist_types 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "4cc1c089dbc430decf8afe0dd69dc168b1fd15b5a1ef03ef4255d6cb85e5ea20"
+"checksum kapitalist_types 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "8ae5c6f140cc264400f3b243e959fd1c89d9a44ed5d0e675809d8cbd22039a68"
 "checksum keccak 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "67c21572b4949434e4fc1e1978b99c5f77064153c59d998bf13ecd96fb5ecba7"
 "checksum kernel32-sys 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "7507624b29483431c0ba2d82aece8ca6cdba9382bff4ddd0f7490560c056098d"
 "checksum language-tags 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "a91d884b6667cd606bb5a69aa0c99ba811a115fc68915e7056ec08a46e93199a"

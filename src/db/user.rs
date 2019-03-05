@@ -7,7 +7,7 @@ use diesel::{self, prelude::*};
 use serde::{Deserialize, Serialize};
 use slog::trace;
 
-use kapitalist_types::request::UserCreationRequest;
+use kapitalist_types::request::{UserCreationRequest, UserUpdateRequest};
 
 use crate::db::{schema::users, DatabaseExecutor};
 
@@ -39,10 +39,19 @@ pub struct NewUser {
 }
 
 /// Actix message to retrieve a user entity from the database
-/// XXX: Change this to take Options of i64 and String to allow for multiple selection methods
 #[derive(Debug)]
 pub struct GetUser {
-    pub email: String,
+    pub uid: Option<i64>,
+    pub email: Option<String>,
+}
+
+/// Actix message to update a user entity in the database
+#[derive(Debug)]
+pub struct UpdateUser {
+    pub uid: i64,
+    pub email: Option<String>,
+    pub secret: Option<String>,
+    pub username: Option<String>,
 }
 
 impl NewUser {
@@ -95,6 +104,24 @@ impl Handler<NewUser> for DatabaseExecutor {
     }
 }
 
+impl GetUser {
+    /// Get the user with the given Id
+    pub fn by_id(uid: i64) -> Self {
+        Self {
+            uid: Some(uid),
+            email: None,
+        }
+    }
+
+    /// Get the user with the given Email address
+    pub fn by_email(email: String) -> Self {
+        Self {
+            uid: None,
+            email: Some(email),
+        }
+    }
+}
+
 impl Message for GetUser {
     type Result = Result<Option<User>, Error>;
 }
@@ -106,12 +133,75 @@ impl Handler<GetUser> for DatabaseExecutor {
         use crate::db::schema::users::dsl::*;
         trace!(self.1, "Received db action"; "msg" => ?msg);
 
-        let user = users
-            .filter(email.eq(&msg.email))
-            .get_result(&self.0)
-            .optional()
-            .map_err(error::ErrorInternalServerError)?;
+        if msg.uid.is_none() && msg.email.is_none() {
+            // XXX: Fix error message?
+            let err = error::ErrorInternalServerError("Invalid GetUser object");
+            trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?err);
+            return Err(err);
+        }
+
+        let user = match (msg.uid, &msg.email) {
+            // Get by Id
+            (Some(uid), None) => users
+                .filter(id.eq(&uid))
+                .get_result(&self.0)
+                .optional()
+                .map_err(error::ErrorInternalServerError)?,
+            // Get by email
+            (None, Some(ref email_)) => users
+                .filter(email.eq(email_))
+                .get_result(&self.0)
+                .optional()
+                .map_err(error::ErrorInternalServerError)?,
+            _ => unreachable!(),
+        };
+
         trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?user);
         Ok(user)
+    }
+}
+
+impl UpdateUser {
+    pub fn from_request(user_id: i64, req: UserUpdateRequest) -> Self {
+        Self {
+            uid: user_id,
+            email: req.email,
+            secret: req.password,
+            username: req.name,
+        }
+    }
+}
+
+impl Message for UpdateUser {
+    type Result = Result<Option<User>, Error>;
+}
+
+impl Handler<UpdateUser> for DatabaseExecutor {
+    type Result = Result<Option<User>, Error>;
+
+    fn handle(&mut self, msg: UpdateUser, ctx: &mut Self::Context) -> Self::Result {
+        let user = self.handle(GetUser::by_id(msg.uid), ctx);
+        let result = match user {
+            Ok(Some(mut u)) => {
+                if let Some(ref email) = msg.email {
+                    u.email = email.clone();
+                }
+                if let Some(ref secret) = msg.secret {
+                    // XXX: Validate password hash here?
+                    u.secret = secret.clone();
+                }
+                if let Some(ref username) = msg.username {
+                    u.username = username.clone()
+                }
+                diesel::update(&u)
+                    .set(&u)
+                    .get_result(&self.0)
+                    .optional()
+                    .map_err(error::ErrorInternalServerError)?
+            }
+            _ => None,
+        };
+        trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?result);
+        Ok(result)
     }
 }

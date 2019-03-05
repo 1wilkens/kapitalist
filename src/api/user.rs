@@ -1,14 +1,12 @@
-/* from doc/api.md
- *
- * ### User Management / Authentication
- * | Method | Endpoint | Payload/Params | Description |
- * | :--: | -- | -- | -- |
- * | POST | `/register` | UserCreationRequest | register new user |
- * | GET | `/me` | -- | get own user details |
- * | PUT | `/me` | UserUpdateRequest | update own user details |
- * |
- * | POST | `/auth` | TokenRequest | obtain authentication token |
- */
+/// from doc/api.md
+///
+/// | Method | Endpoint | Payload/Params | Description |
+/// | :--: | -- | -- | -- |
+/// | POST | `/register` | `UserCreationRequest` | register new user |
+/// | GET | `/me` | -- | get own user details |
+/// | PUT | `/me` | `UserUpdateRequest` | update own user details |
+/// | POST | `/token` | `TokenRequest` | obtain authentication token |
+///
 use actix_web::{AsyncResponder, Either, HttpResponse, Json, Responder, State};
 use futures::Future;
 use jsonwebtoken as jwt;
@@ -18,7 +16,7 @@ use kapitalist_types::request::{TokenRequest, UserCreationRequest, UserUpdateReq
 use kapitalist_types::response::{ErrorResponse, TokenResponse};
 
 use crate::auth::{TokenClaims, UserGuard};
-use crate::db::user::{GetUser, NewUser};
+use crate::db::user::{GetUser, NewUser, UpdateUser};
 use crate::state::AppState;
 
 // TODO: Verify this use of Either
@@ -41,11 +39,12 @@ pub fn register((state, req): (State<AppState>, Json<UserCreationRequest>)) -> i
             .send(new_user)
             .and_then(move |res| {
                 let resp = match res {
+                    // XXX: This return the user entity completely
                     Ok(Some(user)) => HttpResponse::Ok().json(user),
                     Ok(None) => super::util::unauthorized(),
                     Err(err) => {
                         debug!(&state.log, "Error inserting user into database"; "error" => %&err);
-                        HttpResponse::InternalServerError().into()
+                        super::util::internal_server_error()
                     }
                 };
                 Ok(resp)
@@ -59,17 +58,32 @@ pub fn get_me((state, user): (State<AppState>, UserGuard)) -> impl Responder {
     Some(format!("GET /me (uid={})", user.user_id))
 }
 
-// XXX: This should probably return Result instead of Option
-pub fn put_me((_state, _user, req): (State<AppState>, UserGuard, Json<UserUpdateRequest>)) -> impl Responder {
-    // XXX: Move this into UserUpdateRequest.is_valid()?
-    if req.email.is_none() && req.password.is_none() && req.name.is_none() {
+pub fn put_me((state, user, req): (State<AppState>, UserGuard, Json<UserUpdateRequest>)) -> impl Responder {
+    if !req.is_valid() {
         // At least one field has to be set, could also return 301 unchanged?
-        return HttpResponse::BadRequest().json(ErrorResponse::new(
-            "Request has to contain at least one field to update",
-        ));
+        return Either::A(super::util::update_request_invalid());
     }
 
-    HttpResponse::Ok().finish()
+    let update_user = UpdateUser::from_request(user.user_id, req.0);
+    Either::B(
+        state
+            .db
+            .send(update_user)
+            .and_then(move |res| {
+                let resp = match res {
+                    // XXX: This return the user entity completely
+                    Ok(Some(user)) => HttpResponse::Ok().json(user),
+                    Ok(None) => super::util::not_found(&"user"),
+                    Err(err) => {
+                        debug!(&state.log, "Error updating user in database";
+                        "error" => %&err);
+                        super::util::internal_server_error()
+                    }
+                };
+                Ok(resp)
+            })
+            .responder(),
+    )
 }
 
 pub fn token((state, req): (State<AppState>, Json<TokenRequest>)) -> impl Responder {
@@ -81,9 +95,7 @@ pub fn token((state, req): (State<AppState>, Json<TokenRequest>)) -> impl Respon
      */
     use libreauth::pass::HashBuilder;
 
-    let get_user = GetUser {
-        email: req.email.clone(),
-    };
+    let get_user = GetUser::by_email(req.email.clone());
     state
         .db
         .send(get_user)
@@ -110,7 +122,7 @@ pub fn token((state, req): (State<AppState>, Json<TokenRequest>)) -> impl Respon
                 // There was an error contacting the db -> Log error and return 500
                 Err(err) => {
                     debug!(&state.log, "Error loading user from database"; "error" => %&err);
-                    HttpResponse::InternalServerError().json(ErrorResponse::internal_server_error())
+                    super::util::internal_server_error()
                 }
             };
             Ok(resp)

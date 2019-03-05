@@ -21,7 +21,7 @@ path = "src/bin/main.rs"
 lto = true
 
 [dependencies]
-kapitalist_types = "0.1"
+kapitalist_types = "0.1.1"
 
 clap = { version = "2.32", default-features = false, features = ["vec_map"] }
 slog = { version = "2.3", features = ["release_max_level_debug"] }

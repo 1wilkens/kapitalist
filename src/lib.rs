@@ -1,5 +1,9 @@
 #![deny(clippy::pedantic)]
-#![allow(clippy::option_option, clippy::redundant_field_names, clippy::stutter)]
+#![allow(
+    clippy::module_name_repetitions,
+    clippy::option_option,
+    clippy::redundant_field_names
+)]
 
 #[macro_use]
 extern crate diesel;
@@ -40,6 +44,7 @@ pub fn build_app(config: &state::Config, log: &slog::Logger) -> actix_web::App<s
         .resource("/register", |r| r.post().with(api::user::register))
         .resource("/token", |r| r.post().with(api::user::token))
         .resource("/me", |r| r.get().with(api::user::get_me))
+        .resource("/me", |r| r.put().with(api::user::put_me))
         // Wallets
         .resource("/wallet", |r| r.post().with(api::wallet::post))
         .resource("/wallet/{id}", |r| r.get().with(api::wallet::get))
