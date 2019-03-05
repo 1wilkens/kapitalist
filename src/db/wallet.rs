@@ -63,21 +63,24 @@ pub struct DeleteWallet {
 
 impl NewWallet {
     pub fn from_request(uid: i64, req: WalletCreationRequest) -> Self {
-        let color = if let Some(color) = req.color {
-            color
+        // Color is randomly chosen if unset
+        let color = if let Some(col) = req.color {
+            col
         } else {
             // XXX: Always Zelda green for now
             // Replace with random harmonic color similar to:
             // https://stackoverflow.com/a/43235
             "#088C5A".to_string()
         };
+        // Balance defaults to 0 if unset
+        let balance = req.balance.unwrap_or(0);
 
         Self {
             user_id: uid,
             name: req.name,
             wallet_type: req.wallet_type,
-            initial_balance: req.balance,
-            current_balance: req.balance,
+            initial_balance: balance,
+            current_balance: balance,
             color: color,
         }
     }
