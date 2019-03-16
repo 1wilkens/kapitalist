@@ -687,7 +687,7 @@ dependencies = [
 [[package]]
 name = "kapitalist_types"
 version = "0.1.2"
-source = "git+https://github.com/kapitalist-app/types?branch=develop#1f3b63c6c814110d33e9bc4165c295b8c47a3d36"
+source = "git+https://github.com/kapitalist-app/types?branch=develop#d56623980c59c22cc54bbb9a79959e029fd4e51d"
 dependencies = [
  "chrono 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.88 (registry+https://github.com/rust-lang/crates.io-index)",

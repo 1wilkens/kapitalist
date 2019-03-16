@@ -27,7 +27,7 @@ pub fn post((state, user, req): (State<AppState>, UserGuard, Json<WalletCreation
                 // XXX: Set location header
                 Ok(wallet) => HttpResponse::Created()
                     .header(http::header::LOCATION, format!("/wallet/{}", wallet.id))
-                    .json(wallet),
+                    .json(wallet.into_response()),
                 Err(err) => {
                     debug!(&state.log, "Error inserting wallet into database";
                         "error" => %&err);
@@ -46,7 +46,7 @@ pub fn get((state, user, wid): (State<AppState>, UserGuard, Path<i64>)) -> impl 
         .send(get_wallet)
         .and_then(move |res| {
             let resp = match res {
-                Ok(Some(wallet)) => HttpResponse::Ok().json(wallet),
+                Ok(Some(wallet)) => HttpResponse::Ok().json(wallet.into_response()),
                 Ok(None) => super::util::not_found(&"wallet"),
                 Err(err) => {
                     debug!(&state.log, "Error getting wallet from database";
@@ -74,7 +74,7 @@ pub fn put(
             .send(update_wallet)
             .and_then(move |res| {
                 let resp = match res {
-                    Ok(Some(wallet)) => HttpResponse::Ok().json(wallet),
+                    Ok(Some(wallet)) => HttpResponse::Ok().json(wallet.into_response()),
                     Ok(None) => super::util::not_found(&"wallet"),
                     Err(err) => {
                         debug!(&state.log, "Error updating wallet in database";
@@ -98,7 +98,7 @@ pub fn delete((state, user, wid): (State<AppState>, UserGuard, Path<i64>)) -> im
                 Ok(true) => HttpResponse::Ok().json(""),
                 Ok(false) => super::util::not_found(&"wallet"),
                 Err(err) => {
-                    debug!(&state.log, "Error delete wallet from database";
+                    debug!(&state.log, "Error deleting wallet from database";
                         "error" => %&err);
                     super::util::internal_server_error()
                 }

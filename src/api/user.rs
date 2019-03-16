@@ -39,8 +39,7 @@ pub fn register((state, req): (State<AppState>, Json<UserCreationRequest>)) -> i
             .send(new_user)
             .and_then(move |res| {
                 let resp = match res {
-                    // XXX: This return the user entity completely
-                    Ok(Some(user)) => HttpResponse::Ok().json(user),
+                    Ok(Some(user)) => HttpResponse::Ok().json(user.into_response()),
                     Ok(None) => super::util::unauthorized(),
                     Err(err) => {
                         debug!(&state.log, "Error inserting user into database"; "error" => %&err);
@@ -54,8 +53,22 @@ pub fn register((state, req): (State<AppState>, Json<UserCreationRequest>)) -> i
 }
 pub fn get_me((state, user): (State<AppState>, UserGuard)) -> impl Responder {
     trace!(&state.log, "Endpoint {ep} called", ep = "user::get_me");
-    // TODO: Figure out what to return here
-    Some(format!("GET /me (uid={})", user.user_id))
+    let get_user = GetUser::by_id(user.user_id);
+    state
+        .db
+        .send(get_user)
+        .and_then(move |res| {
+            let resp = match res {
+                Ok(Some(user)) => HttpResponse::Ok().json(user.into_response()),
+                Ok(None) => panic!("[FATAL] Did not find authenticated user in database. Exiting"),
+                Err(err) => {
+                    debug!(state.log, "Error getting user from database"; "error" => %&err);
+                    super::util::internal_server_error()
+                }
+            };
+            Ok(resp)
+        })
+        .responder()
 }
 
 pub fn put_me((state, user, req): (State<AppState>, UserGuard, Json<UserUpdateRequest>)) -> impl Responder {
@@ -72,7 +85,7 @@ pub fn put_me((state, user, req): (State<AppState>, UserGuard, Json<UserUpdateRe
             .and_then(move |res| {
                 let resp = match res {
                     // XXX: This return the user entity completely
-                    Ok(Some(user)) => HttpResponse::Ok().json(user),
+                    Ok(Some(user)) => HttpResponse::Ok().json(user.into_response()),
                     Ok(None) => super::util::not_found(&"user"),
                     Err(err) => {
                         debug!(&state.log, "Error updating user in database";

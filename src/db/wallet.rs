@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 use slog::trace;
 
 use kapitalist_types::request::{WalletCreationRequest, WalletUpdateRequest};
+use kapitalist_types::response::WalletResponse;
 
 use crate::db::{schema::wallets, DatabaseExecutor};
 
@@ -59,6 +60,19 @@ pub struct UpdateWallet {
 pub struct DeleteWallet {
     pub(crate) uid: i64,
     pub(crate) wid: i64,
+}
+
+impl Wallet {
+    pub fn into_response(self) -> WalletResponse {
+        WalletResponse {
+            id: self.id,
+            name: self.name,
+            wallet_type: self.wallet_type,
+            current_balance: self.current_balance,
+            color: self.color,
+            created_at: self.created_at,
+        }
+    }
 }
 
 impl NewWallet {

@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 use slog::trace;
 
 use kapitalist_types::request::{UserCreationRequest, UserUpdateRequest};
+use kapitalist_types::response::UserResponse;
 
 use crate::db::{schema::users, DatabaseExecutor};
 
@@ -22,7 +23,7 @@ pub struct User {
     pub secret: String,
     /// User's current username
     pub username: String,
-    /// Creation date of the user's account
+    /// Creation timestamp of the user's account
     pub created_at: NaiveDateTime,
 }
 
@@ -52,6 +53,16 @@ pub struct UpdateUser {
     pub email: Option<String>,
     pub secret: Option<String>,
     pub username: Option<String>,
+}
+
+impl User {
+    pub fn into_response(self) -> UserResponse {
+        UserResponse {
+            email: self.email,
+            username: self.username,
+            created_at: self.created_at,
+        }
+    }
 }
 
 impl NewUser {
