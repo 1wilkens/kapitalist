@@ -45,6 +45,12 @@ pub struct GetWallet {
     pub(crate) wid: i64,
 }
 
+/// Actix message to retrieve all wallet entities of a given user from the database
+#[derive(Debug)]
+pub struct GetWalletsFromUser {
+    pub(crate) uid: i64,
+}
+
 /// Actix message to update a wallet entity in the database
 #[derive(Debug)]
 pub struct UpdateWallet {
@@ -149,6 +155,33 @@ impl Handler<GetWallet> for DatabaseExecutor {
             .map_err(error::ErrorInternalServerError)?;
         trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?wallet);
         Ok(wallet)
+    }
+}
+
+impl GetWalletsFromUser {
+    pub fn new(user_id: i64) -> Self {
+        Self { uid: user_id }
+    }
+}
+
+impl Message for GetWalletsFromUser {
+    type Result = Result<Option<Vec<Wallet>>, Error>;
+}
+
+impl Handler<GetWalletsFromUser> for DatabaseExecutor {
+    type Result = Result<Option<Vec<Wallet>>, Error>;
+
+    fn handle(&mut self, msg: GetWalletsFromUser, _: &mut Self::Context) -> Self::Result {
+        use crate::db::schema::wallets::dsl::*;
+        trace!(self.1, "Received db action"; "msg" => ?msg);
+
+        let result = wallets
+            .filter(user_id.eq(msg.uid))
+            .get_results(&self.0)
+            .optional()
+            .map_err(error::ErrorInternalServerError)?;
+        trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?result);
+        Ok(result)
     }
 }
 

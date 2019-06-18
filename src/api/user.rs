@@ -122,9 +122,8 @@ pub fn token((state, req): (State<AppState>, Json<TokenRequest>)) -> impl Respon
                         let claims = TokenClaims::new("auth", user.id);
                         let jwt = jwt::encode(&jwt::Header::default(), &claims, state.config.jwt_secret.0.as_ref())
                             .expect("Failed to encode jwt token");
-                        let token = TokenResponse { token: jwt };
 
-                        HttpResponse::Ok().json(token)
+                        HttpResponse::Ok().json(TokenResponse { token: jwt })
                     } else {
                         // Password check failed -> Return 401 - Unauthorized
                         super::util::unauthorized()

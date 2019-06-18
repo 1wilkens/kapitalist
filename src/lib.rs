@@ -46,6 +46,7 @@ pub fn build_app(config: &state::Config, log: &slog::Logger) -> actix_web::App<s
         .resource("/me", |r| r.get().with(api::user::get_me))
         .resource("/me", |r| r.put().with(api::user::put_me))
         // Wallets
+        .resource("/wallets", |r| r.get().with(api::wallet::get_all))
         .resource("/wallet", |r| r.post().with(api::wallet::post))
         .resource("/wallet/{id}", |r| r.get().with(api::wallet::get))
         .resource("/wallet/{id}", |r| r.put().with(api::wallet::put))

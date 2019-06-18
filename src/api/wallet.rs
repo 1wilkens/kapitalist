@@ -14,8 +14,27 @@ use slog::debug;
 use kapitalist_types::request::{WalletCreationRequest, WalletUpdateRequest};
 
 use crate::auth::UserGuard;
-use crate::db::wallet::{DeleteWallet, GetWallet, NewWallet, UpdateWallet};
+use crate::db::wallet::{DeleteWallet, GetWallet, GetWalletsFromUser, NewWallet, UpdateWallet};
 use crate::state::AppState;
+
+pub fn get_all((state, user): (State<AppState>, UserGuard)) -> impl Responder {
+    let get_wallets = GetWalletsFromUser::new(user.user_id);
+    state
+        .db
+        .send(get_wallets)
+        .and_then(move |res| {
+            let resp = match res {
+                Ok(wallets) => HttpResponse::Ok().json(wallets),
+                Err(err) => {
+                    debug!(&state.log, "Error getting wallets from database";
+                        "error" => %&err);
+                    super::util::internal_server_error()
+                }
+            };
+            Ok(resp)
+        })
+        .responder()
+}
 
 pub fn post((state, user, req): (State<AppState>, UserGuard, Json<WalletCreationRequest>)) -> impl Responder {
     let new_wallet = NewWallet::from_request(user.user_id, req.0);
