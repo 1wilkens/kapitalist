@@ -14,6 +14,7 @@ use crate::db::{schema::transactions, wallet::GetWallet, DatabaseExecutor};
 /// Database entity representing a transaction
 #[derive(Debug, Deserialize, Serialize, Queryable, Identifiable, AsChangeset)]
 pub struct Transaction {
+    pub name: String,
     pub id: i64,
     pub wallet_id: i64,
     pub category_id: i64,
@@ -25,6 +26,7 @@ pub struct Transaction {
 #[derive(Debug, Insertable)]
 #[table_name = "transactions"]
 pub struct NewTransaction {
+    pub name: String,
     pub wallet_id: i64,
     pub category_id: i64,
     pub amount: i64,
@@ -56,6 +58,7 @@ pub struct GetTransactionsFromWallet {
 pub struct UpdateTransaction {
     pub(crate) uid: i64,
     pub(crate) tid: i64,
+    pub(crate) name: Option<String>,
     pub(crate) wallet_id: Option<i64>,
     pub(crate) category_id: Option<i64>,
     pub(crate) amount: Option<i64>,
@@ -75,6 +78,7 @@ impl CreateNewTransaction {
         Self {
             user_id: user_id,
             tx: NewTransaction {
+                name: req.name,
                 wallet_id: req.wallet_id,
                 category_id: req.category_id,
                 amount: req.amount,
@@ -208,6 +212,7 @@ impl UpdateTransaction {
         Self {
             uid: user_id,
             tid: transaction_id,
+            name: req.name,
             wallet_id: req.wallet_id,
             category_id: req.category_id,
             amount: req.amount,

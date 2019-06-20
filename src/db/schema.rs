@@ -34,6 +34,7 @@ table! {
 
 table! {
     transactions (id) {
+        name        -> Text,
         id          -> Int8,
         wallet_id   -> Int8,
         category_id -> Int8,
