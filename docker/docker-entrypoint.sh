@@ -8,4 +8,4 @@ wait-for-port.sh db:5432 -t 0 -q
 # init database and start serving
 # XXX: init should only be run on first launch, how can we manage that?
 kapitalist init
-kapitalist serve
+kapitalist "$@"

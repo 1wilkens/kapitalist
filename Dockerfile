@@ -1,5 +1,5 @@
 # build container
-FROM rust:1.32 as build
+FROM rust:1.35 as build
 
 # create a new empty shell project
 RUN USER=root cargo new --lib kapitalist
@@ -33,4 +33,5 @@ RUN apt-get update \
 COPY --from=build /kapitalist/target/release/kapitalist /usr/bin/kapitalist
 COPY docker/*.sh /usr/bin/
 
-CMD ["docker-entrypoint.sh"]
+ENTRYPOINT ["docker-entrypoint.sh"]
+CMD ["serve"]
