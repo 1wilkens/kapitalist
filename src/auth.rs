@@ -42,7 +42,8 @@ impl TokenClaims {
             aud: "kapitalist".into(),
             sub: sub.into(),
             iat: Utc::now(),
-            exp: Utc::now() + FixedOffset::east(12 * 3600),
+            /// XXX: Make this configurable
+            exp: Utc::now() + FixedOffset::east(7 * 24 * 3600),
             uid: uid,
         }
     }
