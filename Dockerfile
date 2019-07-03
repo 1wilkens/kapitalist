@@ -6,18 +6,17 @@ RUN USER=root cargo new --lib kapitalist
 WORKDIR /kapitalist
 
 # copy over manifests
-COPY ./Cargo.lock ./Cargo.lock
-COPY ./Cargo.toml ./Cargo.toml
-RUN mkdir src/bin && echo 'fn main() {}' >> src/bin/main.rs
+COPY Cargo.toml Cargo.lock ./
 
 # cache dependencies
-RUN cargo build --release
-RUN rm -rf ./src/*
-RUN rm ./target/release/deps/*kapitalist*
+RUN mkdir src/bin && echo 'fn main() {}' >> src/bin/main.rs \
+    && cargo build --release \
+    && rm -rf ./src/* \
+    && rm ./target/release/deps/*kapitalist*
 
 # copy source tree
-COPY ./src ./src
-COPY ./migrations ./migrations
+COPY src ./src
+COPY migrations ./migrations
 
 # build for release
 RUN cargo build --release

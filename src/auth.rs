@@ -4,7 +4,7 @@ use actix_web::{
     FromRequest, HttpRequest,
 };
 use chrono::serde::ts_seconds::{deserialize as from_ts, serialize as to_ts};
-use chrono::{offset::FixedOffset, DateTime, Utc};
+use chrono::{DateTime, Duration, Utc};
 use jsonwebtoken::{decode, Validation};
 use serde::{Deserialize, Serialize};
 use slog::debug;
@@ -43,7 +43,7 @@ impl TokenClaims {
             sub: sub.into(),
             iat: Utc::now(),
             /// XXX: Make this configurable
-            exp: Utc::now() + FixedOffset::east(7 * 24 * 3600),
+            exp: Utc::now() + Duration::seconds(7 * 24 * 3600),
             uid: uid,
         }
     }
