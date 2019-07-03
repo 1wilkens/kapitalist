@@ -136,11 +136,11 @@ impl GetWallet {
 }
 
 impl Message for GetWallet {
-    type Result = Result<Option<Wallet>, Error>;
+    type Result = Result<Result<Wallet, ()>, Error>;
 }
 
 impl Handler<GetWallet> for DatabaseExecutor {
-    type Result = Result<Option<Wallet>, Error>;
+    type Result = Result<Result<Wallet, ()>, Error>;
 
     fn handle(&mut self, msg: GetWallet, _: &mut Self::Context) -> Self::Result {
         use crate::db::schema::wallets::dsl::*;
@@ -152,7 +152,8 @@ impl Handler<GetWallet> for DatabaseExecutor {
             .filter(user_id.eq(&msg.uid))
             .get_result(&self.0)
             .optional()
-            .map_err(error::ErrorInternalServerError)?;
+            .map_err(error::ErrorInternalServerError)?
+            .ok_or(());
         trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?wallet);
         Ok(wallet)
     }
@@ -210,7 +211,7 @@ impl Handler<UpdateWallet> for DatabaseExecutor {
         // XXX: Verify this is enough to protect unauthorized access
         let wallet = self.handle(GetWallet::new(msg.uid, msg.wid), ctx);
         let result = match wallet {
-            Ok(Some(mut w)) => {
+            Ok(Ok(mut w)) => {
                 if let Some(ref name) = msg.name {
                     w.name = name.clone();
                 }

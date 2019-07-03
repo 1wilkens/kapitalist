@@ -65,8 +65,8 @@ pub fn get((state, user, wid): (State<AppState>, UserGuard, Path<i64>)) -> impl 
         .send(get_wallet)
         .and_then(move |res| {
             let resp = match res {
-                Ok(Some(wallet)) => HttpResponse::Ok().json(wallet.into_response()),
-                Ok(None) => super::util::not_found(&"wallet"),
+                Ok(Ok(wallet)) => HttpResponse::Ok().json(wallet.into_response()),
+                Ok(_) => super::util::not_found(&"wallet"),
                 Err(err) => {
                     debug!(&state.log, "Error getting wallet from database";
                         "error" => %&err);

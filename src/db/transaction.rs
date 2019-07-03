@@ -104,7 +104,7 @@ impl Handler<CreateNewTransaction> for DatabaseExecutor {
 
         let wallet = self.handle(GetWallet::new(msg.user_id, msg.tx.wallet_id), ctx);
         let result = match wallet {
-            Ok(Some(_)) => {
+            Ok(Ok(_)) => {
                 // User owns the target wallet
                 let tx = diesel::insert_into(transactions)
                     .values(&msg.tx)
@@ -159,7 +159,7 @@ impl Handler<GetTransaction> for DatabaseExecutor {
         // XXX: Verify this is enough to protect against unauthorized access
         let wallet = self.handle(GetWallet::new(transaction.wallet_id, msg.uid), ctx);
         let result = match wallet {
-            Ok(Some(_)) => Some(transaction),
+            Ok(Ok(_)) => Some(transaction),
             _ => None,
         };
 
@@ -191,13 +191,17 @@ impl Handler<GetTransactionsFromWallet> for DatabaseExecutor {
         // Check user has access to source wallet
         let wallet = self.handle(GetWallet::new(msg.wid, msg.uid), ctx);
         let result = match wallet {
-            Ok(Some(_)) => {
+            // User owns the wallet and it has transactions
+            Ok(Ok(_)) => {
                 let txs = transactions
                     .filter(wallet_id.eq(msg.wid))
                     .get_results(&self.0)
                     .map_err(error::ErrorInternalServerError)?;
                 Some(txs)
             }
+            // User owns the wallet, but there are not transactions (yet)
+            Ok(Err(())) => Some(Vec::new()),
+            // User doesn't own the wallet or it doesn't exist (yet)
             _ => None,
         };
 
@@ -288,7 +292,7 @@ impl Handler<DeleteTransaction> for DatabaseExecutor {
         // XXX: Verify this is enough to protect against unauthorized access
         let wallet = self.handle(GetWallet::new(tx.wallet_id, msg.uid), ctx);
         let result = match wallet {
-            Ok(Some(_)) => diesel::delete(&tx)
+            Ok(Ok(_)) => diesel::delete(&tx)
                 .execute(&self.0)
                 .map_err(error::ErrorInternalServerError)?,
             _ => 0,
