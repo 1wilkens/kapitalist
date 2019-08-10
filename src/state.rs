@@ -1,4 +1,3 @@
-use actix_web::actix;
 use slog::{self, debug, o, trace};
 use slog_stdlog;
 
@@ -7,7 +6,6 @@ use std::convert::From;
 use std::{env, net};
 
 use crate::auth::JwtSecret;
-use crate::db::DatabaseExecutor;
 
 /// Required environment variables for kapitalist
 #[allow(unused_doc_comments)]
@@ -31,15 +29,15 @@ pub struct Config {
 
 // XXX: Maybe implement debug for this
 pub struct AppState {
-    pub(crate) log: slog::Logger,
     pub(crate) config: Config,
-    pub(crate) db: actix::Addr<DatabaseExecutor>,
+    pub(crate) log: slog::Logger,
+    //pub(crate) db: actix::Addr<DatabaseExecutor>,
 }
 
 pub struct AppStateBuilder {
     pub(crate) config: Config,
-    pub(crate) db: actix::Addr<DatabaseExecutor>,
     pub(crate) log: Option<slog::Logger>,
+    //pub(crate) db: actix::Addr<DatabaseExecutor>,
 }
 
 // XXX: Maybe use failure here
@@ -84,10 +82,9 @@ impl Config {
 
 impl AppState {
     #[allow(clippy::new_ret_no_self)]
-    pub fn new(cfg: Config, addr: actix::Addr<DatabaseExecutor>) -> AppStateBuilder {
+    pub fn new(cfg: Config) -> AppStateBuilder {
         AppStateBuilder {
             config: cfg,
-            db: addr,
             log: None,
         }
     }
@@ -108,7 +105,6 @@ impl AppStateBuilder {
         AppState {
             log: log,
             config: self.config,
-            db: self.db,
         }
     }
 }

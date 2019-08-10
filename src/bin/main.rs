@@ -1,10 +1,12 @@
+#![feature(proc_macro_hygiene, decl_macro)]
 extern crate kapitalist;
+
+#[macro_use] extern crate rocket;
 
 // XXX: Remove this once it becomes obsolete
 #[macro_use]
 extern crate diesel_migrations;
 
-use actix_web::{actix, server};
 use clap::{App, AppSettings, Arg, ArgMatches, SubCommand};
 use diesel::{Connection, PgConnection};
 use slog::{error, info, o};
@@ -53,7 +55,7 @@ fn main() {
         return;
     } else if let Some(_sc) = args.subcommand_matches(SUBCOMMAND_CRON) {
         // cron - scheduled maintenance tasks
-        println!("This subcommand is not implemented yet!");
+        eprintln!("This subcommand is not implemented yet!");
         return;
     } else if let Some(sc) = args.subcommand_matches(SUBCOMMAND_API) {
         // serve - kapitalist API
@@ -63,7 +65,7 @@ fn main() {
             if let Ok(ip) = addr.parse::<IpAddr>() {
                 cfg.addr.set_ip(ip);
             } else {
-                println!("Invalid address specified");
+                eprintln!("Invalid address specified");
                 return;
             }
         }
@@ -71,24 +73,17 @@ fn main() {
             if let Ok(p) = port.parse::<u16>() {
                 cfg.addr.set_port(p);
             } else {
-                println!("Invalid port specified");
+                eprintln!("Invalid port specified");
                 return;
             }
         }
 
-        // init actix system
-        let sys = actix::System::new("kapitalist");
-
         let cfg_ = cfg.clone();
         let log_ = log.clone();
-        let server = server::new(move || build_app(&cfg_, &log_))
-            .bind(&cfg.addr)
-            .unwrap_or_else(|_| panic!("Failed to bind address from configuration: {}", &cfg.addr));
+        let rocket = build_app(&cfg_, &log_);
 
         // start server
-        server.start();
-        info!(&log, "Started server on: {}", &cfg.addr);
-        let _ = sys.run();
+        rocket.launch();
     }
 }
 

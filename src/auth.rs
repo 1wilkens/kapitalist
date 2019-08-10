@@ -1,8 +1,8 @@
-use actix_web::{
+/*use actix_web::{
     error::{Error, ErrorUnauthorized},
     http::header::AUTHORIZATION,
     FromRequest, HttpRequest,
-};
+};*/
 use chrono::serde::ts_seconds::{deserialize as from_ts, serialize as to_ts};
 use chrono::{DateTime, Duration, Utc};
 use jsonwebtoken::{decode, Validation};
@@ -54,7 +54,7 @@ pub struct UserGuard {
     pub user_id: i64, // TODO: Add more fields as required
 }
 
-impl FromRequest<AppState> for UserGuard {
+/*impl FromRequest<AppState> for UserGuard {
     type Config = ();
     type Result = Result<Self, Error>;
 
@@ -95,4 +95,4 @@ impl FromRequest<AppState> for UserGuard {
         // XXX: Make this return a json error
         Err(ErrorUnauthorized("Unauthorized"))
     }
-}
+}*/
