@@ -22,7 +22,8 @@ static REQUIRED_ENV_VARIABLES: [&str; 4] = [
 
 #[derive(Debug, Clone)]
 pub struct Config {
-    pub addr: net::SocketAddr,
+    pub address: String,
+    pub port: u16,
     pub db_url: String,
     pub jwt_secret: JwtSecret,
 }
@@ -31,13 +32,11 @@ pub struct Config {
 pub struct AppState {
     pub(crate) config: Config,
     pub(crate) log: slog::Logger,
-    //pub(crate) db: actix::Addr<DatabaseExecutor>,
 }
 
 pub struct AppStateBuilder {
     pub(crate) config: Config,
     pub(crate) log: Option<slog::Logger>,
-    //pub(crate) db: actix::Addr<DatabaseExecutor>,
 }
 
 // XXX: Maybe use failure here
@@ -66,15 +65,15 @@ impl Config {
         Ok(())
     }
     pub fn from_env() -> Result<Self, ParseError> {
-        let ip = env::var("KAPITALIST_HOST").unwrap_or_else(|_| "0.0.0.0".into());
-        let port = env::var("KAPITALIST_PORT").unwrap_or_else(|_| "5454".into());
-        let addr = ip + ":" + &port;
-        let addr: net::SocketAddr = addr.parse()?;
+        let address = env::var("KAPITALIST_HOST").unwrap_or_else(|_| "0.0.0.0".into());
+        let port = env::var("KAPITALIST_PORT").unwrap_or_else(|_| "5454".into()).parse().unwrap();
+
         let jwt_secret = env::var("KAPITALIST_JWT_SECRET")?;
         let db_url = env::var("KAPITALIST_DB")?;
         Ok(Self {
-            addr: addr,
-            db_url: db_url,
+            address,
+            port,
+            db_url,
             jwt_secret: JwtSecret(jwt_secret),
         })
     }

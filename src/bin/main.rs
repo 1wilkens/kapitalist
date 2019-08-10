@@ -1,8 +1,6 @@
 #![feature(proc_macro_hygiene, decl_macro)]
 extern crate kapitalist;
 
-#[macro_use] extern crate rocket;
-
 // XXX: Remove this once it becomes obsolete
 #[macro_use]
 extern crate diesel_migrations;
@@ -14,7 +12,7 @@ use slog::{error, info, o};
 use std::env;
 use std::net::IpAddr;
 
-use kapitalist::{build_app, Config};
+use kapitalist::{build_rocket, Config};
 
 const SUBCOMMAND_API: &str = "serve";
 const SUBCOMMAND_CRON: &str = "cron";
@@ -62,8 +60,9 @@ fn main() {
 
         // check args and update config
         if let Some(addr) = sc.value_of("address") {
-            if let Ok(ip) = addr.parse::<IpAddr>() {
-                cfg.addr.set_ip(ip);
+            // check if we got a valid ip
+            if let Ok(_) = addr.parse::<IpAddr>() {
+                cfg.address = addr.to_string();
             } else {
                 eprintln!("Invalid address specified");
                 return;
@@ -71,7 +70,7 @@ fn main() {
         }
         if let Some(port) = sc.value_of("port") {
             if let Ok(p) = port.parse::<u16>() {
-                cfg.addr.set_port(p);
+                cfg.port = p;
             } else {
                 eprintln!("Invalid port specified");
                 return;
@@ -80,7 +79,7 @@ fn main() {
 
         let cfg_ = cfg.clone();
         let log_ = log.clone();
-        let rocket = build_app(&cfg_, &log_);
+        let rocket = build_rocket(&cfg_, &log_);
 
         // start server
         rocket.launch();

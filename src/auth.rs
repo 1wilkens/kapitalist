@@ -1,8 +1,4 @@
-/*use actix_web::{
-    error::{Error, ErrorUnauthorized},
-    http::header::AUTHORIZATION,
-    FromRequest, HttpRequest,
-};*/
+use rocket::{Outcome, State, http::Status, request::{self, Request, FromRequest}};
 use chrono::serde::ts_seconds::{deserialize as from_ts, serialize as to_ts};
 use chrono::{DateTime, Duration, Utc};
 use jsonwebtoken::{decode, Validation};
@@ -50,25 +46,19 @@ impl TokenClaims {
 }
 
 /// Request guard which validates the user's token
-pub struct UserGuard {
+pub struct User {
     pub user_id: i64, // TODO: Add more fields as required
 }
 
-/*impl FromRequest<AppState> for UserGuard {
-    type Config = ();
-    type Result = Result<Self, Error>;
+impl<'a, 'r> FromRequest<'a, 'r> for User {
+    type Error = ();
 
-    #[inline]
-    fn from_request(req: &HttpRequest<AppState>, _: &Self::Config) -> Self::Result {
-        let secret = req.state().config.jwt_secret.0.as_ref();
+    fn from_request(request: &'a Request<'r>) -> request::Outcome<Self, Self::Error> {
+        let state = request.guard::<State<AppState>>()?;
+        let secret = state.config.jwt_secret.0.as_ref();
 
-        let headers = req.headers().get_all(AUTHORIZATION);
+        let headers = request.headers().get("Authorization");
         for value in headers {
-            // Skip invalid ASCII headers
-            let value = match value.to_str() {
-                Ok(v) => v,
-                Err(_) => continue,
-            };
             // Extract Bearer
             let parts: Vec<&str> = value.split(' ').collect();
             if parts.len() == 2 && parts[0] == "Bearer" {
@@ -77,22 +67,22 @@ pub struct UserGuard {
                     leeway: 60,
                     ..Validation::default()
                 };
-                debug!(&req.state().log, "Validating bearer token"; "token" => &parts[1]);
+                debug!(&state.log, "Validating bearer token"; "token" => &parts[1]);
                 let token = match decode::<TokenClaims>(&parts[1], secret, &validation) {
                     Ok(token) => token,
                     Err(e) => {
                         // Print errors on debug output and continue to next token if any
-                        debug!(&req.state().log, "Validation failed"; "error" => %e);
+                        debug!(&state.log, "Validation failed"; "error" => %e);
                         continue;
                     }
                 };
-                return Ok(Self {
+                return Outcome::Success(Self {
                     user_id: token.claims.uid,
                 });
             }
         }
 
-        // XXX: Make this return a json error
-        Err(ErrorUnauthorized("Unauthorized"))
+        // XXX: Make this return a json error, through a catcher maybe?
+        Outcome::Failure((Status::Unauthorized, ()))
     }
-}*/
+}

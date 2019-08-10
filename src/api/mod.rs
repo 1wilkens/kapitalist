@@ -1,7 +1,5 @@
-use rocket_contrib::json::Json;
 use kapitalist_types::response::VersionResponse;
-
-use crate::state::AppState;
+use rocket_contrib::json::Json;
 
 //pub mod category;
 //pub mod transaction;
@@ -15,6 +13,7 @@ pub fn index() -> String {
     "Kapitalist is running".into()
 }
 
+#[get("/version")]
 pub fn version() -> Json<VersionResponse> {
     Json(VersionResponse {
         version: env!("CARGO_PKG_VERSION").to_string(),
