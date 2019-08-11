@@ -42,19 +42,6 @@ pub fn post(
     }
 }
 
-#[get("/<wid>")]
-pub fn get(user: User, state: State<AppState>, db: Database, wid: i64) -> super::Result<Json<WalletResponse>> {
-    let get_wallet = GetWallet::new(user.user_id, wid);
-    match get_wallet.execute(&*db) {
-        Ok(Ok(wallet)) => Ok(Json(wallet.into_response())),
-        Ok(_) => Err(not_found("wallet")),
-        Err(err) => {
-            debug!(&state.log, "Error getting wallet from database"; "error" => %&err);
-            Err(internal_server_error())
-        }
-    }
-}
-
 #[get("/all")]
 pub fn get_all(user: User, state: State<AppState>, db: Database) -> super::Result<Json<Vec<WalletResponse>>> {
     let get_wallets = GetWalletsFromUser::new(user.user_id);
@@ -63,6 +50,19 @@ pub fn get_all(user: User, state: State<AppState>, db: Database) -> super::Resul
         Ok(None) => Ok(Json(Vec::new())), // User has no wallets yet
         Err(err) => {
             debug!(&state.log, "Error getting wallets from database"; "error" => %&err);
+            Err(internal_server_error())
+        }
+    }
+}
+
+#[get("/<wid>")]
+pub fn get(user: User, state: State<AppState>, db: Database, wid: i64) -> super::Result<Json<WalletResponse>> {
+    let get_wallet = GetWallet::new(user.user_id, wid);
+    match get_wallet.execute(&*db) {
+        Ok(Ok(wallet)) => Ok(Json(wallet.into_response())),
+        Ok(_) => Err(not_found("wallet")),
+        Err(err) => {
+            debug!(&state.log, "Error getting wallet from database"; "error" => %&err);
             Err(internal_server_error())
         }
     }
