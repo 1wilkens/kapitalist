@@ -209,16 +209,19 @@ impl DeleteWallet {
     }
 
     pub fn execute(self, conn: &PgConnection) -> Result<bool, &'static str> {
-        use crate::db::schema::wallets::dsl::*;
         //trace!(self.1, "Received db action"; "msg" => ?msg);
 
+        let wallet = match GetWallet::new(self.wid, self.uid).execute(conn) {
+            Ok(Ok(w)) => w,
+            _ => return Ok(false),
+        };
+
         // XXX: Verify this is enough to protect unauthorized access
-        let res = diesel::delete(wallets)
-            .filter(id.eq(&self.wid))
-            .filter(user_id.eq(&self.uid))
+        let result = diesel::delete(&wallet)
             .execute(conn)
-            .map_err(|_| "Error deleting Wallet from database")?;
+            .map_err(|_| "Error deleting Wallet from database")?
+            > 0;
         //trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?res);
-        Ok(res > 0)
+        Ok(result)
     }
 }
