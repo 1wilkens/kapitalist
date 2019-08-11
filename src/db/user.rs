@@ -66,7 +66,7 @@ impl NewUser {
     pub fn from_request(req: UserCreationRequest) -> Option<Self> {
         use libreauth::pass::HashBuilder;
 
-        let hasher = HashBuilder::new().finalize().expect("[CRIT] Failed to create Hasher");
+        let hasher = HashBuilder::new().finalize().expect("Failed to create Hasher");
         // XXX: Should handle hash errors here
         let hash = hasher.hash(&req.password).ok()?;
         // XXX: This looks rather ugly, but unwrap_or_else tries to move req
@@ -88,7 +88,7 @@ impl NewUser {
 
         let exists: bool = diesel::select(diesel::dsl::exists(users.filter(email.eq(&self.email))))
             .get_result(conn)
-            .map_err(|_| "Error getting User from Db")?;
+            .map_err(|_| "Error getting User from database")?;
 
         if exists {
             return Ok(None);
@@ -97,7 +97,7 @@ impl NewUser {
         let user = diesel::insert_into(users)
             .values(self)
             .get_result(conn)
-            .map_err(|_| "Error inserting user")?;
+            .map_err(|_| "Error inserting User into database")?;
         //trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?user);
         Ok(Some(user))
     }
@@ -137,13 +137,13 @@ impl GetUser {
                 .filter(id.eq(&uid))
                 .get_result(conn)
                 .optional()
-                .map_err(|_| "Error getting user from database")?,
+                .map_err(|_| "Error getting User from database")?,
             // Get by email
             (None, Some(ref email_)) => users
                 .filter(email.eq(email_))
                 .get_result(conn)
                 .optional()
-                .map_err(|_| "Error getting user from database")?,
+                .map_err(|_| "Error getting User from database")?,
             _ => unreachable!(),
         };
 

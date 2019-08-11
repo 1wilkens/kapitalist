@@ -5,7 +5,7 @@ use rocket_contrib::json::Json;
 //pub mod category;
 //pub mod transaction;
 pub mod user;
-//pub mod wallet;
+pub mod wallet;
 
 pub mod util;
 

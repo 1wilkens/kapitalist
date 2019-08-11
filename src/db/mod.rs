@@ -1,10 +1,9 @@
-//mod executor;
 mod schema;
 
 //pub mod category;
 //pub mod transaction;
 pub mod user;
-//pub mod wallet;
+pub mod wallet;
 
 use rocket::config::Value;
 use rocket_contrib::databases::diesel;

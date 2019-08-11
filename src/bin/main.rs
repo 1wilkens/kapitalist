@@ -7,7 +7,7 @@ extern crate diesel_migrations;
 
 use clap::{App, AppSettings, Arg, ArgMatches, SubCommand};
 use diesel::{Connection, PgConnection};
-use slog::{error, info, o};
+use slog::{error, o};
 
 use std::env;
 use std::net::IpAddr;

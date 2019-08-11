@@ -7,122 +7,100 @@
 /// | PUT | `/wallet/{wid}` | `WalletUpdateRequest` | update wallet details |
 /// | DELETE | `/wallet/{wid}` | -- | delete wallet |
 ///
-use actix_web::{http, AsyncResponder, Either, HttpResponse, Json, Path, Responder, State};
-use futures::Future;
+use rocket::{response::status, State};
+use rocket_contrib::json::Json;
 use slog::debug;
 
 use kapitalist_types::request::{WalletCreationRequest, WalletUpdateRequest};
+use kapitalist_types::response::WalletResponse;
 
-use crate::auth::UserGuard;
-use crate::db::wallet::{DeleteWallet, GetWallet, GetWalletsFromUser, NewWallet, UpdateWallet};
+use crate::api::util::{internal_server_error, not_found, update_request_invalid};
+use crate::auth::User;
+use crate::db::{
+    wallet::{DeleteWallet, GetWallet, GetWalletsFromUser, NewWallet, UpdateWallet, Wallet},
+    Database,
+};
 use crate::state::AppState;
 
-pub fn get_all((state, user): (State<AppState>, UserGuard)) -> impl Responder {
-    let get_wallets = GetWalletsFromUser::new(user.user_id);
-    state
-        .db
-        .send(get_wallets)
-        .and_then(move |res| {
-            let resp = match res {
-                Ok(wallets) => HttpResponse::Ok().json(wallets),
-                Err(err) => {
-                    debug!(&state.log, "Error getting wallets from database";
-                        "error" => %&err);
-                    super::util::internal_server_error()
-                }
-            };
-            Ok(resp)
-        })
-        .responder()
-}
-
-pub fn post((state, user, req): (State<AppState>, UserGuard, Json<WalletCreationRequest>)) -> impl Responder {
+#[post("/", data = "<req>")]
+pub fn post(
+    user: User,
+    state: State<AppState>,
+    db: Database,
+    req: Json<WalletCreationRequest>,
+) -> super::Result<status::Created<Json<WalletResponse>>> {
     let new_wallet = NewWallet::from_request(user.user_id, req.0);
-    state
-        .db
-        .send(new_wallet)
-        .and_then(move |res| {
-            let resp = match res {
-                // XXX: Set location header
-                Ok(wallet) => HttpResponse::Created()
-                    .header(http::header::LOCATION, format!("/wallet/{}", wallet.id))
-                    .json(wallet.into_response()),
-                Err(err) => {
-                    debug!(&state.log, "Error inserting wallet into database";
-                        "error" => %&err);
-                    super::util::internal_server_error()
-                }
-            };
-            Ok(resp)
-        })
-        .responder()
+    match new_wallet.execute(&*db) {
+        Ok(wallet) => {
+            let url = format!("/wallet/{}", wallet.id);
+            Ok(status::Created(url, Some(Json(wallet.into_response()))))
+        }
+        Err(err) => {
+            debug!(&state.log, "Error inserting wallet into database"; "error" => %&err);
+            Err(internal_server_error())
+        }
+    }
 }
 
-pub fn get((state, user, wid): (State<AppState>, UserGuard, Path<i64>)) -> impl Responder {
-    let get_wallet = GetWallet::new(user.user_id, *wid);
-    state
-        .db
-        .send(get_wallet)
-        .and_then(move |res| {
-            let resp = match res {
-                Ok(Ok(wallet)) => HttpResponse::Ok().json(wallet.into_response()),
-                Ok(_) => super::util::not_found(&"wallet"),
-                Err(err) => {
-                    debug!(&state.log, "Error getting wallet from database";
-                        "error" => %&err);
-                    super::util::internal_server_error()
-                }
-            };
-            Ok(resp)
-        })
-        .responder()
+#[get("/<wid>")]
+pub fn get(user: User, state: State<AppState>, db: Database, wid: i64) -> super::Result<Json<WalletResponse>> {
+    let get_wallet = GetWallet::new(user.user_id, wid);
+    match get_wallet.execute(&*db) {
+        Ok(Ok(wallet)) => Ok(Json(wallet.into_response())),
+        Ok(_) => Err(not_found("wallet")),
+        Err(err) => {
+            debug!(&state.log, "Error getting wallet from database"; "error" => %&err);
+            Err(internal_server_error())
+        }
+    }
 }
 
+#[get("/all")]
+pub fn get_all(user: User, state: State<AppState>, db: Database) -> super::Result<Json<Vec<WalletResponse>>> {
+    let get_wallets = GetWalletsFromUser::new(user.user_id);
+    match get_wallets.execute(&*db) {
+        Ok(Some(wallets)) => Ok(Json(wallets.into_iter().map(Wallet::into_response).collect())),
+        Ok(None) => Ok(Json(Vec::new())), // User has no wallets yet
+        Err(err) => {
+            debug!(&state.log, "Error getting wallets from database"; "error" => %&err);
+            Err(internal_server_error())
+        }
+    }
+}
+
+#[put("/<wid>", data = "<req>")]
 pub fn put(
-    (state, user, wid, req): (State<AppState>, UserGuard, Path<i64>, Json<WalletUpdateRequest>),
-) -> impl Responder {
+    user: User,
+    state: State<AppState>,
+    db: Database,
+    wid: i64,
+    req: Json<WalletUpdateRequest>,
+) -> super::Result<Json<WalletResponse>> {
     if !req.is_valid() {
         // At least one field has to be set, could also return 301 unchanged?
-        return Either::A(super::util::update_request_invalid());
+        return Err(update_request_invalid());
     }
 
-    let update_wallet = UpdateWallet::from_request(user.user_id, *wid, req.0);
-    Either::B(
-        state
-            .db
-            .send(update_wallet)
-            .and_then(move |res| {
-                let resp = match res {
-                    Ok(Some(wallet)) => HttpResponse::Ok().json(wallet.into_response()),
-                    Ok(None) => super::util::not_found(&"wallet"),
-                    Err(err) => {
-                        debug!(&state.log, "Error updating wallet in database";
-                        "error" => %&err);
-                        super::util::internal_server_error()
-                    }
-                };
-                Ok(resp)
-            })
-            .responder(),
-    )
+    let update_wallet = UpdateWallet::from_request(user.user_id, wid, req.0);
+    match update_wallet.execute(&*db) {
+        Ok(Some(wallet)) => Ok(Json(wallet.into_response())),
+        Ok(None) => Err(not_found("wallet")),
+        Err(err) => {
+            debug!(&state.log, "Error updating wallet in database"; "error" => %&err);
+            Err(internal_server_error())
+        }
+    }
 }
 
-pub fn delete((state, user, wid): (State<AppState>, UserGuard, Path<i64>)) -> impl Responder {
-    let delete_wallet = DeleteWallet::new(user.user_id, *wid);
-    state
-        .db
-        .send(delete_wallet)
-        .and_then(move |res| {
-            let resp = match res {
-                Ok(true) => HttpResponse::Ok().json(""),
-                Ok(false) => super::util::not_found(&"wallet"),
-                Err(err) => {
-                    debug!(&state.log, "Error deleting wallet from database";
-                        "error" => %&err);
-                    super::util::internal_server_error()
-                }
-            };
-            Ok(resp)
-        })
-        .responder()
+#[delete("/<wid>")]
+pub fn delete(user: User, state: State<AppState>, db: Database, wid: i64) -> super::Result<Json<()>> {
+    let delete_wallet = DeleteWallet::new(user.user_id, wid);
+    match delete_wallet.execute(&*db) {
+        Ok(true) => Ok(Json(())),
+        Ok(false) => Err(not_found("wallet")),
+        Err(err) => {
+            debug!(&state.log, "Error deleting wallet from database"; "error" => %&err);
+            Err(internal_server_error())
+        }
+    }
 }

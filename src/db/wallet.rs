@@ -1,16 +1,14 @@
-use actix_web::{
-    actix::{Handler, Message},
-    error::{self, Error},
-};
 use chrono::NaiveDateTime;
 use diesel::{self, prelude::*};
 use serde::{Deserialize, Serialize};
-use slog::trace;
+//use slog::trace;
 
 use kapitalist_types::request::{WalletCreationRequest, WalletUpdateRequest};
 use kapitalist_types::response::WalletResponse;
 
-use crate::db::{schema::wallets, DatabaseExecutor};
+use crate::db::schema::wallets;
+
+// XXX: Find out how to handle logging here
 
 // XXX: Make wallet_type an enum once we figure out which values belong there
 /// Database entity representing a user's wallet
@@ -104,24 +102,16 @@ impl NewWallet {
             color: color,
         }
     }
-}
 
-impl Message for NewWallet {
-    type Result = Result<Wallet, Error>;
-}
-
-impl Handler<NewWallet> for DatabaseExecutor {
-    type Result = Result<Wallet, Error>;
-
-    fn handle(&mut self, msg: NewWallet, _: &mut Self::Context) -> Self::Result {
+    pub fn execute(self, conn: &PgConnection) -> Result<Wallet, &'static str> {
         use crate::db::schema::wallets::dsl::*;
-        trace!(self.1, "Received db action"; "msg" => ?msg);
+        //trace!(self.1, "Received db action"; "msg" => ?msg);
 
         let wallet = diesel::insert_into(wallets)
-            .values(&msg)
-            .get_result(&self.0)
-            .map_err(error::ErrorInternalServerError)?;
-        trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?wallet);
+            .values(self)
+            .get_result(conn)
+            .map_err(|_| "Error inserting new Wallet into database")?;
+        //trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?wallet);
         Ok(wallet)
     }
 }
@@ -133,28 +123,20 @@ impl GetWallet {
             uid: user_id,
         }
     }
-}
 
-impl Message for GetWallet {
-    type Result = Result<Result<Wallet, ()>, Error>;
-}
-
-impl Handler<GetWallet> for DatabaseExecutor {
-    type Result = Result<Result<Wallet, ()>, Error>;
-
-    fn handle(&mut self, msg: GetWallet, _: &mut Self::Context) -> Self::Result {
+    pub fn execute(self, conn: &PgConnection) -> Result<Result<Wallet, ()>, &'static str> {
         use crate::db::schema::wallets::dsl::*;
-        trace!(self.1, "Received db action"; "msg" => ?msg);
+        //trace!(self.1, "Received db action"; "msg" => ?msg);
 
         // XXX: Verify this is enough to protect unauthorized access
         let wallet = wallets
-            .filter(id.eq(&msg.wid))
-            .filter(user_id.eq(&msg.uid))
-            .get_result(&self.0)
+            .filter(id.eq(&self.wid))
+            .filter(user_id.eq(&self.uid))
+            .get_result(conn)
             .optional()
-            .map_err(error::ErrorInternalServerError)?
+            .map_err(|_| "Error getting Wallet from database")?
             .ok_or(());
-        trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?wallet);
+        //trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?wallet);
         Ok(wallet)
     }
 }
@@ -163,25 +145,17 @@ impl GetWalletsFromUser {
     pub fn new(user_id: i64) -> Self {
         Self { uid: user_id }
     }
-}
 
-impl Message for GetWalletsFromUser {
-    type Result = Result<Option<Vec<Wallet>>, Error>;
-}
-
-impl Handler<GetWalletsFromUser> for DatabaseExecutor {
-    type Result = Result<Option<Vec<Wallet>>, Error>;
-
-    fn handle(&mut self, msg: GetWalletsFromUser, _: &mut Self::Context) -> Self::Result {
+    pub fn execute(self, conn: &PgConnection) -> Result<Option<Vec<Wallet>>, &'static str> {
         use crate::db::schema::wallets::dsl::*;
-        trace!(self.1, "Received db action"; "msg" => ?msg);
+        //trace!(self.1, "Received db action"; "msg" => ?msg);
 
         let result = wallets
-            .filter(user_id.eq(msg.uid))
-            .get_results(&self.0)
+            .filter(user_id.eq(self.uid))
+            .get_results(conn)
             .optional()
-            .map_err(error::ErrorInternalServerError)?;
-        trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?result);
+            .map_err(|_| "Error getting Wallets from database")?;
+        //trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?result);
         Ok(result)
     }
 }
@@ -196,40 +170,32 @@ impl UpdateWallet {
             color: req.color,
         }
     }
-}
 
-impl Message for UpdateWallet {
-    type Result = Result<Option<Wallet>, Error>;
-}
-
-impl Handler<UpdateWallet> for DatabaseExecutor {
-    type Result = Result<Option<Wallet>, Error>;
-
-    fn handle(&mut self, msg: UpdateWallet, ctx: &mut Self::Context) -> Self::Result {
-        trace!(self.1, "Received db action"; "msg" => ?msg);
+    pub fn execute(self, conn: &PgConnection) -> Result<Option<Wallet>, &'static str> {
+        //trace!(self.1, "Received db action"; "msg" => ?msg);
 
         // XXX: Verify this is enough to protect unauthorized access
-        let wallet = self.handle(GetWallet::new(msg.uid, msg.wid), ctx);
+        let wallet = GetWallet::new(self.uid, self.wid).execute(conn);
         let result = match wallet {
             Ok(Ok(mut w)) => {
-                if let Some(ref name) = msg.name {
+                if let Some(ref name) = self.name {
                     w.name = name.clone();
                 }
-                if let Some(ref wallet_type) = msg.wallet_type {
+                if let Some(ref wallet_type) = self.wallet_type {
                     w.wallet_type = wallet_type.clone();
                 }
-                if let Some(ref color) = msg.color {
+                if let Some(ref color) = self.color {
                     w.color = color.clone()
                 }
                 diesel::update(&w)
                     .set(&w)
-                    .get_result(&self.0)
+                    .get_result(conn)
                     .optional()
-                    .map_err(error::ErrorInternalServerError)?
+                    .map_err(|_| "Error updating Wallet in database")?
             }
             _ => None,
         };
-        trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?result);
+        //trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?result);
         Ok(result)
     }
 }
@@ -241,26 +207,18 @@ impl DeleteWallet {
             wid: wallet_id,
         }
     }
-}
 
-impl Message for DeleteWallet {
-    type Result = Result<bool, Error>;
-}
-
-impl Handler<DeleteWallet> for DatabaseExecutor {
-    type Result = Result<bool, Error>;
-
-    fn handle(&mut self, msg: DeleteWallet, _: &mut Self::Context) -> Self::Result {
+    pub fn execute(self, conn: &PgConnection) -> Result<bool, &'static str> {
         use crate::db::schema::wallets::dsl::*;
-        trace!(self.1, "Received db action"; "msg" => ?msg);
+        //trace!(self.1, "Received db action"; "msg" => ?msg);
 
         // XXX: Verify this is enough to protect unauthorized access
         let res = diesel::delete(wallets)
-            .filter(id.eq(&msg.wid))
-            .filter(user_id.eq(&msg.uid))
-            .execute(&self.0)
-            .map_err(error::ErrorInternalServerError)?;
-        trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?res);
+            .filter(id.eq(&self.wid))
+            .filter(user_id.eq(&self.uid))
+            .execute(conn)
+            .map_err(|_| "Error deleting Wallet from database")?;
+        //trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?res);
         Ok(res > 0)
     }
 }

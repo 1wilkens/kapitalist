@@ -44,20 +44,33 @@ pub fn build_rocket(config: &state::Config, log: &slog::Logger) -> rocket::Rocke
         .finalize()
         .unwrap();
 
-    let rocket = rocket::custom(config)
+    rocket::custom(config)
         .manage(state)
         .attach(db::Database::fairing())
-        .mount("/", routes![api::index, api::version])
         .mount(
             "/",
             routes![
+                // Kapitalist related
+                api::index,
+                api::version,
+                // User management
                 api::user::get_me,
                 api::user::put_me,
                 api::user::register,
                 api::user::token
             ],
-        );
-    rocket
+        )
+        .mount(
+            "/wallet",
+            routes![
+                // Wallet management
+                api::wallet::post,
+                api::wallet::get_all,
+                api::wallet::get,
+                api::wallet::put,
+                api::wallet::delete
+            ],
+        )
 
     /*actix_web::App::with_state(state)
     .middleware(log::SlogMiddleware::new(log_.clone()))
