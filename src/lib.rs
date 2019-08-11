@@ -71,6 +71,17 @@ pub fn build_rocket(config: &state::Config, log: &slog::Logger) -> rocket::Rocke
                 api::wallet::delete
             ],
         )
+        .mount(
+            "/category",
+            routes![
+                // Wallet management
+                api::category::post,
+                //api::category::get_all,
+                api::category::get,
+                api::category::put,
+                api::category::delete
+            ],
+        )
 
     /*actix_web::App::with_state(state)
     .middleware(log::SlogMiddleware::new(log_.clone()))

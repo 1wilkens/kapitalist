@@ -1,6 +1,6 @@
 mod schema;
 
-//pub mod category;
+pub mod category;
 //pub mod transaction;
 pub mod user;
 pub mod wallet;

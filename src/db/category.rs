@@ -1,15 +1,12 @@
-use actix_web::{
-    actix::{Handler, Message},
-    error::{self, Error},
-};
 use chrono::NaiveDateTime;
 use diesel::{self, prelude::*};
 use serde::{Deserialize, Serialize};
-use slog::trace;
+//use slog::trace;
 
 use kapitalist_types::request::{CategoryCreationRequest, CategoryUpdateRequest};
+use kapitalist_types::response::CategoryResponse;
 
-use crate::db::{schema::categories, DatabaseExecutor};
+use crate::db::schema::categories;
 
 /// Database entity representing a transaction category
 #[derive(Debug, Deserialize, Serialize, Queryable, Identifiable, AsChangeset)]
@@ -57,6 +54,19 @@ pub struct DeleteCategory {
     pub(crate) uid: i64,
 }
 
+impl Category {
+    pub fn into_response(self) -> CategoryResponse {
+        CategoryResponse {
+            id: self.id,
+            parent_id: self.parent_id,
+            user_id: self.user_id,
+            name: self.name,
+            color: self.color,
+            created_at: self.created_at,
+        }
+    }
+}
+
 impl NewCategory {
     pub fn from_request(req: CategoryCreationRequest, uid: i64) -> Self {
         Self {
@@ -66,25 +76,17 @@ impl NewCategory {
             color: req.color,
         }
     }
-}
 
-impl Message for NewCategory {
-    type Result = Result<Category, Error>;
-}
-
-impl Handler<NewCategory> for DatabaseExecutor {
-    type Result = Result<Category, Error>;
-
-    fn handle(&mut self, msg: NewCategory, _: &mut Self::Context) -> Self::Result {
+    pub fn execute(self, conn: &PgConnection) -> Result<Category, &'static str> {
         use crate::db::schema::categories::dsl::*;
-        trace!(self.1, "Received db action"; "msg" => ?msg);
+        //trace!(self.1, "Received db action"; "msg" => ?msg);
 
         let category: Category = diesel::insert_into(categories)
-            .values(&msg)
-            .get_result(&self.0)
-            .map_err(error::ErrorInternalServerError)?;
+            .values(self)
+            .get_result(conn)
+            .map_err(|_| "Error inserting Category into database")?;
 
-        trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?category);
+        //trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?category);
         Ok(category)
     }
 }
@@ -96,27 +98,19 @@ impl GetCategory {
             uid: user_id,
         }
     }
-}
 
-impl Message for GetCategory {
-    type Result = Result<Option<Category>, Error>;
-}
-
-impl Handler<GetCategory> for DatabaseExecutor {
-    type Result = Result<Option<Category>, Error>;
-
-    fn handle(&mut self, msg: GetCategory, _: &mut Self::Context) -> Self::Result {
+    pub fn execute(self, conn: &PgConnection) -> Result<Option<Category>, &'static str> {
         use crate::db::schema::categories::dsl::*;
-        trace!(self.1, "Received db action"; "msg" => ?msg);
+        //trace!(self.1, "Received db action"; "msg" => ?msg);
 
         // XXX: Verify this is enough to protect unauthorized access
         let category = categories
-            .filter(id.eq(&msg.cid))
-            .filter(user_id.is_null().or(user_id.eq(&msg.uid)))
-            .get_result(&self.0)
+            .filter(id.eq(self.cid))
+            .filter(user_id.is_null().or(user_id.eq(self.uid)))
+            .get_result(conn)
             .optional()
-            .map_err(error::ErrorInternalServerError)?;
-        trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?category);
+            .map_err(|_| "Error getting Category from database")?;
+        //trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?category);
         Ok(category)
     }
 }
@@ -131,40 +125,32 @@ impl UpdateCategory {
             color: req.color,
         }
     }
-}
 
-impl Message for UpdateCategory {
-    type Result = Result<Option<Category>, Error>;
-}
-
-impl Handler<UpdateCategory> for DatabaseExecutor {
-    type Result = Result<Option<Category>, Error>;
-
-    fn handle(&mut self, msg: UpdateCategory, ctx: &mut Self::Context) -> Self::Result {
-        trace!(self.1, "Received db action"; "msg" => ?msg);
+    pub fn execute(self, conn: &PgConnection) -> Result<Option<Category>, &'static str> {
+        //trace!(self.1, "Received db action"; "msg" => ?msg);
 
         // XXX: Verify this is enough to protect unauthorized access
-        let category = self.handle(GetCategory::new(msg.uid, msg.cid), ctx);
+        let category = GetCategory::new(self.uid, self.cid).execute(conn);
         let result = match category {
             Ok(Some(mut c)) => {
-                if let Some(pid) = msg.parent_id {
+                if let Some(pid) = self.parent_id {
                     c.parent_id = pid;
                 }
-                if let Some(ref name) = msg.name {
+                if let Some(ref name) = self.name {
                     c.name = name.clone();
                 }
-                if let Some(ref color) = msg.color {
+                if let Some(ref color) = self.color {
                     c.color = color.clone();
                 }
                 diesel::update(&c)
                     .set(&c)
-                    .get_result(&self.0)
+                    .get_result(conn)
                     .optional()
-                    .map_err(error::ErrorInternalServerError)?
+                    .map_err(|_| "Error updating Category in database")?
             }
             _ => None,
         };
-        trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?result);
+        //trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?result);
         Ok(result)
     }
 }
@@ -176,26 +162,18 @@ impl DeleteCategory {
             uid: user_id,
         }
     }
-}
 
-impl Message for DeleteCategory {
-    type Result = Result<bool, Error>;
-}
-
-impl Handler<DeleteCategory> for DatabaseExecutor {
-    type Result = Result<bool, Error>;
-
-    fn handle(&mut self, msg: DeleteCategory, _: &mut Self::Context) -> Self::Result {
+    pub fn execute(self, conn: &PgConnection) -> Result<bool, &'static str> {
         use crate::db::schema::categories::dsl::*;
-        trace!(self.1, "Received db action"; "msg" => ?msg);
+        //trace!(self.1, "Received db action"; "msg" => ?msg);
 
         // XXX: Verify this is enough to protect unauthorized access
         let res = diesel::delete(categories)
-            .filter(id.eq(&msg.cid))
-            .filter(user_id.is_null().or(user_id.eq(&msg.uid)))
-            .execute(&self.0)
-            .map_err(error::ErrorInternalServerError)?;
-        trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?res);
+            .filter(id.eq(self.cid))
+            .filter(user_id.is_null().or(user_id.eq(self.uid)))
+            .execute(conn)
+            .map_err(|_| "Error deleting Category from database")?;
+        //trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?res);
         Ok(res > 0)
     }
 }

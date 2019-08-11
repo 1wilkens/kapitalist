@@ -8,102 +8,87 @@
 /// | PUT | `/transaction/{tid}` | `TransactionUpdateRequest` | update transaction details |
 /// | DELETE | `/transaction/{tid}` | - | delete transaction |
 ///
-use actix_web::{http, AsyncResponder, Either, HttpResponse, Json, Path, Responder, State};
-use futures::Future;
+use rocket::{response::status, State};
+use rocket_contrib::json::Json;
 use slog::debug;
 
 use kapitalist_types::request::{CategoryCreationRequest, CategoryUpdateRequest};
+use kapitalist_types::response::CategoryResponse;
 
-use crate::auth::UserGuard;
-use crate::db::category::{DeleteCategory, GetCategory, NewCategory, UpdateCategory};
+use crate::api::util::{internal_server_error, not_found, update_request_invalid};
+use crate::auth::User;
+use crate::db::{
+    category::{DeleteCategory, GetCategory, NewCategory, UpdateCategory},
+    Database,
+};
 use crate::state::AppState;
 
-pub fn post((state, user, req): (State<AppState>, UserGuard, Json<CategoryCreationRequest>)) -> impl Responder {
+#[post("/", data = "<req>")]
+pub fn post(
+    user: User,
+    state: State<AppState>,
+    db: Database,
+    req: Json<CategoryCreationRequest>,
+) -> super::Result<status::Created<Json<CategoryResponse>>> {
     let new_category = NewCategory::from_request(req.0, user.user_id);
-    state
-        .db
-        .send(new_category)
-        .and_then(move |res| {
-            let resp = match res {
-                Ok(category) => HttpResponse::Created()
-                    .header(http::header::LOCATION, format!("/category/{}", category.id))
-                    .json(category),
-                Err(err) => {
-                    debug!(&state.log, "Error inserting category into database";
-                        "error" => %&err);
-                    super::util::internal_server_error()
-                }
-            };
-            Ok(resp)
-        })
-        .responder()
+    match new_category.execute(&*db) {
+        Ok(category) => {
+            let url = format!("/category/{}", category.id);
+            Ok(status::Created(url, Some(Json(category.into_response()))))
+        }
+        Err(err) => {
+            debug!(&state.log, "Error inserting category into database"; "error" => %&err);
+            Err(internal_server_error())
+        }
+    }
 }
 
-pub fn get((state, user, tid): (State<AppState>, UserGuard, Path<i64>)) -> impl Responder {
-    let get_category = GetCategory::new(*tid, user.user_id);
-    state
-        .db
-        .send(get_category)
-        .and_then(move |res| {
-            let resp = match res {
-                Ok(Some(category)) => HttpResponse::Ok().json(category),
-                Ok(None) => super::util::not_found(&"category"),
-                Err(err) => {
-                    debug!(&state.log, "Error getting category from database";
-                        "error" => %&err);
-                    super::util::internal_server_error()
-                }
-            };
-            Ok(resp)
-        })
-        .responder()
+#[get("/<cid>")]
+pub fn get(user: User, state: State<AppState>, db: Database, cid: i64) -> super::Result<Json<CategoryResponse>> {
+    let get_category = GetCategory::new(cid, user.user_id);
+    match get_category.execute(&*db) {
+        Ok(Some(category)) => Ok(Json(category.into_response())),
+        Ok(None) => Err(not_found("category")),
+        Err(err) => {
+            debug!(&state.log, "Error getting category from database"; "error" => %&err);
+            Err(internal_server_error())
+        }
+    }
 }
 
+#[put("/<cid>", data = "<req>")]
 pub fn put(
-    (state, user, tid, req): (State<AppState>, UserGuard, Path<i64>, Json<CategoryUpdateRequest>),
-) -> impl Responder {
+    user: User,
+    state: State<AppState>,
+    db: Database,
+    cid: i64,
+    req: Json<CategoryUpdateRequest>,
+) -> super::Result<Json<CategoryResponse>> {
     if !req.is_valid() {
         // At least one field has to be set, could also return 301 unchanged?
-        return Either::A(super::util::update_request_invalid());
+        return Err(update_request_invalid());
     }
 
-    let update_category = UpdateCategory::from_request(user.user_id, *tid, req.0);
-    Either::B(
-        state
-            .db
-            .send(update_category)
-            .and_then(move |res| {
-                let resp = match res {
-                    Ok(Some(category)) => HttpResponse::Ok().json(category),
-                    Ok(None) => super::util::not_found(&"category"),
-                    Err(err) => {
-                        debug!(&state.log, "Error getting category from database";
-                        "error" => %&err);
-                        super::util::internal_server_error()
-                    }
-                };
-                Ok(resp)
-            })
-            .responder(),
-    )
+    let update_category = UpdateCategory::from_request(user.user_id, cid, req.0);
+    match update_category.execute(&*db) {
+        Ok(Some(category)) => Ok(Json(category.into_response())),
+        Ok(None) => Err(not_found("category")),
+        Err(err) => {
+            debug!(&state.log, "Error getting category from database"; "error" => %&err);
+            Err(internal_server_error())
+        }
+    }
 }
 
-pub fn delete((state, user, tid): (State<AppState>, UserGuard, Path<i64>)) -> impl Responder {
-    let delete_category = DeleteCategory::new(user.user_id, *tid);
-    state
-        .db
-        .send(delete_category)
-        .and_then(move |res| {
-            let resp = match res {
-                Ok(true) => HttpResponse::Ok().json(""),
-                Ok(false) => super::util::not_found(&"category"),
-                Err(err) => {
-                    debug!(&state.log, "Error getting category from database";
-                        "error" => %&err);
-                    super::util::internal_server_error()
-                }
-            };
-            Ok(resp)
-        })
-        .responder()
+#[delete("/<cid>")]
+pub fn delete(user: User, state: State<AppState>, db: Database, cid: i64) -> super::Result<Json<()>> {
+    let delete_category = DeleteCategory::new(user.user_id, cid);
+    match delete_category.execute(&*db) {
+        Ok(true) => Ok(Json(())),
+        Ok(false) => Err(not_found("category")),
+        Err(err) => {
+            debug!(&state.log, "Error getting category from database"; "error" => %&err);
+            Err(internal_server_error())
+        }
+    }
 }
