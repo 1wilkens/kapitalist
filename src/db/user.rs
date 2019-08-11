@@ -37,9 +37,9 @@ pub struct NewUser {
 
 /// Actix message to retrieve a user entity from the database
 #[derive(Debug)]
-pub struct GetUser {
-    pub uid: Option<i64>,
-    pub email: Option<String>,
+pub enum GetUser {
+    ById(i64),
+    ByEmail(String),
 }
 
 /// Actix message to update a user entity in the database
@@ -104,47 +104,23 @@ impl NewUser {
 }
 
 impl GetUser {
-    /// Get the user with the given Id
-    pub fn by_id(uid: i64) -> Self {
-        Self {
-            uid: Some(uid),
-            email: None,
-        }
-    }
-
-    /// Get the user with the given Email address
-    pub fn by_email(email: String) -> Self {
-        Self {
-            uid: None,
-            email: Some(email),
-        }
-    }
-
     pub fn execute(self, conn: &PgConnection) -> Result<Option<User>, &'static str> {
         use crate::db::schema::users::dsl::*;
         //trace!(self.1, "Received db action"; "msg" => ?msg);
 
-        if self.uid.is_none() && self.email.is_none() {
-            // XXX: Fix error message?
-            let err = "Invalid GetUser object";
-            //trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?err);
-            return Err(err);
-        }
-
-        let user = match (self.uid, &self.email) {
+        let user = match self {
             // Get by Id
-            (Some(uid), None) => users
+            Self::ById(uid) => users
                 .filter(id.eq(&uid))
                 .get_result(conn)
                 .optional()
                 .map_err(|_| "Error getting User from database")?,
             // Get by email
-            (None, Some(ref email_)) => users
-                .filter(email.eq(email_))
+            Self::ByEmail(em) => users
+                .filter(email.eq(em))
                 .get_result(conn)
                 .optional()
                 .map_err(|_| "Error getting User from database")?,
-            _ => unreachable!(),
         };
 
         //trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?user);
@@ -164,7 +140,7 @@ impl UpdateUser {
 
     pub fn execute(self, conn: &PgConnection) -> Result<Option<User>, &'static str> {
         //trace!(self.1, "Received db action"; "msg" => ?msg);
-        let user = GetUser::by_id(self.uid).execute(conn);
+        let user = GetUser::ById(self.uid).execute(conn);
         let result = match user {
             Ok(Some(mut u)) => {
                 if let Some(ref email) = self.email {

@@ -53,7 +53,7 @@ pub fn register(
 #[get("/me")]
 pub fn get_me(user: User, state: State<AppState>, db: Database) -> super::Result<Json<UserResponse>> {
     trace!(&state.log, "Endpoint {ep} called", ep = "user::get_me");
-    let get_user = GetUser::by_id(user.user_id);
+    let get_user = GetUser::ById(user.user_id);
     match get_user.execute(&*db) {
         Ok(Some(user)) => Ok(Json(user.into_response())),
         Ok(None) => {
@@ -106,7 +106,7 @@ pub fn token(state: State<AppState>, db: Database, req: Json<TokenRequest>) -> s
      */
     use libreauth::pass::HashBuilder;
 
-    let get_user = GetUser::by_email(req.email.clone());
+    let get_user = GetUser::ByEmail(req.email.clone());
     match get_user.execute(&*db) {
         Ok(Some(user)) => {
             // XXX: Should handle errors here as well
