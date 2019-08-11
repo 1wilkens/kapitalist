@@ -1,12 +1,12 @@
 use chrono::NaiveDateTime;
 use diesel::{self, prelude::*};
 use serde::{Deserialize, Serialize};
-use slog::trace;
+//use slog::trace;
 
 use kapitalist_types::request::{UserCreationRequest, UserUpdateRequest};
 use kapitalist_types::response::UserResponse;
 
-use crate::db::{Database, schema::users};
+use crate::db::schema::users;
 
 /// Database entity representing a user account
 #[derive(Debug, Deserialize, Serialize, Queryable, Identifiable, AsChangeset)]
@@ -102,8 +102,6 @@ impl NewUser {
         Ok(Some(user))
     }
 }
-/*
-
 
 impl GetUser {
     /// Get the user with the given Id
@@ -121,43 +119,35 @@ impl GetUser {
             email: Some(email),
         }
     }
-}
 
-impl Message for GetUser {
-    type Result = Result<Option<User>, Error>;
-}
-
-impl Handler<GetUser> for DatabaseExecutor {
-    type Result = Result<Option<User>, Error>;
-
-    fn handle(&mut self, msg: GetUser, _: &mut Self::Context) -> Self::Result {
+    pub fn execute(self, conn: &PgConnection) -> Result<Option<User>, &'static str> {
         use crate::db::schema::users::dsl::*;
-        trace!(self.1, "Received db action"; "msg" => ?msg);
+        //trace!(self.1, "Received db action"; "msg" => ?msg);
 
-        if msg.uid.is_none() && msg.email.is_none() {
+        if self.uid.is_none() && self.email.is_none() {
             // XXX: Fix error message?
-            let err = error::ErrorInternalServerError("Invalid GetUser object");
-            trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?err);
+            let err = "Invalid GetUser object";
+            //trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?err);
             return Err(err);
         }
 
-        let user = match (msg.uid, &msg.email) {
+        let user = match (self.uid, &self.email) {
             // Get by Id
             (Some(uid), None) => users
                 .filter(id.eq(&uid))
-                .get_result(&self.0)
+                .get_result(conn)
                 .optional()
-                .map_err(error::ErrorInternalServerError)?,
+                .map_err(|_| "Error getting user from database")?,
             // Get by email
             (None, Some(ref email_)) => users
                 .filter(email.eq(email_))
-                .get_result(&self.0)
+                .get_result(conn)
                 .optional()
-                .map_err(error::ErrorInternalServerError)?,
+                .map_err(|_| "Error getting user from database")?,
             _ => unreachable!(),
         };
 
-        trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?user);
+        //trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?user);
         Ok(user)
     }
 }
@@ -171,38 +161,31 @@ impl UpdateUser {
             username: req.name,
         }
     }
-}
 
-impl Message for UpdateUser {
-    type Result = Result<Option<User>, Error>;
-}
-
-impl Handler<UpdateUser> for DatabaseExecutor {
-    type Result = Result<Option<User>, Error>;
-
-    fn handle(&mut self, msg: UpdateUser, ctx: &mut Self::Context) -> Self::Result {
-        let user = self.handle(GetUser::by_id(msg.uid), ctx);
+    pub fn execute(self, conn: &PgConnection) -> Result<Option<User>, &'static str> {
+        //trace!(self.1, "Received db action"; "msg" => ?msg);
+        let user = GetUser::by_id(self.uid).execute(conn);
         let result = match user {
             Ok(Some(mut u)) => {
-                if let Some(ref email) = msg.email {
+                if let Some(ref email) = self.email {
                     u.email = email.clone();
                 }
-                if let Some(ref secret) = msg.secret {
+                if let Some(ref secret) = self.secret {
                     // XXX: Validate password hash here?
                     u.secret = secret.clone();
                 }
-                if let Some(ref username) = msg.username {
+                if let Some(ref username) = self.username {
                     u.username = username.clone()
                 }
                 diesel::update(&u)
                     .set(&u)
-                    .get_result(&self.0)
+                    .get_result(conn)
                     .optional()
-                    .map_err(error::ErrorInternalServerError)?
+                    .map_err(|_| "Error updating User in database")?
             }
             _ => None,
         };
-        trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?result);
+        //trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?result);
         Ok(result)
     }
-}*/
+}

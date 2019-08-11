@@ -66,7 +66,10 @@ impl Config {
     }
     pub fn from_env() -> Result<Self, ParseError> {
         let address = env::var("KAPITALIST_HOST").unwrap_or_else(|_| "0.0.0.0".into());
-        let port = env::var("KAPITALIST_PORT").unwrap_or_else(|_| "5454".into()).parse().unwrap();
+        let port = env::var("KAPITALIST_PORT")
+            .unwrap_or_else(|_| "5454".into())
+            .parse()
+            .unwrap();
 
         let jwt_secret = env::var("KAPITALIST_JWT_SECRET")?;
         let db_url = env::var("KAPITALIST_DB")?;
@@ -82,10 +85,7 @@ impl Config {
 impl AppState {
     #[allow(clippy::new_ret_no_self)]
     pub fn new(cfg: Config) -> AppStateBuilder {
-        AppStateBuilder {
-            config: cfg,
-            log: None,
-        }
+        AppStateBuilder { config: cfg, log: None }
     }
 }
 
@@ -110,12 +110,12 @@ impl AppStateBuilder {
 
 impl From<env::VarError> for ParseError {
     fn from(error: env::VarError) -> Self {
-        ParseError::InvalidEnvironment(error)
+        Self::InvalidEnvironment(error)
     }
 }
 
 impl From<net::AddrParseError> for ParseError {
     fn from(error: net::AddrParseError) -> Self {
-        ParseError::InvalidAddress(error)
+        Self::InvalidAddress(error)
     }
 }

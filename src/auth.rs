@@ -1,7 +1,11 @@
-use rocket::{Outcome, State, http::Status, request::{self, Request, FromRequest}};
 use chrono::serde::ts_seconds::{deserialize as from_ts, serialize as to_ts};
 use chrono::{DateTime, Duration, Utc};
 use jsonwebtoken::{decode, Validation};
+use rocket::{
+    http::Status,
+    request::{self, FromRequest, Request},
+    Outcome, State,
+};
 use serde::{Deserialize, Serialize};
 use slog::debug;
 

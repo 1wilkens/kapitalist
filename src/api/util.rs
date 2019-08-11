@@ -1,4 +1,7 @@
-use rocket::{response::{status, Responder}, http::Status};
+use rocket::{
+    http::Status,
+    response::{status, Responder},
+};
 use rocket_contrib::json::Json;
 
 use kapitalist_types::response::ErrorResponse;

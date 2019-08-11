@@ -50,18 +50,16 @@ fn main() {
         // init - init db schema
         let conn = PgConnection::establish(&cfg.db_url).expect("Could not establish connection to database");
         let _ = embedded_migrations::run_with_output(&conn, &mut std::io::stdout());
-        return;
     } else if let Some(_sc) = args.subcommand_matches(SUBCOMMAND_CRON) {
         // cron - scheduled maintenance tasks
         eprintln!("This subcommand is not implemented yet!");
-        return;
     } else if let Some(sc) = args.subcommand_matches(SUBCOMMAND_API) {
         // serve - kapitalist API
 
         // check args and update config
         if let Some(addr) = sc.value_of("address") {
             // check if we got a valid ip
-            if let Ok(_) = addr.parse::<IpAddr>() {
+            if addr.parse::<IpAddr>().is_ok() {
                 cfg.address = addr.to_string();
             } else {
                 eprintln!("Invalid address specified");
