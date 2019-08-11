@@ -3,7 +3,7 @@ mod schema;
 
 //pub mod category;
 //pub mod transaction;
-//pub mod user;
+pub mod user;
 //pub mod wallet;
 
 use rocket::config::Value;
@@ -12,7 +12,7 @@ use rocket_contrib::databases::diesel;
 use std::collections::HashMap;
 
 #[database("kapitalist")]
-pub(crate) struct Database(diesel::PgConnection);
+pub struct Database(diesel::PgConnection);
 
 pub fn build_config(db_url: &str) -> HashMap<&'static str, Value> {
     let mut db_cfg = HashMap::new();

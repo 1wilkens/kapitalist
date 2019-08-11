@@ -49,7 +49,8 @@ pub fn build_rocket(config: &state::Config, log: &slog::Logger) -> rocket::Rocke
     let rocket = rocket::custom(config)
         .manage(state)
         .attach(db::Database::fairing())
-        .mount("/", routes![api::index, api::version]);
+        .mount("/", routes![api::index, api::version])
+        .mount("/", routes![api::user::register]);
     rocket
 
     /*actix_web::App::with_state(state)

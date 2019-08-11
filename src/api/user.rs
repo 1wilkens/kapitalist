@@ -7,20 +7,20 @@
 /// | PUT | `/me` | `UserUpdateRequest` | update own user details |
 /// | POST | `/token` | `TokenRequest` | obtain authentication token |
 ///
-use actix_web::{AsyncResponder, Either, HttpResponse, Json, Responder, State};
-use futures::Future;
 use jsonwebtoken as jwt;
+use rocket::{State};
+use rocket_contrib::json::Json;
 use slog::{debug, trace};
 
 use kapitalist_types::request::{TokenRequest, UserCreationRequest, UserUpdateRequest};
-use kapitalist_types::response::{ErrorResponse, TokenResponse};
+use kapitalist_types::response::{ErrorResponse, TokenResponse, UserResponse};
 
-use crate::auth::{TokenClaims, UserGuard};
-use crate::db::user::{GetUser, NewUser, UpdateUser};
+use crate::auth::{TokenClaims, User};
+use crate::db::{Database, user::{GetUser, NewUser, UpdateUser}};
 use crate::state::AppState;
 
-// TODO: Verify this use of Either
-pub fn register((state, req): (State<AppState>, Json<UserCreationRequest>)) -> impl Responder {
+#[post("/register", data = "<req>")]
+pub fn register(state: State<AppState>, db: Database, req: Json<UserCreationRequest>) -> super::Result<Json<UserResponse>> {
     /* Register a new user
      *
      * - Check email is not registered yet
@@ -31,27 +31,19 @@ pub fn register((state, req): (State<AppState>, Json<UserCreationRequest>)) -> i
     let new_user = if let Some(u) = NewUser::from_request(req.0) {
         u
     } else {
-        return Either::A(HttpResponse::BadRequest().json(ErrorResponse::new("Password does not match criteria")));
+        return Err(super::util::bad_request("Password does not match criteria"));
     };
-    Either::B(
-        state
-            .db
-            .send(new_user)
-            .and_then(move |res| {
-                let resp = match res {
-                    Ok(Some(user)) => HttpResponse::Ok().json(user.into_response()),
-                    Ok(None) => super::util::unauthorized(),
-                    Err(err) => {
-                        debug!(&state.log, "Error inserting user into database"; "error" => %&err);
-                        super::util::internal_server_error()
-                    }
-                };
-                Ok(resp)
-            })
-            .responder(),
-    )
+    match new_user.execute(&*db) {
+        Ok(Some(user)) => Ok(Json(user.into_response())),
+        Ok(None) => Err(super::util::unauthorized()),
+        Err(err) => {
+            debug!(&state.log, "Error inserting user into database"; "error" => %&err);
+            Err(super::util::internal_server_error())
+        }
+    }
 }
-pub fn get_me((state, user): (State<AppState>, UserGuard)) -> impl Responder {
+
+/*pub fn get_me((state, user): (State<AppState>, UserGuard)) -> impl Responder {
     trace!(&state.log, "Endpoint {ep} called", ep = "user::get_me");
     let get_user = GetUser::by_id(user.user_id);
     state
@@ -140,4 +132,4 @@ pub fn token((state, req): (State<AppState>, Json<TokenRequest>)) -> impl Respon
             Ok(resp)
         })
         .responder()
-}
+}*/

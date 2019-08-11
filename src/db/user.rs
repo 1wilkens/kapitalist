@@ -1,7 +1,3 @@
-use actix_web::{
-    actix::{Handler, Message},
-    error::{self, Error},
-};
 use chrono::NaiveDateTime;
 use diesel::{self, prelude::*};
 use serde::{Deserialize, Serialize};
@@ -10,7 +6,7 @@ use slog::trace;
 use kapitalist_types::request::{UserCreationRequest, UserUpdateRequest};
 use kapitalist_types::response::UserResponse;
 
-use crate::db::{schema::users, DatabaseExecutor};
+use crate::db::{Database, schema::users};
 
 /// Database entity representing a user account
 #[derive(Debug, Deserialize, Serialize, Queryable, Identifiable, AsChangeset)]
@@ -85,35 +81,29 @@ impl NewUser {
             username: name,
         })
     }
-}
 
-impl Message for NewUser {
-    type Result = Result<Option<User>, Error>;
-}
-
-impl Handler<NewUser> for DatabaseExecutor {
-    type Result = Result<Option<User>, Error>;
-
-    fn handle(&mut self, msg: NewUser, _: &mut Self::Context) -> Self::Result {
+    pub fn execute(self, conn: &PgConnection) -> Result<Option<User>, &'static str> {
         use crate::db::schema::users::dsl::*;
-        trace!(self.1, "Received db action"; "msg" => ?msg);
+        //trace!(self.1, "Received db action"; "msg" => ?msg);
 
-        let exists: bool = diesel::select(diesel::dsl::exists(users.filter(email.eq(&msg.email))))
-            .get_result(&self.0)
-            .map_err(|_| error::ErrorInternalServerError("Error getting User from Db"))?;
+        let exists: bool = diesel::select(diesel::dsl::exists(users.filter(email.eq(&self.email))))
+            .get_result(conn)
+            .map_err(|_| "Error getting User from Db")?;
 
         if exists {
             return Ok(None);
         }
 
         let user = diesel::insert_into(users)
-            .values(&msg)
-            .get_result(&self.0)
-            .map_err(|_| error::ErrorInternalServerError("Error inserting user"))?;
-        trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?user);
+            .values(self)
+            .get_result(conn)
+            .map_err(|_| "Error inserting user")?;
+        //trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?user);
         Ok(Some(user))
     }
 }
+/*
+
 
 impl GetUser {
     /// Get the user with the given Id
@@ -215,4 +205,4 @@ impl Handler<UpdateUser> for DatabaseExecutor {
         trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?result);
         Ok(result)
     }
-}
+}*/

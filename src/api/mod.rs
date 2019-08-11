@@ -1,16 +1,19 @@
-use kapitalist_types::response::VersionResponse;
+use kapitalist_types::response::{ErrorResponse, VersionResponse};
+use rocket::response::{status, content};
 use rocket_contrib::json::Json;
 
 //pub mod category;
 //pub mod transaction;
-//pub mod user;
+pub mod user;
 //pub mod wallet;
 
-//pub mod util;
+pub mod util;
+
+type Result<S> = std::result::Result<S, status::Custom<Json<ErrorResponse>>>;
 
 #[get("/")]
-pub fn index() -> String {
-    "Kapitalist is running".into()
+pub fn index() -> content::Plain<String> {
+    content::Plain("Kapitalist is running".into())
 }
 
 #[get("/version")]
