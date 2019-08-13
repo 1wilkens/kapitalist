@@ -36,20 +36,20 @@ pub struct NewWallet {
     pub color: String,
 }
 
-/// Actix message to retrieve a wallet entity from the database
+/// Struct to retrieve a wallet entity from the database
 #[derive(Debug)]
 pub struct GetWallet {
     pub(crate) uid: i64,
     pub(crate) wid: i64,
 }
 
-/// Actix message to retrieve all wallet entities of a given user from the database
+/// Struct to retrieve all wallet entities of a given user from the database
 #[derive(Debug)]
 pub struct GetWalletsFromUser {
     pub(crate) uid: i64,
 }
 
-/// Actix message to update a wallet entity in the database
+/// Struct to update a wallet entity in the database
 #[derive(Debug)]
 pub struct UpdateWallet {
     pub uid: i64,
@@ -59,7 +59,7 @@ pub struct UpdateWallet {
     pub color: Option<String>,
 }
 
-/// Actix message to delete a wallet entity from the database
+/// Struct to delete a wallet entity from the database
 #[derive(Debug)]
 pub struct DeleteWallet {
     pub(crate) uid: i64,

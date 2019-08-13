@@ -37,14 +37,14 @@ pub struct CreateNewTransaction {
     tx: NewTransaction,
 }
 
-/// Actix message to retrieve a transaction entity from the database
+/// Struct to retrieve a transaction entity from the database
 #[derive(Debug)]
 pub struct GetTransaction {
     pub(crate) uid: i64,
     pub(crate) tid: i64,
 }
 
-/// Actix message to retrieve all transactions of a given wallet from the database
+/// Struct to retrieve all transactions of a given wallet from the database
 #[derive(Debug)]
 pub struct GetTransactionsFromWallet {
     pub(crate) uid: i64,
@@ -62,7 +62,7 @@ pub struct UpdateTransaction {
     pub(crate) ts: Option<NaiveDateTime>,
 }
 
-/// Actix message to delete a transaction entity from the database
+/// Struct to delete a transaction entity from the database
 #[derive(Debug)]
 pub struct DeleteTransaction {
     pub(crate) uid: i64,

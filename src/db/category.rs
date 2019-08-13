@@ -30,14 +30,14 @@ pub struct NewCategory {
     pub color: String,
 }
 
-/// Actix message to retrieve a category entity from the database
+/// Struct to retrieve a category entity from the database
 #[derive(Debug)]
 pub struct GetCategory {
     pub(crate) cid: i64,
     pub(crate) uid: i64,
 }
 
-/// Actix message to update a category entity in the database
+/// Struct to update a category entity in the database
 #[derive(Debug)]
 pub struct UpdateCategory {
     pub uid: i64,
@@ -47,7 +47,7 @@ pub struct UpdateCategory {
     pub color: Option<String>,
 }
 
-/// Actix message to delete a category entity from the database
+/// Struct to delete a category entity from the database
 #[derive(Debug)]
 pub struct DeleteCategory {
     pub(crate) cid: i64,

@@ -35,14 +35,14 @@ pub struct NewUser {
     pub username: String,
 }
 
-/// Actix message to retrieve a user entity from the database
+/// Struct to retrieve a user entity from the database
 #[derive(Debug)]
 pub enum GetUser {
     ById(i64),
     ByEmail(String),
 }
 
-/// Actix message to update a user entity in the database
+/// Struct to update a user entity in the database
 #[derive(Debug)]
 pub struct UpdateUser {
     pub uid: i64,
