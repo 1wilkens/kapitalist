@@ -35,7 +35,7 @@ pub struct NewUser {
     pub username: String,
 }
 
-/// Struct to retrieve a user entity from the database
+/// Enum to retrieve a user entity from the database
 #[derive(Debug)]
 pub enum GetUser {
     ById(i64),

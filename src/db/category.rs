@@ -33,8 +33,8 @@ pub struct NewCategory {
 /// Struct to retrieve a category entity from the database
 #[derive(Debug)]
 pub struct GetCategory {
-    pub(crate) cid: i64,
-    pub(crate) uid: i64,
+    pub cid: i64,
+    pub uid: i64,
 }
 
 /// Struct to update a category entity in the database
@@ -50,8 +50,8 @@ pub struct UpdateCategory {
 /// Struct to delete a category entity from the database
 #[derive(Debug)]
 pub struct DeleteCategory {
-    pub(crate) cid: i64,
-    pub(crate) uid: i64,
+    pub cid: i64,
+    pub uid: i64,
 }
 
 impl Category {

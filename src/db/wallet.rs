@@ -39,14 +39,14 @@ pub struct NewWallet {
 /// Struct to retrieve a wallet entity from the database
 #[derive(Debug)]
 pub struct GetWallet {
-    pub(crate) uid: i64,
-    pub(crate) wid: i64,
+    pub uid: i64,
+    pub wid: i64,
 }
 
 /// Struct to retrieve all wallet entities of a given user from the database
 #[derive(Debug)]
 pub struct GetWalletsFromUser {
-    pub(crate) uid: i64,
+    pub uid: i64,
 }
 
 /// Struct to update a wallet entity in the database
@@ -62,8 +62,8 @@ pub struct UpdateWallet {
 /// Struct to delete a wallet entity from the database
 #[derive(Debug)]
 pub struct DeleteWallet {
-    pub(crate) uid: i64,
-    pub(crate) wid: i64,
+    pub uid: i64,
+    pub wid: i64,
 }
 
 impl Wallet {

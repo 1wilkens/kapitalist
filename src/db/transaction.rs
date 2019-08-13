@@ -40,33 +40,33 @@ pub struct CreateNewTransaction {
 /// Struct to retrieve a transaction entity from the database
 #[derive(Debug)]
 pub struct GetTransaction {
-    pub(crate) uid: i64,
-    pub(crate) tid: i64,
+    pub uid: i64,
+    pub tid: i64,
 }
 
 /// Struct to retrieve all transactions of a given wallet from the database
 #[derive(Debug)]
 pub struct GetTransactionsFromWallet {
-    pub(crate) uid: i64,
-    pub(crate) wid: i64,
+    pub uid: i64,
+    pub wid: i64,
 }
 
 #[derive(Debug)]
 pub struct UpdateTransaction {
-    pub(crate) uid: i64,
-    pub(crate) tid: i64,
-    pub(crate) name: Option<String>,
-    pub(crate) wallet_id: Option<i64>,
-    pub(crate) category_id: Option<i64>,
-    pub(crate) amount: Option<i64>,
-    pub(crate) ts: Option<NaiveDateTime>,
+    pub uid: i64,
+    pub tid: i64,
+    pub name: Option<String>,
+    pub wallet_id: Option<i64>,
+    pub category_id: Option<i64>,
+    pub amount: Option<i64>,
+    pub ts: Option<NaiveDateTime>,
 }
 
 /// Struct to delete a transaction entity from the database
 #[derive(Debug)]
 pub struct DeleteTransaction {
-    pub(crate) uid: i64,
-    pub(crate) tid: i64,
+    pub uid: i64,
+    pub tid: i64,
 }
 
 impl Transaction {
