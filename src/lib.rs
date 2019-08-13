@@ -74,12 +74,23 @@ pub fn build_rocket(config: &state::Config, log: &slog::Logger) -> rocket::Rocke
         .mount(
             "/category",
             routes![
-                // Wallet management
+                // Category management
                 api::category::post,
                 //api::category::get_all,
                 api::category::get,
                 api::category::put,
                 api::category::delete
+            ],
+        )
+        .mount(
+            "/transaction",
+            routes![
+                // Transaction management
+                api::transaction::post,
+                api::transaction::get_all,
+                api::transaction::get,
+                api::transaction::put,
+                api::transaction::delete
             ],
         )
 

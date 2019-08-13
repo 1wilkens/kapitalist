@@ -47,7 +47,7 @@ pub fn get_all(user: User, state: State<AppState>, db: Database) -> super::Resul
     let get_wallets = GetWalletsFromUser::new(user.user_id);
     match get_wallets.execute(&*db) {
         Ok(Some(wallets)) => Ok(Json(wallets.into_iter().map(Wallet::into_response).collect())),
-        Ok(None) => Ok(Json(Vec::new())), // User has no wallets yet
+        Ok(None) => Ok(Json(Vec::new())), // User has no Wallets yet
         Err(err) => {
             debug!(&state.log, "Error getting wallets from database"; "error" => %&err);
             Err(internal_server_error())

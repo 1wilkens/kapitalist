@@ -1,15 +1,12 @@
-use actix_web::{
-    actix::{Handler, Message},
-    error::{self, Error},
-};
 use chrono::{NaiveDateTime, Utc};
 use diesel::{self, prelude::*};
 use serde::{Deserialize, Serialize};
-use slog::trace;
+//use slog::trace;
 
 use kapitalist_types::request::{TransactionCreationRequest, TransactionUpdateRequest};
+use kapitalist_types::response::TransactionResponse;
 
-use crate::db::{schema::transactions, wallet::GetWallet, DatabaseExecutor};
+use crate::db::{schema::transactions, wallet::GetWallet};
 
 /// Database entity representing a transaction
 #[derive(Debug, Deserialize, Serialize, Queryable, Identifiable, AsChangeset)]
@@ -72,8 +69,20 @@ pub struct DeleteTransaction {
     pub(crate) tid: i64,
 }
 
+impl Transaction {
+    pub fn into_response(self) -> TransactionResponse {
+        TransactionResponse {
+            id: self.id,
+            name: self.name,
+            wallet_id: self.wallet_id,
+            category_id: self.category_id,
+            amount: self.amount,
+            ts: self.ts,
+        }
+    }
+}
+
 impl CreateNewTransaction {
-    #[allow(clippy::needless_pass_by_value)]
     pub fn from_request(user_id: i64, req: TransactionCreationRequest) -> Self {
         Self {
             user_id: user_id,
@@ -89,33 +98,25 @@ impl CreateNewTransaction {
             },
         }
     }
-}
 
-impl Message for CreateNewTransaction {
-    type Result = Result<Option<Transaction>, Error>;
-}
-
-impl Handler<CreateNewTransaction> for DatabaseExecutor {
-    type Result = Result<Option<Transaction>, Error>;
-
-    fn handle(&mut self, msg: CreateNewTransaction, ctx: &mut Self::Context) -> Self::Result {
+    pub fn execute(self, conn: &PgConnection) -> Result<Option<Transaction>, &'static str> {
         use crate::db::schema::transactions::dsl::*;
-        trace!(self.1, "Received db action"; "msg" => ?msg);
+        //trace!(self.1, "Received db action"; "msg" => ?msg);
 
-        let wallet = self.handle(GetWallet::new(msg.user_id, msg.tx.wallet_id), ctx);
+        let wallet = GetWallet::new(self.user_id, self.tx.wallet_id).execute(conn);
         let result = match wallet {
             Ok(Ok(_)) => {
                 // User owns the target wallet
                 let tx = diesel::insert_into(transactions)
-                    .values(&msg.tx)
-                    .get_result(&self.0)
-                    .map_err(error::ErrorInternalServerError)?;
+                    .values(self.tx)
+                    .get_result(conn)
+                    .map_err(|_| "Error inserting Transaction into database")?;
                 Some(tx)
             }
             _ => None,
         };
 
-        trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?result);
+        //trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?result);
         Ok(result)
     }
 }
@@ -127,43 +128,35 @@ impl GetTransaction {
             tid: transaction_id,
         }
     }
-}
-
-impl Message for GetTransaction {
-    type Result = Result<Option<Transaction>, Error>;
-}
-
-impl Handler<GetTransaction> for DatabaseExecutor {
-    type Result = Result<Option<Transaction>, Error>;
 
     #[allow(clippy::single_match_else)]
-    fn handle(&mut self, msg: GetTransaction, ctx: &mut Self::Context) -> Self::Result {
+    pub fn execute(self, conn: &PgConnection) -> Result<Option<Transaction>, &'static str> {
         use crate::db::schema::transactions::dsl::*;
-        trace!(self.1, "Received db action"; "msg" => ?msg);
+        //trace!(self.1, "Received db action"; "msg" => ?msg);
 
         let transaction: Option<Transaction> = transactions
-            .filter(id.eq(&msg.tid))
-            .get_result(&self.0)
+            .filter(id.eq(self.tid))
+            .get_result(conn)
             .optional()
-            .map_err(error::ErrorInternalServerError)?;
+            .map_err(|_| "Error getting Transaction from database")?;
 
         let transaction = match transaction {
             Some(t) => t,
             None => {
                 // XXX: This is ugly
-                trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => "Ok(None(");
+                //trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => "Ok(None(");
                 return Ok(None);
             }
         };
 
         // XXX: Verify this is enough to protect against unauthorized access
-        let wallet = self.handle(GetWallet::new(transaction.wallet_id, msg.uid), ctx);
+        let wallet = GetWallet::new(transaction.wallet_id, self.uid).execute(conn);
         let result = match wallet {
             Ok(Ok(_)) => Some(transaction),
             _ => None,
         };
 
-        trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?result);
+        //trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?result);
         Ok(result)
     }
 }
@@ -175,43 +168,34 @@ impl GetTransactionsFromWallet {
             wid: wallet_id,
         }
     }
-}
 
-impl Message for GetTransactionsFromWallet {
-    type Result = Result<Option<Vec<Transaction>>, Error>;
-}
-
-impl Handler<GetTransactionsFromWallet> for DatabaseExecutor {
-    type Result = Result<Option<Vec<Transaction>>, Error>;
-
-    fn handle(&mut self, msg: GetTransactionsFromWallet, ctx: &mut Self::Context) -> Self::Result {
+    pub fn execute(self, conn: &PgConnection) -> Result<Option<Vec<Transaction>>, &'static str> {
         use crate::db::schema::transactions::dsl::*;
-        trace!(self.1, "Received db action"; "msg" => ?msg);
+        //trace!(self.1, "Received db action"; "msg" => ?msg);
 
         // Check user has access to source wallet
-        let wallet = self.handle(GetWallet::new(msg.wid, msg.uid), ctx);
+        let wallet = GetWallet::new(self.wid, self.uid).execute(conn);
         let result = match wallet {
-            // User owns the wallet and it has transactions
+            // XXX: verify this is correct
+            // User owns the wallet
             Ok(Ok(_)) => {
                 let txs = transactions
-                    .filter(wallet_id.eq(msg.wid))
-                    .get_results(&self.0)
-                    .map_err(error::ErrorInternalServerError)?;
-                Some(txs)
+                    .filter(wallet_id.eq(self.wid))
+                    .get_results(conn)
+                    .optional()
+                    .map_err(|_| "Error getting Transactions from database")?;
+                txs
             }
-            // User owns the wallet, but there are not transactions (yet)
-            Ok(Err(())) => Some(Vec::new()),
             // User doesn't own the wallet or it doesn't exist (yet)
             _ => None,
         };
 
-        trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?result);
+        //trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?result);
         Ok(result)
     }
 }
 
 impl UpdateTransaction {
-    #[allow(clippy::needless_pass_by_value)]
     pub fn from_request(user_id: i64, transaction_id: i64, req: TransactionUpdateRequest) -> Self {
         Self {
             uid: user_id,
@@ -223,43 +207,35 @@ impl UpdateTransaction {
             ts: req.ts,
         }
     }
-}
 
-impl Message for UpdateTransaction {
-    type Result = Result<Option<Transaction>, Error>;
-}
-
-impl Handler<UpdateTransaction> for DatabaseExecutor {
-    type Result = Result<Option<Transaction>, Error>;
-
-    fn handle(&mut self, msg: UpdateTransaction, ctx: &mut Self::Context) -> Self::Result {
-        trace!(self.1, "Received db action"; "msg" => ?msg);
+    pub fn execute(self, conn: &PgConnection) -> Result<Option<Transaction>, &'static str> {
+        //trace!(self.1, "Received db action"; "msg" => ?msg);
 
         // XXX: Verify this is enough to protect unauthorized access
-        let transaction = self.handle(GetTransaction::new(msg.uid, msg.tid), ctx);
+        let transaction = GetTransaction::new(self.uid, self.tid).execute(conn);
         let result = match transaction {
             Ok(Some(mut tx)) => {
-                if let Some(wallet_id) = msg.wallet_id {
+                if let Some(wallet_id) = self.wallet_id {
                     tx.wallet_id = wallet_id;
                 }
-                if let Some(category_id) = msg.category_id {
+                if let Some(category_id) = self.category_id {
                     tx.category_id = category_id;
                 }
-                if let Some(amount) = msg.amount {
+                if let Some(amount) = self.amount {
                     tx.amount = amount;
                 }
-                if let Some(ts) = msg.ts {
+                if let Some(ts) = self.ts {
                     tx.ts = ts;
                 }
                 diesel::update(&tx)
                     .set(&tx)
-                    .get_result(&self.0)
+                    .get_result(conn)
                     .optional()
-                    .map_err(error::ErrorInternalServerError)?
+                    .map_err(|_| "Error updating Transaction in database")?
             }
             _ => None,
         };
-        trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?result);
+        //trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?result);
         Ok(result)
     }
 }
@@ -271,34 +247,28 @@ impl DeleteTransaction {
             tid: transaction_id,
         }
     }
-}
 
-impl Message for DeleteTransaction {
-    type Result = Result<bool, Error>;
-}
+    pub fn execute(self, conn: &PgConnection) -> Result<bool, &'static str> {
+        //trace!(self.1, "Received db action"; "msg" => ?msg);
 
-impl Handler<DeleteTransaction> for DatabaseExecutor {
-    type Result = Result<bool, Error>;
-
-    fn handle(&mut self, msg: DeleteTransaction, ctx: &mut Self::Context) -> Self::Result {
-        trace!(self.1, "Received db action"; "msg" => ?msg);
-
-        let tx = self.handle(GetTransaction::new(msg.tid, msg.uid), ctx);
-        let tx = match tx {
+        let tx = match GetTransaction::new(self.tid, self.uid).execute(conn) {
             Ok(Some(t)) => t,
             _ => return Ok(false),
         };
 
         // XXX: Verify this is enough to protect against unauthorized access
-        let wallet = self.handle(GetWallet::new(tx.wallet_id, msg.uid), ctx);
-        let result = match wallet {
-            Ok(Ok(_)) => diesel::delete(&tx)
-                .execute(&self.0)
-                .map_err(error::ErrorInternalServerError)?,
-            _ => 0,
+        let result = match GetWallet::new(tx.wallet_id, self.uid).execute(conn) {
+            // User owns the Wallet and is thus able to delete the Transaction
+            Ok(Ok(_)) => {
+                diesel::delete(&tx)
+                    .execute(conn)
+                    .map_err(|_| "Error deleting Transaction from database")?
+                    > 0
+            }
+            _ => false,
         };
 
-        trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?result);
-        Ok(result > 0)
+        //trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?result);
+        Ok(result)
     }
 }
