@@ -19,7 +19,8 @@ use crate::api::util::{internal_server_error, not_found, update_request_invalid}
 use crate::auth::User;
 use crate::db::{
     transaction::{
-        CreateNewTransaction, DeleteTransaction, GetTransaction, GetTransactionsFromWallet, UpdateTransaction,
+        CreateNewTransaction, DeleteTransaction, GetTransaction, GetTransactionsFromWallet, Transaction,
+        UpdateTransaction,
     },
     Database,
 };
@@ -55,7 +56,7 @@ pub fn get_all(
 ) -> super::Result<Json<Vec<TransactionResponse>>> {
     let get_txs = GetTransactionsFromWallet::new(user.user_id, wid);
     match get_txs.execute(&*db) {
-        Ok(Some(txs)) => Ok(Json(txs.into_iter().map(|t| t.into_response()).collect())),
+        Ok(Some(txs)) => Ok(Json(txs.into_iter().map(Transaction::into_response).collect())),
         Ok(None) => Ok(Json(Vec::new())), // Wallet has no Transactions yet
         Err(err) => {
             debug!(&state.log, "Error getting transactions from database"; "error" => %&err);

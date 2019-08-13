@@ -37,6 +37,11 @@ pub struct GetCategory {
     pub uid: i64,
 }
 
+/// Struct to retrieve all category entities for a User (built-in or custom)
+pub struct GetCategoriesForUser {
+    pub uid: i64,
+}
+
 /// Struct to update a category entity in the database
 #[derive(Debug)]
 pub struct UpdateCategory {
@@ -88,6 +93,24 @@ impl NewCategory {
 
         //trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?category);
         Ok(category)
+    }
+}
+
+impl GetCategoriesForUser {
+    pub fn new(user_id: i64) -> Self {
+        Self { uid: user_id }
+    }
+
+    pub fn execute(self, conn: &PgConnection) -> Result<Vec<Category>, &'static str> {
+        use crate::db::schema::categories::dsl::*;
+        //trace!(self.1, "Received db action"; "msg" => ?msg);
+
+        let categories_ = categories
+            .filter(user_id.is_null().or(user_id.eq(self.uid)))
+            .get_results(conn)
+            .map_err(|_| "Error getting Categories from database")?;
+        //trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?category);
+        Ok(categories_)
     }
 }
 

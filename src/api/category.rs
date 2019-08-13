@@ -18,7 +18,7 @@ use kapitalist_types::response::CategoryResponse;
 use crate::api::util::{internal_server_error, not_found, update_request_invalid};
 use crate::auth::User;
 use crate::db::{
-    category::{DeleteCategory, GetCategory, NewCategory, UpdateCategory},
+    category::{Category, DeleteCategory, GetCategoriesForUser, GetCategory, NewCategory, UpdateCategory},
     Database,
 };
 use crate::state::AppState;
@@ -38,6 +38,18 @@ pub fn post(
         }
         Err(err) => {
             debug!(&state.log, "Error inserting category into database"; "error" => %&err);
+            Err(internal_server_error())
+        }
+    }
+}
+
+#[get("/all")]
+pub fn get_all(user: User, state: State<AppState>, db: Database) -> super::Result<Json<Vec<CategoryResponse>>> {
+    let get_categories = GetCategoriesForUser::new(user.user_id);
+    match get_categories.execute(&*db) {
+        Ok(txs) => Ok(Json(txs.into_iter().map(Category::into_response).collect())),
+        Err(err) => {
+            debug!(&state.log, "Error getting categories from database"; "error" => %&err);
             Err(internal_server_error())
         }
     }
