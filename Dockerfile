@@ -1,5 +1,5 @@
 # build container
-FROM rust:1.35 as build
+FROM rustlang/rust:nightly as build
 
 # create a new empty shell project
 RUN USER=root cargo new --lib kapitalist
@@ -12,7 +12,7 @@ COPY Cargo.toml Cargo.lock ./
 RUN mkdir src/bin && echo 'fn main() {}' >> src/bin/main.rs \
     && cargo build --release \
     && rm -rf ./src/* \
-    && rm ./target/release/deps/*kapitalist*
+    && rm ./target/release/deps/*kapitalist-*
 
 # copy source tree
 COPY src ./src

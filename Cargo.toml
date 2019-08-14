@@ -35,8 +35,8 @@ chrono = { version = "0.4", features = ["serde"] }
 diesel = { version = "1.4", default-features = false, features = ["chrono", "postgres"] }
 diesel_migrations = "1.4"
 
-rocket = "0.4.2"
+rocket = { version = "0.4.2", default-features = false }
 rocket_contrib = { version = "0.4.2", default-features = false, features = ["json", "diesel_postgres_pool"] }
 
-jsonwebtoken = "5.0"
+jsonwebtoken = "6.0"
 libreauth = "0.11"
