@@ -52,6 +52,7 @@ fn main() {
         let _ = embedded_migrations::run_with_output(&conn, &mut std::io::stdout());
     } else if let Some(_sc) = args.subcommand_matches(SUBCOMMAND_CRON) {
         // cron - scheduled maintenance tasks
+        let _conn = PgConnection::establish(&cfg.db_url).expect("Could not establish connection to database");
         eprintln!("This subcommand is not implemented yet!");
     } else if let Some(sc) = args.subcommand_matches(SUBCOMMAND_API) {
         // serve - kapitalist API

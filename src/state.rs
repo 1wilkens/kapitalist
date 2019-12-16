@@ -58,7 +58,7 @@ impl Config {
                 "name" => v);
             } else {
                 debug!(&log, "Missing required env variables"; "name" => v);
-                return Err(v.to_string());
+                return Err((*v).to_string());
             }
         }
 

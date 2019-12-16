@@ -34,7 +34,7 @@ pub(crate) struct TokenClaims {
 }
 
 impl TokenClaims {
-    /// Create a new TokenClaims instance with the given subject and user is
+    /// Create a new `TokenClaims` instance with the given subject and user is
     pub(crate) fn new(sub: &str, uid: i64) -> Self {
         // TODO: make this configurable and use real urls
         Self {

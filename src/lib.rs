@@ -2,6 +2,7 @@
 #![allow(
     clippy::needless_pass_by_value,
     clippy::module_name_repetitions,
+    clippy::must_use_candidate,
     clippy::option_option,
     clippy::redundant_field_names
 )]
@@ -32,10 +33,7 @@ pub fn build_rocket(config: &state::Config, log: &slog::Logger) -> rocket::Rocke
     // database connection
     let db = db::build_config(&config.db_url);
 
-    let log_ = log.clone();
-    let cfg_ = config.clone();
-
-    let state = state::AppState::new(cfg_.clone()).with_logger(log_.clone()).build();
+    let state = state::AppState::new(config.clone()).with_logger(log.clone()).build();
 
     let config = rocket::Config::build(Environment::Development)
         .address(&config.address)
