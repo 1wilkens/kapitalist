@@ -11,7 +11,7 @@ use crate::auth::JwtSecret;
 #[allow(unused_doc_comments)]
 static REQUIRED_ENV_VARIABLES: [&str; 4] = [
     /// Which IP address to listen on
-    "KAPITALIST_HOST",
+    "KAPITALIST_ADDRESS",
     /// Which port to listen on
     "KAPITALIST_PORT",
     /// Connection string of the backing database (diesel format)
@@ -49,7 +49,7 @@ pub enum ParseError {
 impl Config {
     pub fn check_env(log: &slog::Logger) -> Result<(), String> {
         trace!(&log, "Checking environment");
-        let vars: HashMap<String, String> = env::vars().collect();
+        let vars: HashMap<_, _> = env::vars().collect();
 
         for v in &REQUIRED_ENV_VARIABLES {
             if vars.contains_key(*v) && !vars[*v].is_empty() {

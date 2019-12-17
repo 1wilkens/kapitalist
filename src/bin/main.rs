@@ -7,12 +7,12 @@ extern crate diesel_migrations;
 
 use clap::{App, AppSettings, Arg, ArgMatches, SubCommand};
 use diesel::{Connection, PgConnection};
-use slog::{error, o};
+use slog::o;
 
 use std::env;
 use std::net::IpAddr;
 
-use kapitalist::{build_rocket, Config};
+use kapitalist::{Config};
 
 const SUBCOMMAND_API: &str = "serve";
 const SUBCOMMAND_CRON: &str = "cron";
@@ -20,7 +20,7 @@ const SUBCOMMAND_INIT: &str = "init";
 
 embed_migrations!();
 
-fn main() {
+fn main() -> Result<(), String> {
     // parse args
     let args = build_argparser().get_matches();
 
@@ -30,57 +30,57 @@ fn main() {
     // load and check environment
     load_env();
     if let Err(var) = Config::check_env(&log) {
-        error!(&log, "Failed to validate environment"; "missing" => var);
-        return;
+        return Err(format!("Failed to validate environment: Missing variable {}", var));
     }
 
-    // load configuration
+    // load and check configuration
     let mut cfg = match Config::from_env() {
         Ok(cfg) => cfg,
         Err(e) => {
-            error!(&log, "Failed to parse configuration"; "error" => ?e);
-            return;
+            return Err(format!("Failed to parse configuration: {:?}", e));
         }
     };
     if let Some(db) = args.value_of("database") {
         cfg.db_url = db.into();
     }
 
+    // execute subcommand
     if args.subcommand_matches(SUBCOMMAND_INIT).is_some() {
         // init - init db schema
-        let conn = PgConnection::establish(&cfg.db_url).expect("Could not establish connection to database");
-        let _ = embedded_migrations::run_with_output(&conn, &mut std::io::stdout());
+        let conn = PgConnection::establish(&cfg.db_url)
+            .map_err(|err| format!("Failed to establish connection to database: {}", err))?;
+        return embedded_migrations::run_with_output(&conn, &mut std::io::stdout())
+            .map_err(|err| format!("Error during database initialization: {}", err));
     } else if let Some(_sc) = args.subcommand_matches(SUBCOMMAND_CRON) {
         // cron - scheduled maintenance tasks
-        let _conn = PgConnection::establish(&cfg.db_url).expect("Could not establish connection to database");
-        eprintln!("This subcommand is not implemented yet!");
+        return kapitalist::cron::execute(&cfg, &log);
     } else if let Some(sc) = args.subcommand_matches(SUBCOMMAND_API) {
         // serve - kapitalist API
 
         // check args and update config
         if let Some(addr) = sc.value_of("address") {
-            // check if we got a valid ip
+            // check if we got a valid IP
             if addr.parse::<IpAddr>().is_ok() {
                 cfg.address = addr.to_string();
             } else {
-                eprintln!("Invalid address specified");
-                return;
+                return Err(format!("Invalid address specified: {}", addr));
             }
         }
         if let Some(port) = sc.value_of("port") {
+            // check if we got a valid port
             if let Ok(p) = port.parse::<u16>() {
                 cfg.port = p;
             } else {
-                eprintln!("Invalid port specified");
-                return;
+                return Err(format!("Invalid port specified: {}", port));
             }
         }
 
-        let rocket = build_rocket(&cfg, &log);
+        let rocket = kapitalist::build_rocket(&cfg, &log);
 
         // start server
         rocket.launch();
     }
+    Ok(())
 }
 
 fn build_argparser<'a, 'b>() -> App<'a, 'b> {
@@ -101,7 +101,7 @@ fn build_argparser<'a, 'b>() -> App<'a, 'b> {
             Arg::with_name("database")
                 .short("d")
                 .long("database")
-                .help("Database connection string to use (`diesel` format)")
+                .help("Database connection string to use (diesel format)")
                 .takes_value(true),
         ])
         .subcommands(vec![
@@ -109,13 +109,15 @@ fn build_argparser<'a, 'b>() -> App<'a, 'b> {
                 .about("Serve kapitalist API")
                 .args(&[
                     Arg::with_name("address")
+                        .long("address")
                         .help("Which address to listen on. Overwrites value from KAPITALIST_ADDRESS")
                         .takes_value(true),
-                    Arg::with_name(SUBCOMMAND_CRON)
+                    Arg::with_name("port")
+                        .long("port")
                         .help("Which port to serve on. Overwrites value from KAPITALIST_PORT")
                         .takes_value(true),
                 ]),
-            SubCommand::with_name(SUBCOMMAND_INIT).about("Initialize database"),
+            SubCommand::with_name(SUBCOMMAND_INIT).about("Initialize database and exit"),
             SubCommand::with_name(SUBCOMMAND_CRON).about("Perform scheduled maintenance tasks and exit"),
         ])
 }

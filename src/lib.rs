@@ -17,24 +17,23 @@ extern crate rocket_contrib;
 extern crate diesel;
 
 pub mod api;
-pub mod db;
-
 pub mod auth;
+pub mod cron;
+pub mod db;
 pub mod state;
 
 //mod log;
 
 pub use crate::state::Config;
 
-/// Construct and configure an instance of an `rocket::Rocket` from the given `kapitalist::Config` and
-/// `slog::Logger`
+/// Construct and configure an instance of an `rocket::Rocket` from the given
+/// `kapitalist::Config` and `slog::Logger`
 pub fn build_rocket(config: &state::Config, log: &slog::Logger) -> rocket::Rocket {
     use rocket::config::Environment;
-    // database connection
-    let db = db::build_config(&config.db_url);
 
+    // setup app state, database connection and rocket configuration
     let state = state::AppState::new(config.clone()).with_logger(log.clone()).build();
-
+    let db = db::build_config(&config.db_url);
     let config = rocket::Config::build(Environment::Development)
         .address(&config.address)
         .port(config.port)
@@ -42,6 +41,7 @@ pub fn build_rocket(config: &state::Config, log: &slog::Logger) -> rocket::Rocke
         .finalize()
         .unwrap();
 
+    // configure rocket with routes
     rocket::custom(config)
         .manage(state)
         .attach(db::Database::fairing())
