@@ -76,9 +76,7 @@ fn main() {
             }
         }
 
-        let cfg_ = cfg.clone();
-        let log_ = log.clone();
-        let rocket = build_rocket(&cfg_, &log_);
+        let rocket = build_rocket(&cfg, &log);
 
         // start server
         rocket.launch();
