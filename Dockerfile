@@ -1,12 +1,12 @@
 # build container
-FROM rustlang/rust:nightly as build
+FROM rustlang/rust:nightly-buster-slim as build
 
 # create a new empty shell project
 RUN USER=root cargo new --lib kapitalist
 WORKDIR /kapitalist
 
 # copy over manifests
-COPY Cargo.toml Cargo.lock ./
+COPY Cargo.toml Cargo.lock README.md ./
 
 # cache dependencies
 RUN mkdir src/bin && echo 'fn main() {}' >> src/bin/main.rs \
@@ -22,7 +22,7 @@ COPY migrations ./migrations
 RUN cargo build --release
 
 # kapitalist container
-FROM debian:stretch-slim
+FROM debian:buster-slim
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends libpq5 \
@@ -32,5 +32,5 @@ RUN apt-get update \
 COPY --from=build /kapitalist/target/release/kapitalist /usr/bin/kapitalist
 COPY docker/*.sh /usr/bin/
 
-ENTRYPOINT ["docker-entrypoint.sh"]
+ENTRYPOINT ["entrypoint.sh"]
 CMD ["serve"]
