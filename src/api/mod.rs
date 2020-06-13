@@ -19,6 +19,6 @@ pub fn index() -> content::Plain<String> {
 #[get("/version")]
 pub fn version() -> Json<VersionResponse> {
     Json(VersionResponse {
-        version: env!("CARGO_PKG_VERSION").to_string(),
+        version: format!("kapitalist v{}", env!("CARGO_PKG_VERSION")),
     })
 }
