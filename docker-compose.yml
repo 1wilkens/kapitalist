@@ -7,7 +7,7 @@ services:
     image: kapitalistapp/backend:develop
     environment:
       # IP/port are already set per default
-      KAPITALIST_HOST: 0.0.0.0
+      KAPITALIST_ADDRESS: 0.0.0.0
       KAPITALIST_PORT: 5454
       # Database connection string
       KAPITALIST_DB: postgres://kapitalist:supersecretpassword@db/kapitalist
