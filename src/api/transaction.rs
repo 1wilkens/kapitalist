@@ -2,114 +2,106 @@
 ///
 /// | Method | Endpoint | Payload/Params | Result | Description |
 /// | :--: | -- | -- | -- | -- |
-/// | GET | `/transactions` | `from, to` | get transaction history |
 /// | POST | `/transaction` | `TransactionCreationRequest` | create new transaction |
 /// | GET | `/transaction/{tid}` | - | get transaction details |
 /// | PUT | `/transaction/{tid}` | `TransactionUpdateRequest` | update transaction details |
 /// | DELETE | `/transaction/{tid}` | - | delete transaction |
+/// | GET | `/transactions` | `from, to` | get transaction history |
 ///
-use rocket::{response::status, State};
-use rocket_contrib::json::Json;
-use slog::debug;
+use tracing::debug;
+use warp::{reject, reply, Rejection, Reply};
 
 use kapitalist_types::request::{TransactionCreationRequest, TransactionUpdateRequest};
 use kapitalist_types::response::TransactionResponse;
 
-use crate::api::util::{internal_server_error, not_found, update_request_invalid};
+//use crate::api::util::{reject::reject, reject::reject, update_request_invalid};
 use crate::auth::User;
 use crate::db::{
     transaction::{
-        CreateNewTransaction, DeleteTransaction, GetTransaction, GetTransactionsFromWallet, Transaction,
-        UpdateTransaction,
+        CreateNewTransaction, DeleteTransaction, GetTransaction, GetTransactionsFromWallet,
+        Transaction, UpdateTransaction,
     },
     Database,
 };
-use crate::state::AppState;
 
-#[post("/", data = "<req>")]
-pub fn post(
-    user: User,
-    state: State<AppState>,
+pub async fn post(
     db: Database,
-    req: Json<TransactionCreationRequest>,
-) -> super::Result<status::Created<Json<TransactionResponse>>> {
-    let new_tx = CreateNewTransaction::from_request(user.user_id, req.0);
-    match new_tx.execute(&*db) {
+    user: User,
+    req: TransactionCreationRequest,
+) -> Result<impl Reply, Rejection> {
+    let new_tx = CreateNewTransaction::from_request(user.user_id, req);
+    match new_tx.execute(&*db.0) {
         Ok(Some(tx)) => {
             let url = format!("/transaction/{}", tx.id);
-            Ok(status::Created(url, Some(Json(tx.into_response()))))
+            //Ok(status::Created(url, Some(reply::json(tx.into_response()))))
+            Ok(reply::json(&tx.into_response()))
         }
-        Ok(None) => Err(not_found("transaction")),
+        //Ok(None) => Err(reject::reject("transaction")),
+        Ok(None) => Err(reject::reject()),
         Err(err) => {
-            debug!(&state.log, "Error inserting transaction into database"; "error" => %&err);
-            Err(internal_server_error())
+            debug!(error = %&err, "Error inserting transaction into database");
+            Err(reject::reject())
         }
     }
 }
 
-#[get("/all/<wid>")]
-pub fn get_all(
-    user: User,
-    state: State<AppState>,
-    db: Database,
-    wid: i64,
-) -> super::Result<Json<Vec<TransactionResponse>>> {
-    let get_txs = GetTransactionsFromWallet::new(user.user_id, wid);
-    match get_txs.execute(&*db) {
-        Ok(Some(txs)) => Ok(Json(txs.into_iter().map(Transaction::into_response).collect())),
-        Ok(None) => Ok(Json(Vec::new())), // Wallet has no Transactions yet
-        Err(err) => {
-            debug!(&state.log, "Error getting transactions from database"; "error" => %&err);
-            Err(internal_server_error())
-        }
-    }
-}
-
-#[get("/<tid>")]
-pub fn get(user: User, state: State<AppState>, db: Database, tid: i64) -> super::Result<Json<TransactionResponse>> {
+pub async fn get(db: Database, user: User, tid: i64) -> Result<impl Reply, Rejection> {
     let get_tx = GetTransaction::new(user.user_id, tid);
-    match get_tx.execute(&*db) {
-        Ok(Some(tx)) => Ok(Json(tx.into_response())),
-        Ok(None) => Err(not_found("transaction")),
+    match get_tx.execute(&*db.0) {
+        Ok(Some(tx)) => Ok(reply::json(&tx.into_response())),
+        //Ok(None) => Err(reject::reject("transaction")),
+        Ok(None) => Err(reject::reject()),
         Err(err) => {
-            debug!(&state.log, "Error getting transaction from database"; "error" => %&err);
-            Err(internal_server_error())
+            debug!(error = %&err, "Error getting transaction from database");
+            Err(reject::reject())
         }
     }
 }
 
-#[put("/<tid>", data = "<req>")]
-pub fn put(
-    user: User,
-    state: State<AppState>,
+pub async fn put(
     db: Database,
+    user: User,
     tid: i64,
-    req: Json<TransactionUpdateRequest>,
-) -> super::Result<Json<TransactionResponse>> {
+    req: TransactionUpdateRequest,
+) -> Result<impl Reply, Rejection> {
     if !req.is_valid() {
-        return Err(update_request_invalid());
+        return Err(reject::reject());
     }
 
-    let update_tx = UpdateTransaction::from_request(user.user_id, tid, req.0);
-    match update_tx.execute(&*db) {
-        Ok(Some(tx)) => Ok(Json(tx.into_response())),
-        Ok(None) => Err(not_found(&"transaction")),
+    let update_tx = UpdateTransaction::from_request(user.user_id, tid, req);
+    match update_tx.execute(&*db.0) {
+        Ok(Some(tx)) => Ok(reply::json(&tx.into_response())),
+        //Ok(None) => Err(reject::reject(&"transaction"))
+        Ok(None) => Err(reject::reject()),
         Err(err) => {
-            debug!(&state.log, "Error updating transaction in database"; "error" => %&err);
-            Err(internal_server_error())
+            debug!(error = %&err, "Error updating transaction in database");
+            Err(reject::reject())
         }
     }
 }
 
-#[delete("/<tid>")]
-pub fn delete(user: User, state: State<AppState>, db: Database, tid: i64) -> super::Result<Json<()>> {
+pub async fn delete(db: Database, user: User, tid: i64) -> Result<impl Reply, Rejection> {
     let delete_tx = DeleteTransaction::new(tid, user.user_id);
-    match delete_tx.execute(&*db) {
-        Ok(true) => Ok(Json(())),
-        Ok(false) => Err(not_found("transaction")),
+    match delete_tx.execute(&*db.0) {
+        Ok(true) => Ok(reply::json(&())),
+        //Ok(false) => Err(reject::reject("transaction")),
+        Ok(false) => Err(reject::reject()),
         Err(err) => {
-            debug!(&state.log, "Error deleting transaction from database"; "error" => %&err);
-            Err(internal_server_error())
+            debug!(error = %&err, "Error deleting transaction from database");
+            Err(reject::reject())
         }
     }
+}
+
+pub async fn all(db: Database, user: User, wid: i64) -> Result<impl Reply, Rejection> {
+    let get_txs = GetTransactionsFromWallet::new(user.user_id, wid);
+    let resp: Vec<TransactionResponse> = match get_txs.execute(&*db.0) {
+        Ok(Some(txs)) => txs.into_iter().map(Transaction::into_response).collect(),
+        Ok(None) => vec![], // Wallet has no Transactions yet
+        Err(err) => {
+            debug!(error = %&err, "Error getting transactions from database");
+            return Err(reject::reject());
+        }
+    };
+    Ok(reply::json(&resp))
 }

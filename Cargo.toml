@@ -23,20 +23,19 @@ lto = true
 [dependencies]
 kapitalist_types = { git = "https://github.com/kapitalist-app/types", branch = "develop" }
 
-clap = { version = "2.32", default-features = false, features = ["vec_map"] }
-slog = { version = "2.3", features = ["release_max_level_debug"] }
-slog-async = { version = "2.3", default-features = false }
-slog-stdlog = { version = "3.0", default-features = false }
-slog-term = { version = "2.4", default-features = false }
+color-eyre = "0.5"
+clap = { version = "2.33", default-features = false, features = ["vec_map"] }
+tracing = "0.1"
+tracing-subscriber = "0.2"
 
 dotenv = "0.13"
 serde = { version = "1.0", features = ["derive"] }
 chrono = { version = "0.4", features = ["serde"] }
-diesel = { version = "1.4", default-features = false, features = ["chrono", "postgres"] }
+diesel = { version = "1.4", default-features = false, features = ["chrono", "r2d2", "postgres"] }
 diesel_migrations = "1.4"
 
-rocket = { version = "0.4.2", default-features = false }
-rocket_contrib = { version = "0.4.2", default-features = false, features = ["json", "diesel_postgres_pool"] }
+tokio = { version = "^1.5", features = ["full"] }
+warp = "0.3"
 
-jsonwebtoken = "6.0"
-libreauth = "0.11"
+jsonwebtoken = "7.2"
+libreauth = "0.14"

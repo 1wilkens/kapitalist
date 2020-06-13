@@ -1,3 +1,8 @@
+use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
+use diesel::PgConnection;
+
+use warp::{Filter, Rejection};
+
 mod schema;
 
 pub mod category;
@@ -5,20 +10,23 @@ pub mod transaction;
 pub mod user;
 pub mod wallet;
 
-use rocket::config::Value;
-use rocket_contrib::databases::diesel;
+pub struct Database(pub PooledConnection<ConnectionManager<PgConnection>>);
 
-use std::collections::HashMap;
+pub type PgPool = Pool<ConnectionManager<PgConnection>>;
 
-#[database("kapitalist")]
-pub struct Database(diesel::PgConnection);
+pub fn init_pool(db_url: &str) -> PgPool {
+    let manager = ConnectionManager::<PgConnection>::new(db_url);
+    Pool::new(manager).expect("Postgres connection pool could not be created")
+}
 
-pub fn build_config(db_url: &str) -> HashMap<&'static str, Value> {
-    let mut db_cfg = HashMap::new();
-    let mut dbs = HashMap::new();
-
-    db_cfg.insert("url", Value::from(db_url));
-    dbs.insert("kapitalist", Value::from(db_cfg));
-
-    dbs
+pub fn attach(pool: PgPool) -> impl Filter<Extract = (Database,), Error = Rejection> + Clone {
+    warp::any()
+        .map(move || pool.clone())
+        .and_then(|pool: PgPool| async move {
+            match pool.get() {
+                Ok(conn) => Ok(Database(conn)),
+                // FIXME: replace with proper error type
+                Err(err) => Err(warp::reject::reject()),
+            }
+        })
 }

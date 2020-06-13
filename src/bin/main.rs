@@ -1,18 +1,16 @@
-#![feature(proc_macro_hygiene, decl_macro)]
-extern crate kapitalist;
-
 // XXX: Remove this once it becomes obsolete
 #[macro_use]
 extern crate diesel_migrations;
 
-use clap::{App, AppSettings, Arg, ArgMatches, SubCommand};
-use diesel::{Connection, PgConnection};
-use slog::o;
-
 use std::env;
 use std::net::IpAddr;
+use std::sync::Arc;
 
-use kapitalist::{Config};
+use clap::{App, AppSettings, Arg, ArgMatches, SubCommand};
+use diesel::{Connection, PgConnection};
+use tracing::Level;
+
+use kapitalist::{db, AppState, Config};
 
 const SUBCOMMAND_API: &str = "serve";
 const SUBCOMMAND_CRON: &str = "cron";
@@ -20,17 +18,21 @@ const SUBCOMMAND_INIT: &str = "init";
 
 embed_migrations!();
 
-fn main() -> Result<(), String> {
+#[tokio::main]
+async fn main() -> Result<(), String> {
     // parse args
     let args = build_argparser().get_matches();
 
     // init logging
-    let log = init_logging(&args);
+    init_logging(&args)?;
 
     // load and check environment
     load_env();
-    if let Err(var) = Config::check_env(&log) {
-        return Err(format!("Failed to validate environment: Missing variable {}", var));
+    if let Err(var) = Config::check_env() {
+        return Err(format!(
+            "Failed to validate environment: Missing variable {}",
+            var
+        ));
     }
 
     // load and check configuration
@@ -53,15 +55,15 @@ fn main() -> Result<(), String> {
             .map_err(|err| format!("Error during database initialization: {}", err));
     } else if let Some(_sc) = args.subcommand_matches(SUBCOMMAND_CRON) {
         // cron - scheduled maintenance tasks
-        return kapitalist::cron::execute(&cfg, &log);
+        return kapitalist::cron::execute(&cfg);
     } else if let Some(sc) = args.subcommand_matches(SUBCOMMAND_API) {
         // serve - kapitalist API
 
         // check args and update config
         if let Some(addr) = sc.value_of("address") {
             // check if we got a valid IP
-            if addr.parse::<IpAddr>().is_ok() {
-                cfg.address = addr.to_string();
+            if let Ok(a) = addr.parse::<IpAddr>() {
+                cfg.address = a;
             } else {
                 return Err(format!("Invalid address specified: {}", addr));
             }
@@ -75,10 +77,12 @@ fn main() -> Result<(), String> {
             }
         }
 
-        let rocket = kapitalist::build_rocket(&cfg, &log);
+        // setup app state and database connection
+        let st = Arc::new(AppState::new(cfg.clone()).build());
+        let db = db::init_pool(&cfg.db_url);
+        let site = kapitalist::build_site(st, db);
 
-        // start server
-        rocket.launch();
+        warp::serve(site).run((cfg.address, cfg.port)).await;
     }
     Ok(())
 }
@@ -90,6 +94,11 @@ fn build_argparser<'a, 'b>() -> App<'a, 'b> {
         .version(env!("CARGO_PKG_VERSION"))
         .setting(AppSettings::SubcommandRequiredElseHelp)
         .args(&[
+            Arg::with_name("quiet")
+                .short("q")
+                .long("quiet")
+                .help("Only print errors")
+                .takes_value(false),
             Arg::with_name("verbose")
                 .short("v")
                 .long("verbose")
@@ -97,7 +106,8 @@ fn build_argparser<'a, 'b>() -> App<'a, 'b> {
                 .takes_value(false),
             Arg::with_name("debug")
                 .long("debug")
-                .help("Print debug output (implies --verbose)"),
+                .help("Print debug output (implies --verbose)")
+                .takes_value(false),
             Arg::with_name("database")
                 .short("d")
                 .long("database")
@@ -108,9 +118,9 @@ fn build_argparser<'a, 'b>() -> App<'a, 'b> {
             SubCommand::with_name(SUBCOMMAND_API)
                 .about("Serve kapitalist API")
                 .args(&[
-                    Arg::with_name("address")
-                        .long("address")
-                        .help("Which address to listen on. Overwrites value from KAPITALIST_ADDRESS")
+                    Arg::with_name("host")
+                        .long("host")
+                        .help("Which host to listen on. Overwrites value from KAPITALIST_HOST")
                         .takes_value(true),
                     Arg::with_name("port")
                         .long("port")
@@ -118,35 +128,32 @@ fn build_argparser<'a, 'b>() -> App<'a, 'b> {
                         .takes_value(true),
                 ]),
             SubCommand::with_name(SUBCOMMAND_INIT).about("Initialize database and exit"),
-            SubCommand::with_name(SUBCOMMAND_CRON).about("Perform scheduled maintenance tasks and exit"),
+            SubCommand::with_name(SUBCOMMAND_CRON)
+                .about("Perform scheduled maintenance tasks and exit"),
         ])
 }
 
-fn init_logging(args: &ArgMatches) -> slog::Logger {
-    use slog::Drain;
-
-    let log_level = if args.is_present("debug") {
-        slog::Level::Debug
+fn init_logging(args: &ArgMatches) -> Result<(), String> {
+    let level = if args.is_present("debug") {
+        Level::DEBUG
     } else if args.is_present("verbose") {
-        slog::Level::Info
+        Level::INFO
+    } else if args.is_present("quiet") {
+        Level::ERROR
     } else {
-        slog::Level::Error
+        Level::WARN
     };
 
-    let decorator = slog_term::TermDecorator::new().build();
-    let drain = slog_term::CompactFormat::new(decorator).build();
-    let drain = slog::LevelFilter::new(drain, log_level).fuse();
-    let drain = slog_async::Async::new(drain).build().fuse();
-    slog::Logger::root(drain, o!())
+    let subscriber = tracing_subscriber::fmt().with_max_level(level).finish();
+    tracing::subscriber::set_global_default(subscriber)
+        .map_err(|e| format!("Failed to set global subscriber: {}", e))
 }
 
 fn load_env() {
     if let Ok(variables) = dotenv::dotenv_iter() {
-        for item in variables {
-            if let Ok((key, val)) = item {
-                if let Err(env::VarError::NotPresent) = env::var(&key) {
-                    env::set_var(&key, &val);
-                }
+        for (key, val) in variables.flatten() {
+            if env::var(&key) == Err(env::VarError::NotPresent) {
+                env::set_var(&key, &val);
             }
         }
     }

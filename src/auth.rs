@@ -1,18 +1,24 @@
+use std::sync::Arc;
+
 use chrono::serde::ts_seconds::{deserialize as from_ts, serialize as to_ts};
 use chrono::{DateTime, Duration, Utc};
 use jsonwebtoken::{decode, Validation};
-use rocket::{
-    http::Status,
-    request::{self, FromRequest, Request},
-    Outcome, State,
-};
 use serde::{Deserialize, Serialize};
-use slog::debug;
+use tracing::debug;
+use warp::{
+    reject::{self, Rejection},
+    Filter,
+};
 
-use crate::state::AppState;
+use crate::state;
 
-#[derive(Debug, Clone)]
-pub struct JwtSecret(pub String);
+pub fn check(
+    st: Arc<state::AppState>,
+) -> impl Filter<Extract = (User,), Error = Rejection> + Clone {
+    warp::header("Authorization")
+        .and(state::attach(st.clone()))
+        .and_then(check_token)
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 /// Represents claims included in kapitalist issued json web tokens
@@ -50,43 +56,40 @@ impl TokenClaims {
 }
 
 /// Request guard which validates the user's token
+#[derive(Debug, Clone, Copy)]
 pub struct User {
     pub user_id: i64, // TODO: Add more fields as required
 }
 
-impl<'a, 'r> FromRequest<'a, 'r> for User {
-    type Error = ();
+pub async fn check_token(header: String, state: Arc<state::AppState>) -> Result<User, Rejection> {
+    let state = state.clone();
+    let key = &state.config.jwt_decoding_key;
 
-    fn from_request(request: &'a Request<'r>) -> request::Outcome<Self, Self::Error> {
-        let state = request.guard::<State<AppState>>()?;
-        let secret = state.config.jwt_secret.0.as_ref();
-
-        let headers = request.headers().get("Authorization");
-        for value in headers {
-            // Extract Bearer
-            let parts: Vec<&str> = value.split(' ').collect();
-            if parts.len() == 2 && parts[0] == "Bearer" {
-                // We have a bearer token
-                let validation = Validation {
-                    leeway: 60,
-                    ..Validation::default()
-                };
-                debug!(&state.log, "Validating bearer token"; "token" => &parts[1]);
-                let token = match decode::<TokenClaims>(&parts[1], secret, &validation) {
-                    Ok(token) => token,
-                    Err(e) => {
-                        // Print errors on debug output and continue to next token if any
-                        debug!(&state.log, "Validation failed"; "error" => %e);
-                        continue;
-                    }
-                };
-                return Outcome::Success(Self {
-                    user_id: token.claims.uid,
-                });
+    debug!(%header, "check_auth");
+    // Extract Bearer
+    let parts: Vec<&str> = header.split(' ').collect();
+    if parts.len() == 2 && parts[0] == "Bearer" {
+        // We have a bearer token
+        let validation = Validation {
+            leeway: 60,
+            ..Validation::default()
+        };
+        debug!(token = %parts[1], "Validating bearer token");
+        let token = match decode::<TokenClaims>(&parts[1], key, &validation) {
+            Ok(token) => token,
+            Err(e) => {
+                // Print errors on debug output and continue to next token if any
+                debug!(error = %e, "Validation failed");
+                // FIXME: return 401
+                return Err(reject::reject());
             }
-        }
+        };
 
-        // XXX: Make this return a json error, through a catcher maybe?
-        Outcome::Failure((Status::Unauthorized, ()))
+        return Ok(User {
+            user_id: token.claims.uid,
+        });
     }
+
+    // FIXME: return 401
+    Err(reject::reject())
 }

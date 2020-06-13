@@ -1,6 +1,9 @@
-use kapitalist_types::response::{ErrorResponse, VersionResponse};
-use rocket::response::{content, status};
-use rocket_contrib::json::Json;
+use std::convert::Infallible;
+
+use tracing::trace;
+use warp::{reply, Reply};
+
+use kapitalist_types::response::VersionResponse;
 
 pub mod category;
 pub mod transaction;
@@ -9,16 +12,18 @@ pub mod wallet;
 
 pub mod util;
 
-type Result<S> = std::result::Result<S, status::Custom<Json<ErrorResponse>>>;
-
-#[get("/")]
-pub fn index() -> content::Plain<String> {
-    content::Plain("Kapitalist is running".into())
+pub async fn index() -> Result<impl Reply, Infallible> {
+    trace!("index()");
+    Ok(format!(
+        "{} v{} is running",
+        env!("CARGO_PKG_NAME"),
+        env!("CARGO_PKG_VERSION")
+    ))
 }
 
-#[get("/version")]
-pub fn version() -> Json<VersionResponse> {
-    Json(VersionResponse {
-        version: format!("kapitalist v{}", env!("CARGO_PKG_VERSION")),
-    })
+pub async fn version() -> Result<impl Reply, Infallible> {
+    trace!("version()");
+    Ok(reply::json(&VersionResponse {
+        version: format!("{}", env!("CARGO_PKG_VERSION")),
+    }))
 }

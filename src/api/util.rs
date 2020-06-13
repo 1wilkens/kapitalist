@@ -1,25 +1,22 @@
-use rocket::{
-    http::Status,
-    response::{status, Responder},
-};
-use rocket_contrib::json::Json;
+use warp::Rejection;
 
 use kapitalist_types::response::ErrorResponse;
 
+/*
 // Status shorthands. These are private as they should not be used directly
-fn status_bad_request<'r, R: Responder<'r>>(responder: R) -> status::Custom<R> {
+fn status_bad_request(resp: i32) -> Rejection {
     status::Custom(Status::BadRequest, responder)
 }
 
-fn status_unauthorized<'r, R: Responder<'r>>(responder: R) -> status::Custom<R> {
+fn status_unauthorized<'r, R: Responder<'r>>(responder: R) -> Rejection {
     status::Custom(Status::Unauthorized, responder)
 }
 
-fn status_not_found<'r, R: Responder<'r>>(responder: R) -> status::Custom<R> {
+fn status_not_found<'r, R: Responder<'r>>(responder: R) -> Rejection {
     status::Custom(Status::NotFound, responder)
 }
 
-fn status_internal_server_error<'r, R: Responder<'r>>(responder: R) -> status::Custom<R> {
+fn status_internal_server_error<'r, R: Responder<'r>>(responder: R) -> Rejection {
     status::Custom(Status::InternalServerError, responder)
 }
 
@@ -43,4 +40,4 @@ pub fn unauthorized() -> status::Custom<Json<ErrorResponse>> {
 
 pub fn not_found(entity: &str) -> status::Custom<Json<ErrorResponse>> {
     status_not_found(Json(ErrorResponse::new(format!("{} not found", entity))))
-}
+}*/

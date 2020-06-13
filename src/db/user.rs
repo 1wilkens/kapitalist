@@ -1,7 +1,6 @@
 use chrono::NaiveDateTime;
 use diesel::{self, prelude::*};
 use serde::{Deserialize, Serialize};
-//use slog::trace;
 
 use kapitalist_types::request::{UserCreationRequest, UserUpdateRequest};
 use kapitalist_types::response::UserResponse;
@@ -66,7 +65,9 @@ impl NewUser {
     pub fn from_request(req: UserCreationRequest) -> Option<Self> {
         use libreauth::pass::HashBuilder;
 
-        let hasher = HashBuilder::new().finalize().expect("Failed to create Hasher");
+        let hasher = HashBuilder::new()
+            .finalize()
+            .expect("Failed to create Hasher");
         // XXX: Should handle hash errors here
         let hash = hasher.hash(&req.password).ok()?;
         // XXX: This looks rather ugly, but unwrap_or_else tries to move req
