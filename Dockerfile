@@ -1,11 +1,16 @@
 # build container
 FROM rustlang/rust:nightly-buster-slim as build
 
+# we need libpq-dev for the build
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 # create a new empty shell project
 RUN USER=root cargo new --lib kapitalist
 WORKDIR /kapitalist
 
-# copy over manifests
+# copy over manifests and README required for build
 COPY Cargo.toml Cargo.lock README.md ./
 
 # cache dependencies
@@ -20,6 +25,7 @@ COPY migrations ./migrations
 
 # build for release
 RUN cargo build --release
+
 
 # kapitalist container
 FROM debian:buster-slim
