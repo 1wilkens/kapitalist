@@ -27,21 +27,12 @@ async fn main() -> Result<(), String> {
     init_logging(&args)?;
 
     // load and check environment
-    load_env();
-    if let Err(var) = Config::check_env() {
-        return Err(format!(
-            "Failed to validate environment: Missing variable {}",
-            var
-        ));
-    }
+    import_env();
+    Config::check_env()?;
 
     // load and check configuration
-    let mut cfg = match Config::from_env() {
-        Ok(cfg) => cfg,
-        Err(e) => {
-            return Err(format!("Failed to parse configuration: {:?}", e));
-        }
-    };
+    let mut cfg =
+        Config::from_env().map_err(|e| format!("Failed to parse configuration: {:?}", e))?;
     if let Some(db) = args.value_of("database") {
         cfg.db_url = db.into();
     }
@@ -149,7 +140,7 @@ fn init_logging(args: &ArgMatches) -> Result<(), String> {
         .map_err(|e| format!("Failed to set global subscriber: {}", e))
 }
 
-fn load_env() {
+fn import_env() {
     if let Ok(variables) = dotenv::dotenv_iter() {
         for (key, val) in variables.flatten() {
             if env::var(&key) == Err(env::VarError::NotPresent) {

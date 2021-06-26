@@ -38,7 +38,7 @@ pub enum ParseError {
 
 impl Config {
     pub fn check_env() -> Result<(), String> {
-        trace!("Config::check_env");
+        trace!("Config::check_env()");
 
         let vars: HashMap<_, _> = env::vars().collect();
         for v in &REQUIRED_ENV_VARIABLES {

@@ -1,8 +1,8 @@
-use warp::Rejection;
+/*use warp::Rejection;
 
 use kapitalist_types::response::ErrorResponse;
 
-/*
+
 // Status shorthands. These are private as they should not be used directly
 fn status_bad_request(resp: i32) -> Rejection {
     status::Custom(Status::BadRequest, responder)

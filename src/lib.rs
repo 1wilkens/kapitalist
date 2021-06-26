@@ -27,8 +27,6 @@ use std::sync::Arc;
 use serde::de::DeserializeOwned;
 use warp::{filters::BoxedFilter, log::Info, Filter, Rejection, Reply};
 
-const APPLICATION_NAME: &str = concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"));
-
 pub fn build_site(state: Arc<AppState>, db: crate::db::PgPool) -> BoxedFilter<(impl Reply,)> {
     // static endpoints
     let index = warp::get().and_then(api::index);
