@@ -1,5 +1,5 @@
 use chrono::NaiveDateTime;
-use diesel::{self, prelude::*};
+use diesel::{self, prelude::*, result::Error as DieselError};
 use serde::{Deserialize, Serialize};
 //use slog::trace;
 
@@ -103,14 +103,11 @@ impl NewWallet {
         }
     }
 
-    pub fn execute(self, conn: &PgConnection) -> Result<Wallet, &'static str> {
+    pub fn execute(self, conn: &PgConnection) -> Result<Wallet, DieselError> {
         use crate::db::schema::wallets::dsl::*;
         //trace!(self.1, "Received db action"; "msg" => ?msg);
 
-        let wallet = diesel::insert_into(wallets)
-            .values(self)
-            .get_result(conn)
-            .map_err(|_| "Error inserting new Wallet into database")?;
+        let wallet = diesel::insert_into(wallets).values(self).get_result(conn)?;
         //trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?wallet);
         Ok(wallet)
     }
@@ -124,7 +121,7 @@ impl GetWallet {
         }
     }
 
-    pub fn execute(self, conn: &PgConnection) -> Result<Result<Wallet, ()>, &'static str> {
+    pub fn execute(self, conn: &PgConnection) -> Result<Result<Wallet, ()>, DieselError> {
         use crate::db::schema::wallets::dsl::*;
         //trace!(self.1, "Received db action"; "msg" => ?msg);
 
@@ -133,8 +130,7 @@ impl GetWallet {
             .filter(id.eq(&self.wid))
             .filter(user_id.eq(&self.uid))
             .get_result(conn)
-            .optional()
-            .map_err(|_| "Error getting Wallet from database")?
+            .optional()?
             .ok_or(());
         //trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?wallet);
         Ok(wallet)
@@ -146,15 +142,14 @@ impl GetWalletsFromUser {
         Self { uid: user_id }
     }
 
-    pub fn execute(self, conn: &PgConnection) -> Result<Option<Vec<Wallet>>, &'static str> {
+    pub fn execute(self, conn: &PgConnection) -> Result<Option<Vec<Wallet>>, DieselError> {
         use crate::db::schema::wallets::dsl::*;
         //trace!(self.1, "Received db action"; "msg" => ?msg);
 
         let result = wallets
             .filter(user_id.eq(self.uid))
             .get_results(conn)
-            .optional()
-            .map_err(|_| "Error getting Wallets from database")?;
+            .optional()?;
         //trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?result);
         Ok(result)
     }
@@ -171,7 +166,7 @@ impl UpdateWallet {
         }
     }
 
-    pub fn execute(self, conn: &PgConnection) -> Result<Option<Wallet>, &'static str> {
+    pub fn execute(self, conn: &PgConnection) -> Result<Option<Wallet>, DieselError> {
         //trace!(self.1, "Received db action"; "msg" => ?msg);
 
         // XXX: Verify this is enough to protect unauthorized access
@@ -187,11 +182,7 @@ impl UpdateWallet {
                 if let Some(ref color) = self.color {
                     w.color = color.clone()
                 }
-                diesel::update(&w)
-                    .set(&w)
-                    .get_result(conn)
-                    .optional()
-                    .map_err(|_| "Error updating Wallet in database")?
+                diesel::update(&w).set(&w).get_result(conn).optional()?
             }
             _ => None,
         };
@@ -208,7 +199,7 @@ impl DeleteWallet {
         }
     }
 
-    pub fn execute(self, conn: &PgConnection) -> Result<bool, &'static str> {
+    pub fn execute(self, conn: &PgConnection) -> Result<bool, DieselError> {
         //trace!(self.1, "Received db action"; "msg" => ?msg);
 
         let wallet = match GetWallet::new(self.wid, self.uid).execute(conn) {
@@ -217,10 +208,7 @@ impl DeleteWallet {
         };
 
         // XXX: Verify this is enough to protect unauthorized access
-        let result = diesel::delete(&wallet)
-            .execute(conn)
-            .map_err(|_| "Error deleting Wallet from database")?
-            > 0;
+        let result = diesel::delete(&wallet).execute(conn)? == 0;
         //trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?res);
         Ok(result)
     }

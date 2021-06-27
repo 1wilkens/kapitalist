@@ -1,5 +1,5 @@
 use chrono::{NaiveDateTime, Utc};
-use diesel::{self, prelude::*};
+use diesel::{self, prelude::*, result::Error as DieselError};
 use serde::{Deserialize, Serialize};
 //use slog::trace;
 
@@ -99,7 +99,7 @@ impl CreateNewTransaction {
         }
     }
 
-    pub fn execute(self, conn: &PgConnection) -> Result<Option<Transaction>, &'static str> {
+    pub fn execute(self, conn: &PgConnection) -> Result<Option<Transaction>, DieselError> {
         use crate::db::schema::transactions::dsl::*;
         //trace!(self.1, "Received db action"; "msg" => ?msg);
 
@@ -109,8 +109,7 @@ impl CreateNewTransaction {
                 // User owns the target wallet
                 let tx = diesel::insert_into(transactions)
                     .values(self.tx)
-                    .get_result(conn)
-                    .map_err(|_| "Error inserting Transaction into database")?;
+                    .get_result(conn)?;
                 Some(tx)
             }
             _ => None,
@@ -130,15 +129,14 @@ impl GetTransaction {
     }
 
     #[allow(clippy::single_match_else)]
-    pub fn execute(self, conn: &PgConnection) -> Result<Option<Transaction>, &'static str> {
+    pub fn execute(self, conn: &PgConnection) -> Result<Option<Transaction>, DieselError> {
         use crate::db::schema::transactions::dsl::*;
         //trace!(self.1, "Received db action"; "msg" => ?msg);
 
         let transaction: Option<Transaction> = transactions
             .filter(id.eq(self.tid))
             .get_result(conn)
-            .optional()
-            .map_err(|_| "Error getting Transaction from database")?;
+            .optional()?;
 
         let transaction = match transaction {
             Some(t) => t,
@@ -169,7 +167,7 @@ impl GetTransactionsFromWallet {
         }
     }
 
-    pub fn execute(self, conn: &PgConnection) -> Result<Option<Vec<Transaction>>, &'static str> {
+    pub fn execute(self, conn: &PgConnection) -> Result<Option<Vec<Transaction>>, DieselError> {
         use crate::db::schema::transactions::dsl::*;
         //trace!(self.1, "Received db action"; "msg" => ?msg);
 
@@ -178,14 +176,10 @@ impl GetTransactionsFromWallet {
         let result = match wallet {
             // XXX: verify this is correct
             // User owns the wallet
-            Ok(Ok(_)) => {
-                let txs = transactions
-                    .filter(wallet_id.eq(self.wid))
-                    .get_results(conn)
-                    .optional()
-                    .map_err(|_| "Error getting Transactions from database")?;
-                txs
-            }
+            Ok(Ok(_)) => transactions
+                .filter(wallet_id.eq(self.wid))
+                .get_results(conn)
+                .optional()?,
             // User doesn't own the wallet or it doesn't exist (yet)
             _ => None,
         };
@@ -208,7 +202,7 @@ impl UpdateTransaction {
         }
     }
 
-    pub fn execute(self, conn: &PgConnection) -> Result<Option<Transaction>, &'static str> {
+    pub fn execute(self, conn: &PgConnection) -> Result<Option<Transaction>, DieselError> {
         //trace!(self.1, "Received db action"; "msg" => ?msg);
 
         // XXX: Verify this is enough to protect unauthorized access
@@ -227,11 +221,7 @@ impl UpdateTransaction {
                 if let Some(ts) = self.ts {
                     tx.ts = ts;
                 }
-                diesel::update(&tx)
-                    .set(&tx)
-                    .get_result(conn)
-                    .optional()
-                    .map_err(|_| "Error updating Transaction in database")?
+                diesel::update(&tx).set(&tx).get_result(conn).optional()?
             }
             _ => None,
         };
@@ -248,7 +238,7 @@ impl DeleteTransaction {
         }
     }
 
-    pub fn execute(self, conn: &PgConnection) -> Result<bool, &'static str> {
+    pub fn execute(self, conn: &PgConnection) -> Result<bool, DieselError> {
         //trace!(self.1, "Received db action"; "msg" => ?msg);
 
         let tx = match GetTransaction::new(self.tid, self.uid).execute(conn) {
@@ -259,12 +249,7 @@ impl DeleteTransaction {
         // XXX: Verify this is enough to protect against unauthorized access
         let result = match GetWallet::new(tx.wallet_id, self.uid).execute(conn) {
             // User owns the Wallet and is thus able to delete the Transaction
-            Ok(Ok(_)) => {
-                diesel::delete(&tx)
-                    .execute(conn)
-                    .map_err(|_| "Error deleting Transaction from database")?
-                    > 0
-            }
+            Ok(Ok(_)) => diesel::delete(&tx).execute(conn)? == 0,
             _ => false,
         };
 

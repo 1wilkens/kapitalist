@@ -6,6 +6,7 @@
 /// | GET | `/wallet/{wid}` | `id` | get wallet details |
 /// | PUT | `/wallet/{wid}` | `WalletUpdateRequest` | update wallet details |
 /// | DELETE | `/wallet/{wid}` | -- | delete wallet |
+/// | GET | `/wallet/all` | `from, to` | get transaction history |
 ///
 use tracing::debug;
 use warp::{reject, reply, Rejection, Reply};
@@ -13,7 +14,7 @@ use warp::{reject, reply, Rejection, Reply};
 use kapitalist_types::request::{WalletCreationRequest, WalletUpdateRequest};
 use kapitalist_types::response::WalletResponse;
 
-//use crate::api::util::{reject::reject, reject::reject, update_request_invalid};
+use crate::api::util;
 use crate::auth::User;
 use crate::db::{
     wallet::{DeleteWallet, GetWallet, GetWalletsFromUser, NewWallet, UpdateWallet, Wallet},
@@ -29,8 +30,7 @@ pub async fn post(
     match new_wallet.execute(&*db.0) {
         Ok(wallet) => {
             let url = format!("/wallet/{}", wallet.id);
-            // FIXME: use url in created status code
-            Ok(reply::json(&wallet.into_response()))
+            Ok(util::created(&wallet.into_response(), url))
         }
         Err(err) => {
             debug!(error = %&err, "Error inserting wallet into database");
@@ -43,8 +43,7 @@ pub async fn get(db: Database, user: User, wid: i64) -> Result<impl Reply, Rejec
     let get_wallet = GetWallet::new(user.user_id, wid);
     match get_wallet.execute(&*db.0) {
         Ok(Ok(wallet)) => Ok(reply::json(&wallet.into_response())),
-        //Ok(_) => Err(reject::reject("wallet")),
-        Ok(_) => Err(reject::reject()),
+        Ok(_) => Err(util::not_found("wallet")),
         Err(err) => {
             debug!(error = %&err, "Error getting wallet from database");
             Err(reject::reject())
@@ -66,8 +65,7 @@ pub async fn put(
     let update_wallet = UpdateWallet::from_request(user.user_id, wid, req);
     match update_wallet.execute(&*db.0) {
         Ok(Some(wallet)) => Ok(reply::json(&wallet.into_response())),
-        //Ok(None) => Err(reject::reject("wallet")),
-        Ok(None) => Err(reject::reject()),
+        Ok(None) => Err(util::not_found("wallet")),
         Err(err) => {
             debug!(error = %&err, "Error updating wallet in database");
             Err(reject::reject())
@@ -79,11 +77,10 @@ pub async fn delete(db: Database, user: User, wid: i64) -> Result<impl Reply, Re
     let delete_wallet = DeleteWallet::new(user.user_id, wid);
     match delete_wallet.execute(&*db.0) {
         Ok(true) => Ok(reply::json(&())),
-        //Ok(false) => Err(reject::reject("wallet")),
-        Ok(false) => Err(reject::reject()),
+        Ok(false) => Err(util::not_found("wallet")),
         Err(err) => {
             debug!(error = %&err, "Error deleting wallet from database");
-            Err(reject::reject())
+            Err(util::error(err))
         }
     }
 }
@@ -98,7 +95,7 @@ pub async fn all(db: Database, user: User) -> Result<impl Reply, Rejection> {
         // db error
         Err(err) => {
             debug!(error = %&err, "Error getting wallets from database");
-            return Err(reject::reject());
+            return Err(util::error(err));
         }
     };
     Ok(reply::json(&resp))

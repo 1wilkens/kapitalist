@@ -1,5 +1,5 @@
 use chrono::NaiveDateTime;
-use diesel::{self, prelude::*};
+use diesel::{self, prelude::*, result::Error as DieselError};
 use serde::{Deserialize, Serialize};
 //use slog::trace;
 
@@ -82,14 +82,13 @@ impl NewCategory {
         }
     }
 
-    pub fn execute(self, conn: &PgConnection) -> Result<Category, &'static str> {
+    pub fn execute(self, conn: &PgConnection) -> Result<Category, DieselError> {
         use crate::db::schema::categories::dsl::*;
         //trace!(self.1, "Received db action"; "msg" => ?msg);
 
         let category: Category = diesel::insert_into(categories)
             .values(self)
-            .get_result(conn)
-            .map_err(|_| "Error inserting Category into database")?;
+            .get_result(conn)?;
 
         //trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?category);
         Ok(category)
@@ -101,14 +100,13 @@ impl GetCategoriesForUser {
         Self { uid: user_id }
     }
 
-    pub fn execute(self, conn: &PgConnection) -> Result<Vec<Category>, &'static str> {
+    pub fn execute(self, conn: &PgConnection) -> Result<Vec<Category>, DieselError> {
         use crate::db::schema::categories::dsl::*;
         //trace!(self.1, "Received db action"; "msg" => ?msg);
 
         let categories_ = categories
             .filter(user_id.is_null().or(user_id.eq(self.uid)))
-            .get_results(conn)
-            .map_err(|_| "Error getting Categories from database")?;
+            .get_results(conn)?;
         //trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?category);
         Ok(categories_)
     }
@@ -122,7 +120,7 @@ impl GetCategory {
         }
     }
 
-    pub fn execute(self, conn: &PgConnection) -> Result<Option<Category>, &'static str> {
+    pub fn execute(self, conn: &PgConnection) -> Result<Option<Category>, DieselError> {
         use crate::db::schema::categories::dsl::*;
         //trace!(self.1, "Received db action"; "msg" => ?msg);
 
@@ -131,8 +129,7 @@ impl GetCategory {
             .filter(id.eq(self.cid))
             .filter(user_id.is_null().or(user_id.eq(self.uid)))
             .get_result(conn)
-            .optional()
-            .map_err(|_| "Error getting Category from database")?;
+            .optional()?;
         //trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?category);
         Ok(category)
     }
@@ -149,7 +146,7 @@ impl UpdateCategory {
         }
     }
 
-    pub fn execute(self, conn: &PgConnection) -> Result<Option<Category>, &'static str> {
+    pub fn execute(self, conn: &PgConnection) -> Result<Option<Category>, DieselError> {
         //trace!(self.1, "Received db action"; "msg" => ?msg);
 
         // XXX: Verify this is enough to protect unauthorized access
@@ -165,11 +162,7 @@ impl UpdateCategory {
                 if let Some(ref color) = self.color {
                     c.color = color.clone();
                 }
-                diesel::update(&c)
-                    .set(&c)
-                    .get_result(conn)
-                    .optional()
-                    .map_err(|_| "Error updating Category in database")?
+                diesel::update(&c).set(&c).get_result(conn).optional()?
             }
             _ => None,
         };
@@ -186,7 +179,7 @@ impl DeleteCategory {
         }
     }
 
-    pub fn execute(self, conn: &PgConnection) -> Result<bool, &'static str> {
+    pub fn execute(self, conn: &PgConnection) -> Result<bool, DieselError> {
         use crate::db::schema::categories::dsl::*;
         //trace!(self.1, "Received db action"; "msg" => ?msg);
 
@@ -194,8 +187,7 @@ impl DeleteCategory {
         let res = diesel::delete(categories)
             .filter(id.eq(self.cid))
             .filter(user_id.is_null().or(user_id.eq(self.uid)))
-            .execute(conn)
-            .map_err(|_| "Error deleting Category from database")?;
+            .execute(conn)?;
         //trace!(self.1, "Handled db action"; "msg" => ?msg, "result" => ?res);
         Ok(res > 0)
     }

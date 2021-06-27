@@ -1,12 +1,12 @@
 /// from doc/api.md
 ///
-/// | Method | Endpoint | Payload/Params | Result | Description |
-/// | :--: | -- | -- | -- | -- |
-/// | GET | `/transactions` | `from, to` | get transaction history |
-/// | POST | `/transaction` | `TransactionCreationRequest` | create new transaction |
-/// | GET | `/transaction/{tid}` | - | get transaction details |
-/// | PUT | `/transaction/{tid}` | `TransactionUpdateRequest` | update transaction details |
-/// | DELETE | `/transaction/{tid}` | - | delete transaction |
+/// | Method | Endpoint | Payload/Params | Description |
+/// | :--: | -- | -- | -- |
+/// | POST | `/category` | `CategoryCreationRequest` | create new category |
+/// | GET | `/category/{cid}` | - | get category details |
+/// | PUT | `/category/{cid}` | `CategoryUpdateRequest` | update category details |
+/// | DELETE | `/category/{cid}` | - | delete category |
+/// | GET | `/category/all` | `from, to` | get all available category for the user |
 ///
 use tracing::debug;
 use warp::{reject, reply, Rejection, Reply};
@@ -14,7 +14,7 @@ use warp::{reject, reply, Rejection, Reply};
 use kapitalist_types::request::{CategoryCreationRequest, CategoryUpdateRequest};
 use kapitalist_types::response::CategoryResponse;
 
-//use crate::api::util::{reject::reject, reject::reject, update_request_invalid};
+use crate::api::util;
 use crate::auth::User;
 use crate::db::{
     category::{
@@ -32,11 +32,11 @@ pub async fn post(
     match new_category.execute(&*db.0) {
         Ok(category) => {
             let url = format!("/category/{}", category.id);
-            Ok(reply::json(&category.into_response()))
+            Ok(util::created(&category.into_response(), url))
         }
         Err(err) => {
             debug!(error = %&err, "Error inserting category into database");
-            Err(reject::reject())
+            Err(util::error(err))
         }
     }
 }
@@ -45,11 +45,10 @@ pub async fn get(db: Database, user: User, cid: i64) -> Result<impl Reply, Rejec
     let get_category = GetCategory::new(cid, user.user_id);
     match get_category.execute(&*db.0) {
         Ok(Some(category)) => Ok(reply::json(&category.into_response())),
-        //Ok(None) => Err(reject::reject("category")),
-        Ok(None) => Err(reject::reject()),
+        Ok(None) => Err(util::not_found("category")),
         Err(err) => {
             debug!(error = %&err, "Error getting category from database");
-            Err(reject::reject())
+            Err(util::error(err))
         }
     }
 }
@@ -68,11 +67,10 @@ pub async fn put(
     let update_category = UpdateCategory::from_request(user.user_id, cid, req);
     match update_category.execute(&*db.0) {
         Ok(Some(category)) => Ok(reply::json(&category.into_response())),
-        //Ok(None) => Err(reject::reject("category")),
-        Ok(None) => Err(reject::reject()),
+        Ok(None) => Err(util::not_found("category")),
         Err(err) => {
             debug!(error = %&err, "Error getting category from database");
-            Err(reject::reject())
+            Err(util::error(err))
         }
     }
 }
@@ -81,11 +79,10 @@ pub async fn delete(db: Database, user: User, cid: i64) -> Result<impl Reply, Re
     let delete_category = DeleteCategory::new(user.user_id, cid);
     match delete_category.execute(&*db.0) {
         Ok(true) => Ok(reply::json(&())),
-        //Ok(false) => Err(reject::reject("category")),
-        Ok(false) => Err(reject::reject()),
+        Ok(false) => Err(util::not_found("category")),
         Err(err) => {
             debug!(error = %&err, "Error getting category from database");
-            Err(reject::reject())
+            Err(util::error(err))
         }
     }
 }
@@ -100,7 +97,7 @@ pub async fn get_all(db: Database, user: User) -> Result<impl Reply, Rejection> 
         }
         Err(err) => {
             debug!(error = %&err, "Error getting categories from database");
-            return Err(reject::reject());
+            return Err(util::error(err));
         }
     }
 }

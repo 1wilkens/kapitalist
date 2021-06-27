@@ -1,6 +1,5 @@
 use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
 use diesel::PgConnection;
-
 use warp::{Filter, Rejection};
 
 mod schema;
@@ -25,8 +24,10 @@ pub fn attach(pool: PgPool) -> impl Filter<Extract = (Database,), Error = Reject
         .and_then(|pool: PgPool| async move {
             match pool.get() {
                 Ok(conn) => Ok(Database(conn)),
-                // FIXME: replace with proper error type
-                Err(err) => Err(warp::reject::reject()),
+                Err(err) => {
+                    tracing::debug!(error = %&err, "Error attaching database to request handler");
+                    Err(warp::reject::custom(crate::err::Error::PoolError))
+                }
             }
         })
 }

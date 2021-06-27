@@ -1,43 +1,26 @@
-/*use warp::Rejection;
+use serde::Serialize;
+use warp::{
+    http::{header, StatusCode},
+    reject, reply, Rejection, Reply,
+};
 
-use kapitalist_types::response::ErrorResponse;
+use crate::err::Error;
 
-
-// Status shorthands. These are private as they should not be used directly
-fn status_bad_request(resp: i32) -> Rejection {
-    status::Custom(Status::BadRequest, responder)
+pub(crate) fn created<T: Serialize>(resp: &T, url: String) -> impl Reply {
+    reply::with_status(
+        reply::with_header(reply::json(resp), header::LOCATION, url),
+        StatusCode::CREATED,
+    )
 }
 
-fn status_unauthorized<'r, R: Responder<'r>>(responder: R) -> Rejection {
-    status::Custom(Status::Unauthorized, responder)
+pub(crate) fn bad_request<T: Into<String>>(msg: T) -> Rejection {
+    error(Error::BadRequest(msg.into()))
 }
 
-fn status_not_found<'r, R: Responder<'r>>(responder: R) -> Rejection {
-    status::Custom(Status::NotFound, responder)
+pub(crate) fn not_found<T: Into<String>>(entity: T) -> Rejection {
+    error(Error::NotFound(entity.into()))
 }
 
-fn status_internal_server_error<'r, R: Responder<'r>>(responder: R) -> Rejection {
-    status::Custom(Status::InternalServerError, responder)
+pub(crate) fn error<T: Into<Error>>(error: T) -> Rejection {
+    reject::custom(error.into())
 }
-
-// Common request shorthands
-pub fn internal_server_error() -> status::Custom<Json<ErrorResponse>> {
-    status_internal_server_error(Json(ErrorResponse::internal_server_error()))
-}
-
-// Cannot use status::BadRequest here, as we need a single return type for handlers
-pub fn bad_request<S: Into<String>>(msg: S) -> status::Custom<Json<ErrorResponse>> {
-    status_bad_request(Json(ErrorResponse::new(msg.into())))
-}
-
-pub fn update_request_invalid() -> status::Custom<Json<ErrorResponse>> {
-    bad_request("Request has to contain at least one field to update")
-}
-
-pub fn unauthorized() -> status::Custom<Json<ErrorResponse>> {
-    status_unauthorized(Json(ErrorResponse::unauthorized()))
-}
-
-pub fn not_found(entity: &str) -> status::Custom<Json<ErrorResponse>> {
-    status_not_found(Json(ErrorResponse::new(format!("{} not found", entity))))
-}*/
