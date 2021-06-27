@@ -16,7 +16,7 @@ pub fn check(
     st: Arc<state::AppState>,
 ) -> impl Filter<Extract = (User,), Error = Rejection> + Clone {
     warp::header("Authorization")
-        .and(state::attach(st.clone()))
+        .and(state::attach(st))
         .and_then(check_token)
 }
 
@@ -62,7 +62,6 @@ pub struct User {
 }
 
 pub async fn check_token(header: String, state: Arc<state::AppState>) -> Result<User, Rejection> {
-    let state = state.clone();
     let key = &state.config.jwt_decoding_key;
 
     debug!(%header, "check_auth");
@@ -75,7 +74,7 @@ pub async fn check_token(header: String, state: Arc<state::AppState>) -> Result<
             ..Validation::default()
         };
         debug!(token = %parts[1], "Validating bearer token");
-        let token = match decode::<TokenClaims>(&parts[1], key, &validation) {
+        let token = match decode::<TokenClaims>(parts[1], key, &validation) {
             Ok(token) => token,
             Err(e) => {
                 // Print errors on debug output and continue to next token if any

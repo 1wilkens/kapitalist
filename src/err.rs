@@ -17,7 +17,10 @@ pub async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> 
     let mut message = "Internal server error";
     let mut resp = None;
 
-    if let Some(_) = err.find::<warp::filters::body::BodyDeserializeError>() {
+    if err
+        .find::<warp::filters::body::BodyDeserializeError>()
+        .is_some()
+    {
         code = StatusCode::BAD_REQUEST;
         message = "Invalid Body";
     }

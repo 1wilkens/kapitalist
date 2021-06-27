@@ -24,6 +24,6 @@ pub async fn index() -> Result<impl Reply, Infallible> {
 pub async fn version() -> Result<impl Reply, Infallible> {
     trace!("version()");
     Ok(reply::json(&VersionResponse {
-        version: format!("{}", env!("CARGO_PKG_VERSION")),
+        version: env!("CARGO_PKG_VERSION").to_string(),
     }))
 }

@@ -97,7 +97,7 @@ pub async fn get_all(db: Database, user: User) -> Result<impl Reply, Rejection> 
         }
         Err(err) => {
             debug!(error = %&err, "Error getting categories from database");
-            return Err(util::error(err));
+            Err(util::error(err))
         }
     }
 }

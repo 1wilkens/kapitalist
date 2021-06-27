@@ -1,11 +1,5 @@
 //#![deny(clippy::pedantic)]
-#![allow(
-    clippy::needless_pass_by_value,
-    clippy::module_name_repetitions,
-    clippy::must_use_candidate,
-    clippy::option_option,
-    clippy::redundant_field_names
-)]
+#![allow(clippy::redundant_field_names)]
 
 #[macro_use]
 extern crate diesel;
