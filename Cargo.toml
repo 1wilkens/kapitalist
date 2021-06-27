@@ -23,7 +23,7 @@ lto = true
 [dependencies]
 kapitalist_types = { git = "https://github.com/kapitalist-app/types", branch = "develop" }
 
-color-eyre = "0.5"
+#color-eyre = "0.5"
 clap = { version = "2.33", default-features = false, features = ["vec_map"] }
 tracing = "0.1"
 tracing-subscriber = "0.2"
@@ -34,7 +34,7 @@ chrono = { version = "0.4", features = ["serde"] }
 diesel = { version = "1.4", default-features = false, features = ["chrono", "r2d2", "postgres"] }
 diesel_migrations = "1.4"
 
-tokio = { version = "^1.5", features = ["full"] }
+tokio = { version = "1.7", features = ["full"] }
 warp = "0.3"
 
 jsonwebtoken = "7.2"
