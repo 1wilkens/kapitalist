@@ -11,6 +11,7 @@ use warp::{
 };
 
 use crate::state;
+use crate::err::Error;
 
 pub fn check(
     st: Arc<state::AppState>,
@@ -79,8 +80,7 @@ pub async fn check_token(header: String, state: Arc<state::AppState>) -> Result<
             Err(e) => {
                 // Print errors on debug output and continue to next token if any
                 debug!(error = %e, "Validation failed");
-                // FIXME: return 401
-                return Err(reject::reject());
+                return Err(reject::custom(Error::Unauthorized));
             }
         };
 
@@ -89,6 +89,5 @@ pub async fn check_token(header: String, state: Arc<state::AppState>) -> Result<
         });
     }
 
-    // FIXME: return 401
-    Err(reject::reject())
+    Err(reject::custom(Error::Unauthorized))
 }

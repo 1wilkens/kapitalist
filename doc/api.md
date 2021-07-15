@@ -19,6 +19,7 @@
 | GET | `/wallet/{wid}` | - | Wallet | get wallet details |
 | PUT | `/wallet/{wid}` | WalletUpdateRequest | Wallet | update wallet details |
 | DELETE | `/wallet/{wid}` | - | HTTP 200? | delete wallet |
+| GET | `/wallet/all` | - | List<Wallet> | get all wallet of the user |
 
 ### Categories
 
@@ -28,6 +29,7 @@
 | GET | `/category/{wid}` | - | Category | get category details |
 | PUT | `/category/{wid}` | CategoryUpdateRequest | Category | update category details |
 | DELETE | `/category/{wid}` | - | HTTP 200? | delete category |
+| GET | `/category/all` | - | List<Category> | get all categories for the user |
 
 ### Transactions
 
@@ -44,4 +46,4 @@
 | :--: | -- | -- | -- |
 | GET | `/statistics` | `wallet_ids, from, to` | get general statistics for a list of wallets |
 | GET | `/statistics/category` | `wallet_ids, from, to` | get category statistics for a list of wallets |
-| GET | `/statistics/cashflow` | `wallet_ids, from, to` | get cashflow statistics for a list of wallets|
+| GET | `/statistics/cashflow` | `wallet_ids, from, to` | get cashflow statistics for a list of wallets |

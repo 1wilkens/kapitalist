@@ -6,10 +6,11 @@ use kapitalist_types::response::ErrorResponse;
 
 #[derive(Debug)]
 pub enum Error {
+    DbError(diesel::result::Error),
+    PoolError,
     BadRequest(String),
     NotFound(String),
-    PoolError,
-    DbError(diesel::result::Error),
+    Unauthorized,
 }
 
 pub async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
